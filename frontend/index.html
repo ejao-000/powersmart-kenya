@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PowerSmart — Kenya Power Smart Dashboard</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <link rel="stylesheet" href="css/auth.css"/>
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-icon">⚡</span>
+      <h1>PowerSmart</h1>
+      <p>Smart management for your Kenya Power meter</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="auth-tabs">
+      <button class="tab-btn active" data-tab="login">Sign In</button>
+      <button class="tab-btn" data-tab="register">Create Account</button>
+    </div>
+
+    <!-- Login form -->
+    <form id="form-login" class="auth-form active">
+      <label>Email
+        <input type="email" id="login-email" required placeholder="you@example.com"/>
+      </label>
+      <label>Password
+        <input type="password" id="login-password" required placeholder="••••••••"/>
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+      <p id="login-error" class="form-error hidden"></p>
+    </form>
+
+    <!-- Register form -->
+    <form id="form-register" class="auth-form">
+      <label>Full name
+        <input type="text" id="reg-name" required placeholder="Jane Wanjiku"/>
+      </label>
+      <label>Email
+        <input type="email" id="reg-email" required placeholder="you@example.com"/>
+      </label>
+      <label>Phone
+        <input type="tel" id="reg-phone" required placeholder="0712345678"/>
+      </label>
+      <label>Password
+        <input type="password" id="reg-password" required minlength="8" placeholder="Minimum 8 characters"/>
+      </label>
+      <label>
+        Kenya Power Meter Account Number
+        <input type="text" id="reg-meter-account" required pattern="\d{8,12}"
+               placeholder="e.g. 2601234567"
+               title="Enter your 8–12 digit KP account number (found on your KP statement or meter)"/>
+        <span class="field-hint">Only valid Kenya Power prepaid account holders can register.</span>
+      </label>
+      <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+      <p id="register-error" class="form-error hidden"></p>
+    </form>
+  </div>
+
+  <script type="module">
+    import { auth } from './js/api.js';
+    import { isLoggedIn, setUser } from './js/store.js';
+
+    if (isLoggedIn()) location.href = 'dashboard.html';
+
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn, .auth-form').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`form-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    // Login
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('login-error');
+      err.classList.add('hidden');
+      try {
+        const res = await auth.login({
+          email:    document.getElementById('login-email').value,
+          password: document.getElementById('login-password').value,
+        });
+        localStorage.setItem('ps_token', res.token);
+        setUser(res.user);
+        location.href = 'dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+      }
+    });
+
+    // Register
+    document.getElementById('form-register').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('register-error');
+      err.classList.add('hidden');
+      try {
+        const res = await auth.register({
+          name:          document.getElementById('reg-name').value,
+          email:         document.getElementById('reg-email').value,
+          phone:         document.getElementById('reg-phone').value,
+          password:      document.getElementById('reg-password').value,
+          meter_account: document.getElementById('reg-meter-account').value,
+        });
+        localStorage.setItem('ps_token', res.token);
+        setUser(res.user);
+        location.href = 'dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
