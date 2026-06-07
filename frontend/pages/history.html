@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Token History — PowerSmart</title>
+  <link rel="stylesheet" href="../css/main.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../css/tokens.css"/>
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="brand"><span class="brand-icon">⚡</span><span>PowerSmart</span></div>
+    <a href="../dashboard.html" class="nav-item">◎ Dashboard</a>
+    <a href="tokens.html"    class="nav-item">⊕ Buy Tokens</a>
+    <a href="history.html"   class="nav-item active">☰ Token History</a>
+    <a href="alerts.html"    class="nav-item">⚑ Alerts</a>
+    <a href="settings.html"  class="nav-item">⚙ Settings</a>
+    <div class="nav-spacer"></div>
+    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+  </nav>
+
+  <main class="content">
+    <header class="page-header">
+      <div>
+        <h1>Token History</h1>
+        <p class="subtitle">All tokens you have purchased. Tap the trash icon to remove a record.</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <div id="token-history-list" class="token-history-grid">
+        <p class="empty-state">Loading…</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { tokens as tokenApi } from '../js/api.js';
+    import { isLoggedIn } from '../js/store.js';
+
+    if (!isLoggedIn()) location.href = '../index.html';
+
+    const list = document.getElementById('token-history-list');
+
+    function pushStatusBadge(status) {
+      const map = {
+        success: ['✓ Pushed', 'badge-success'],
+        pending: ['⏳ Pending', 'badge-warn'],
+        failed:  ['✗ Failed', 'badge-danger'],
+        manual:  ['Manual', 'badge-neutral'],
+      };
+      const [label, cls] = map[status] || ['Unknown', 'badge-neutral'];
+      return `<span class="badge ${cls}">${label}</span>`;
+    }
+
+    async function render() {
+      const data = await tokenApi.listHistory().catch(() => []);
+
+      if (!data.length) {
+        list.innerHTML = '<p class="empty-state">No token history yet. Buy your first token to get started.</p>';
+        return;
+      }
+
+      list.innerHTML = data.map(t => `
+        <div class="history-row" data-id="${t.id}">
+          <div class="hist-main">
+            <span class="token-num">${t.token_number}</span>
+            <span class="hist-meta">${t.units} kWh · Ksh ${t.amount_ksh}</span>
+          </div>
+          <div class="hist-right">
+            ${pushStatusBadge(t.push_status)}
+            <span class="hist-date">${new Date(t.purchased_at).toLocaleDateString('en-KE')}</span>
+            <button class="icon-btn btn-delete" title="Remove from history" data-id="${t.id}">🗑</button>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.dataset.id;
+          if (!confirm('Remove this token record? The token itself remains valid.')) return;
+          await tokenApi.deleteHistory(id);
+          render();
+        });
+      });
+    }
+
+    render();
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      import('../js/store.js').then(({ clearUser }) => { clearUser(); location.href = '../index.html'; });
+    });
+  </script>
+</body>
+</html>
