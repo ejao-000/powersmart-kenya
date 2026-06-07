@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PowerSmart Dashboard</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <link rel="stylesheet" href="css/dashboard.css"/>
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="brand">
+      <span class="brand-icon">⚡</span>
+      <span>PowerSmart</span>
+    </div>
+    <a href="dashboard.html" class="nav-item active">
+      <span class="nav-icon">◎</span> Dashboard
+    </a>
+    <a href="pages/tokens.html" class="nav-item">
+      <span class="nav-icon">⊕</span> Buy Tokens
+    </a>
+    <a href="pages/history.html" class="nav-item">
+      <span class="nav-icon">☰</span> Token History
+    </a>
+    <a href="pages/alerts.html" class="nav-item">
+      <span class="nav-icon">⚑</span> Alerts
+    </a>
+    <a href="pages/settings.html" class="nav-item">
+      <span class="nav-icon">⚙</span> Settings
+    </a>
+    <div class="nav-spacer"></div>
+    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+  </nav>
+
+  <main class="content">
+    <header class="page-header">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle" id="meter-account-label">Loading…</p>
+      </div>
+      <div class="header-actions">
+        <!-- Bluetooth status pill -->
+        <button id="btn-bluetooth" class="bt-pill" title="Connect meter via Bluetooth">
+          <span id="bt-icon">⬡</span>
+          <span id="bt-label">Connect Meter</span>
+        </button>
+        <button id="btn-theme" class="icon-btn" title="Toggle theme">◑</button>
+      </div>
+    </header>
+
+    <!-- Units ring + key stats ----------------------------------------- -->
+    <section class="metrics-grid">
+      <div class="card card-ring">
+        <svg viewBox="0 0 200 200" class="ring-svg" aria-label="Power units remaining gauge">
+          <circle cx="100" cy="100" r="80" class="ring-track"/>
+          <circle cx="100" cy="100" r="80" class="ring-fill" id="ring-arc"
+                  stroke-dasharray="502" stroke-dashoffset="502"/>
+          <text x="100" y="92" class="ring-value" id="ring-value">--</text>
+          <text x="100" y="116" class="ring-label">kWh left</text>
+        </svg>
+        <div class="ring-meta">
+          <span id="alert-badge" class="alert-badge hidden">Low</span>
+        </div>
+      </div>
+
+      <div class="stats-col">
+        <div class="stat-card" id="stat-days">
+          <span class="stat-label">Est. days left</span>
+          <span class="stat-value" id="val-days">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Daily average</span>
+          <span class="stat-value" id="val-avg">-- kWh</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Runs out</span>
+          <span class="stat-value" id="val-depletion">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Last updated</span>
+          <span class="stat-value" id="val-updated">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Prediction alert banner ----------------------------------------- -->
+    <div id="alert-banner" class="alert-banner hidden">
+      <span id="alert-banner-text"></span>
+      <a href="pages/tokens.html" class="btn btn-sm">Buy Now</a>
+    </div>
+
+    <!-- Manual telemetry entry ------------------------------------------ -->
+    <section class="card manual-entry">
+      <h2>Update Units Reading</h2>
+      <p class="hint">Enter the current units shown on your meter. Or connect via Bluetooth to sync automatically.</p>
+      <div class="input-row">
+        <input type="number" id="input-units" placeholder="e.g. 42.5" min="0" step="0.1"/>
+        <button id="btn-update-reading" class="btn btn-primary">Update</button>
+      </div>
+    </section>
+
+    <!-- Recent token history preview ------------------------------------ -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Recent Tokens</h2>
+        <a href="pages/history.html" class="link-sm">View all →</a>
+      </div>
+      <div id="recent-tokens" class="token-list">
+        <p class="empty-state">Loading history…</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
