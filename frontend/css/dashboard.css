@@ -1,0 +1,92 @@
+/* dashboard.css — ring gauge, metric cards, alert banners */
+
+/* Metrics grid: ring + stats side by side */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Ring gauge */
+.card-ring {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem;
+}
+.ring-svg { width: 160px; height: 160px; }
+.ring-track { fill: none; stroke: var(--border); stroke-width: 12; }
+.ring-fill  {
+  fill: none; stroke: var(--ok); stroke-width: 12;
+  stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 50% 50%;
+  transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
+}
+.ring-fill.ring-warn     { stroke: var(--warn); }
+.ring-fill.ring-critical { stroke: var(--danger); }
+.ring-fill.ring-ok       { stroke: var(--ok); }
+
+.ring-value { font-size: 2rem; font-weight: 700; fill: var(--text); text-anchor: middle; }
+.ring-label { font-size: 0.75rem; fill: var(--muted); text-anchor: middle; }
+.ring-meta  { margin-top: 0.75rem; }
+
+/* Alert badge on ring */
+.alert-badge {
+  background: var(--danger); color: #fff;
+  padding: 0.25rem 0.75rem; border-radius: 99px;
+  font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+}
+
+/* Stats column */
+.stats-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 1rem;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.stat-value { font-size: 1.2rem; font-weight: 600; }
+
+/* Alert banner */
+.alert-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 1.25rem; border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem; font-size: 0.9rem; font-weight: 500;
+  background: #fef3cd; color: #7a5200; border: 1px solid #f0cc7a;
+}
+.alert-banner[data-level="critical"] { background: #fde8e8; color: #8b1a1a; border-color: #f0a0a0; }
+
+/* Manual entry */
+.manual-entry { margin-bottom: 1.5rem; }
+.manual-entry h2 { margin-bottom: 0.5rem; font-size: 1rem; }
+
+/* Token list (preview) */
+.token-list { display: flex; flex-direction: column; gap: 8px; }
+.token-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.875rem;
+}
+.token-row:last-child { border-bottom: none; }
+.token-num-sm { font-family: monospace; font-size: 0.8rem; color: var(--muted); flex: 1; }
+.token-units  { font-weight: 600; min-width: 60px; }
+.token-amount { color: var(--muted); min-width: 70px; }
+.token-push-icon { font-size: 0.9rem; }
+
+/* Bluetooth pill */
+.bt-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 0.4rem 0.9rem; border-radius: 99px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  font-size: 0.8rem; font-weight: 500; color: var(--muted);
+  transition: all 0.15s;
+}
+.bt-pill.bt-connected { border-color: var(--ok); color: var(--ok); }
+.bt-pill:hover { border-color: var(--accent); }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .metrics-grid { grid-template-columns: 1fr; }
+  .stats-col { grid-template-columns: 1fr 1fr; }
+  body:not(.auth-body) { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 0.5rem; border-right: none; border-bottom: 1px solid var(--border); }
+  .brand { padding-bottom: 0; }
+  .nav-spacer { display: none; }
+}
