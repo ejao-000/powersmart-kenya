@@ -10,14 +10,16 @@
 </head>
 <body>
   <nav class="sidebar">
-    <div class="brand"><span class="brand-icon">⚡</span><span>PowerSmart</span></div>
-    <a href="../dashboard.html" class="nav-item">◎ Dashboard</a>
-    <a href="tokens.html"    class="nav-item">⊕ Buy Tokens</a>
-    <a href="history.html"   class="nav-item">☰ Token History</a>
-    <a href="alerts.html"    class="nav-item active">⚑ Alerts</a>
-    <a href="settings.html"  class="nav-item">⚙ Settings</a>
+    <a href="../dashboard.html" class="brand" style="text-decoration:none">
+      <span class="brand-icon">⚡</span><span>PowerSmart</span>
+    </a>
+    <a href="../dashboard.html" class="nav-item"        data-page="dashboard">◎ Dashboard</a>
+    <a href="tokens.html"       class="nav-item"        data-page="tokens">⊕ Buy Tokens</a>
+    <a href="history.html"      class="nav-item"        data-page="history">☰ Token History</a>
+    <a href="alerts.html"       class="nav-item active" data-page="alerts">⚑ Alerts</a>
+    <a href="settings.html"     class="nav-item"        data-page="settings">⚙ Settings</a>
     <div class="nav-spacer"></div>
-    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+    <button id="btn-logout" class="nav-item nav-logout">↩ Sign Out</button>
   </nav>
 
   <main class="content">
@@ -26,12 +28,12 @@
         <h1>Alerts</h1>
         <p class="subtitle">Get notified before your power runs out.</p>
       </div>
-      <button id="btn-request-notif" class="btn btn-outline">Enable Notifications</button>
+      <button id="btn-request-notif" class="btn btn-outline">🔔 Enable Notifications</button>
     </header>
 
-    <!-- Add new alert -------------------------------------------------- -->
-    <section class="card">
-      <h2>Add Alert Rule</h2>
+    <!-- Add alert -->
+    <section class="card" style="margin-bottom:1.5rem">
+      <h2 style="font-size:1rem;margin-bottom:1rem">Add Alert Rule</h2>
       <form id="form-add-alert" class="alert-form">
         <div class="form-row">
           <label>Alert type
@@ -55,12 +57,13 @@
           </label>
         </div>
         <button type="submit" class="btn btn-primary">Save Alert</button>
+        <p id="alert-error" class="form-error hidden"></p>
       </form>
     </section>
 
-    <!-- Existing alerts ------------------------------------------------- -->
+    <!-- Existing alerts -->
     <section class="card">
-      <h2>Your Alert Rules</h2>
+      <h2 style="font-size:1rem;margin-bottom:1rem">Your Alert Rules</h2>
       <div id="alerts-list" class="alerts-list">
         <p class="empty-state">Loading…</p>
       </div>
@@ -69,12 +72,14 @@
 
   <script type="module">
     import { alerts as alertsApi } from '../js/api.js';
-    import { requestNotificationPermission, invalidateAlertsCache } from '../js/predictor.js';
-    import { isLoggedIn } from '../js/store.js';
+    import { requireAuth, attachLogoutButton } from '../js/auth.js';
+    import { requestPermission, invalidateAlertsCache } from '../js/predictor.js';
+    import { toast } from '../js/notifications.js';
 
-    if (!isLoggedIn()) location.href = '../index.html';
+    requireAuth('../index.html');
+    attachLogoutButton('btn-logout', '../index.html');
 
-    const alertsList = document.getElementById('alerts-list');
+    const alertsList    = document.getElementById('alerts-list');
     const thresholdUnit = document.getElementById('threshold-unit');
 
     document.getElementById('sel-type').addEventListener('change', e => {
@@ -82,42 +87,56 @@
     });
 
     document.getElementById('btn-request-notif').addEventListener('click', async () => {
-      const granted = await requestNotificationPermission();
-      alert(granted ? 'Notifications enabled!' : 'Permission denied. Check browser settings.');
+      const granted = await requestPermission();
+      toast[granted ? 'success' : 'warning'](
+        granted ? 'Browser notifications enabled!' : 'Permission denied. Check your browser settings.'
+      );
     });
 
     async function renderAlerts() {
-      const data = await alertsApi.list().catch(() => []);
+      const result = await alertsApi.list().catch(() => []);
+      const data   = Array.isArray(result) ? result : (result.data || []);
+
       if (!data.length) {
-        alertsList.innerHTML = '<p class="empty-state">No alert rules yet.</p>';
+        alertsList.innerHTML = `
+          <div style="text-align:center;padding:2rem 0">
+            <div style="font-size:2rem;margin-bottom:0.5rem">⚑</div>
+            <p class="empty-state" style="padding:0">No alert rules yet.</p>
+            <p style="font-size:0.8rem;color:var(--muted);margin-top:0.4rem">Add one above to be notified before your power runs out.</p>
+          </div>`;
         return;
       }
+
       alertsList.innerHTML = data.map(a => `
         <div class="alert-row">
           <div class="alert-info">
-            <strong>${a.type === 'low_units' ? 'Units' : 'Days'} below ${a.threshold}${a.type === 'low_units' ? ' kWh' : ' days'}</strong>
+            <strong>${a.type === 'low_units' ? 'Units' : 'Days'} below
+              ${a.threshold}${a.type === 'low_units' ? ' kWh' : ' days'}
+            </strong>
             <span class="alert-channel">via ${a.channel}</span>
           </div>
           <div class="alert-actions">
-            <label class="toggle" title="${a.enabled ? 'Enabled' : 'Disabled'}">
+            <label class="toggle" title="${a.enabled ? 'Enabled — click to disable' : 'Disabled — click to enable'}">
               <input type="checkbox" ${a.enabled ? 'checked' : ''} data-id="${a.id}" class="chk-enable"/>
               <span class="toggle-slider"></span>
             </label>
-            <button class="icon-btn btn-delete-alert" data-id="${a.id}" title="Delete">🗑</button>
+            <button class="icon-btn btn-delete-alert" data-id="${a.id}" title="Delete alert">🗑</button>
           </div>
-        </div>
-      `).join('');
+        </div>`).join('');
 
       alertsList.querySelectorAll('.chk-enable').forEach(chk => {
-        chk.addEventListener('change', e => {
-          alertsApi.update(e.target.dataset.id, { enabled: e.target.checked });
+        chk.addEventListener('change', async e => {
+          await alertsApi.update(e.target.dataset.id, { enabled: e.target.checked }).catch(()=>{});
           invalidateAlertsCache();
+          toast.info(`Alert ${e.target.checked ? 'enabled' : 'disabled'}`);
         });
       });
       alertsList.querySelectorAll('.btn-delete-alert').forEach(btn => {
         btn.addEventListener('click', async e => {
-          await alertsApi.delete(e.currentTarget.dataset.id);
+          if (!confirm('Delete this alert rule?')) return;
+          await alertsApi.delete(e.currentTarget.dataset.id).catch(()=>{});
           invalidateAlertsCache();
+          toast.info('Alert deleted');
           renderAlerts();
         });
       });
@@ -125,14 +144,28 @@
 
     document.getElementById('form-add-alert').addEventListener('submit', async e => {
       e.preventDefault();
-      await alertsApi.create({
-        type:      document.getElementById('sel-type').value,
-        threshold: parseFloat(document.getElementById('inp-threshold').value),
-        channel:   document.getElementById('sel-channel').value,
-      });
-      invalidateAlertsCache();
-      e.target.reset();
-      renderAlerts();
+      const errEl = document.getElementById('alert-error');
+      errEl.classList.add('hidden');
+      const threshold = parseFloat(document.getElementById('inp-threshold').value);
+      if (!threshold || threshold <= 0) {
+        errEl.textContent = 'Enter a valid threshold greater than 0.';
+        errEl.classList.remove('hidden'); return;
+      }
+      try {
+        await alertsApi.create({
+          type:      document.getElementById('sel-type').value,
+          threshold,
+          channel:   document.getElementById('sel-channel').value,
+        });
+        invalidateAlertsCache();
+        e.target.reset();
+        thresholdUnit.textContent = 'kWh';
+        toast.success('Alert rule saved!');
+        renderAlerts();
+      } catch (err) {
+        errEl.textContent = err.message || 'Failed to save alert.';
+        errEl.classList.remove('hidden');
+      }
     });
 
     renderAlerts();
