@@ -79,6 +79,39 @@ export function isLoggedIn() {
   return !!localStorage.getItem('ps_token');
 }
 
+// store.js - User management only (not token history)
+const USER_KEY = 'ps_user';
+const TOKEN_KEY = 'ps_token';
+
+export function setUser(user) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+export function getUser() {
+  try {
+    return JSON.parse(localStorage.getItem(USER_KEY));
+  } catch {
+    return null;
+  }
+}
+
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearUser() {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+export function isLoggedIn() {
+  return !!getToken() && !!getUser();
+}
+
 // ── Meter + Prediction (session-only) ────────────────────────────────────
 
 export function setMeter(meter) { state.meter = meter; }
