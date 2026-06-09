@@ -10,87 +10,122 @@
 </head>
 <body>
   <nav class="sidebar">
-    <div class="brand"><span class="brand-icon">⚡</span><span>PowerSmart</span></div>
-    <a href="../dashboard.html" class="nav-item">◎ Dashboard</a>
-    <a href="tokens.html"    class="nav-item">⊕ Buy Tokens</a>
-    <a href="history.html"   class="nav-item active">☰ Token History</a>
-    <a href="alerts.html"    class="nav-item">⚑ Alerts</a>
-    <a href="settings.html"  class="nav-item">⚙ Settings</a>
+    <a href="../dashboard.html" class="brand" style="text-decoration:none">
+      <span class="brand-icon">⚡</span><span>PowerSmart</span>
+    </a>
+    <a href="../dashboard.html" class="nav-item"        data-page="dashboard">◎ Dashboard</a>
+    <a href="tokens.html"       class="nav-item"        data-page="tokens">⊕ Buy Tokens</a>
+    <a href="history.html"      class="nav-item active" data-page="history">☰ Token History</a>
+    <a href="alerts.html"       class="nav-item"        data-page="alerts">⚑ Alerts</a>
+    <a href="settings.html"     class="nav-item"        data-page="settings">⚙ Settings</a>
     <div class="nav-spacer"></div>
-    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+    <button id="btn-logout" class="nav-item nav-logout">↩ Sign Out</button>
   </nav>
 
   <main class="content">
     <header class="page-header">
       <div>
         <h1>Token History</h1>
-        <p class="subtitle">All tokens you have purchased. Tap the trash icon to remove a record.</p>
+        <p class="subtitle">All tokens you have purchased. Tap 🗑 to remove a record.</p>
       </div>
+      <a href="tokens.html" class="btn btn-primary btn-sm">⊕ Buy Token</a>
     </header>
 
-    <section class="card">
+    <!-- Stats bar -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem" id="history-stats">
+      <div class="card" style="padding:1rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:700" id="stat-count">—</div>
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Total purchases</div>
+      </div>
+      <div class="card" style="padding:1rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:700" id="stat-kwh">—</div>
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Total kWh bought</div>
+      </div>
+      <div class="card" style="padding:1rem;text-align:center">
+        <div style="font-size:1.5rem;font-weight:700" id="stat-spend">—</div>
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Total spent</div>
+      </div>
+    </div>
+
+    <div class="card">
       <div id="token-history-list" class="token-history-grid">
         <p class="empty-state">Loading…</p>
       </div>
-    </section>
+    </div>
   </main>
 
   <script type="module">
     import { tokens as tokenApi } from '../js/api.js';
-    import { isLoggedIn } from '../js/store.js';
+    import { requireAuth, attachLogoutButton } from '../js/auth.js';
 
-    if (!isLoggedIn()) location.href = '../index.html';
+    requireAuth('../index.html');
+    attachLogoutButton('btn-logout', '../index.html');
 
     const list = document.getElementById('token-history-list');
 
-    function pushStatusBadge(status) {
+    function pushBadge(status) {
       const map = {
-        success: ['✓ Pushed', 'badge-success'],
-        pending: ['⏳ Pending', 'badge-warn'],
-        failed:  ['✗ Failed', 'badge-danger'],
-        manual:  ['Manual', 'badge-neutral'],
+        success: ['✓ Pushed',  'badge-success'],
+        pending: ['⏳ Pending','badge-warn'],
+        failed:  ['✗ Failed',  'badge-danger'],
+        manual:  ['Manual',    'badge-neutral'],
       };
-      const [label, cls] = map[status] || ['Unknown', 'badge-neutral'];
+      const [label, cls] = map[status] || ['—','badge-neutral'];
       return `<span class="badge ${cls}">${label}</span>`;
     }
 
+    function formatToken(num) {
+      return num ? num.replace(/(\d{4})(?=\d)/g,'$1-') : '—';
+    }
+
     async function render() {
-      const data = await tokenApi.listHistory().catch(() => []);
+      list.innerHTML = '<p class="empty-state">Loading…</p>';
+      const result = await tokenApi.listHistory().catch(() => []);
+      const data   = Array.isArray(result) ? result : (result.data || []);
+
+      // Update stats
+      const totalCount = data.length;
+      const totalKwh   = data.reduce((s, t) => s + (t.units || 0), 0);
+      const totalSpend = data.reduce((s, t) => s + (t.amount_ksh || 0), 0);
+      document.getElementById('stat-count').textContent = totalCount;
+      document.getElementById('stat-kwh').textContent   = totalKwh.toFixed(1) + ' kWh';
+      document.getElementById('stat-spend').textContent = 'Ksh ' + totalSpend.toLocaleString();
 
       if (!data.length) {
-        list.innerHTML = '<p class="empty-state">No token history yet. Buy your first token to get started.</p>';
+        list.innerHTML = `
+          <div style="text-align:center;padding:3rem 0">
+            <div style="font-size:2.5rem;margin-bottom:0.75rem">📄</div>
+            <p class="empty-state" style="padding:0">No token history yet.</p>
+            <a href="tokens.html" class="btn btn-primary btn-sm" style="margin-top:1rem">Buy your first token →</a>
+          </div>`;
         return;
       }
 
       list.innerHTML = data.map(t => `
         <div class="history-row" data-id="${t.id}">
           <div class="hist-main">
-            <span class="token-num">${t.token_number}</span>
-            <span class="hist-meta">${t.units} kWh · Ksh ${t.amount_ksh}</span>
+            <span class="token-num">${formatToken(t.token_number)}</span>
+            <span class="hist-meta">${t.units} kWh · Ksh ${(t.amount_ksh||0).toLocaleString()}</span>
           </div>
           <div class="hist-right">
-            ${pushStatusBadge(t.push_status)}
-            <span class="hist-date">${new Date(t.purchased_at).toLocaleDateString('en-KE')}</span>
+            ${pushBadge(t.push_status)}
+            <span class="hist-date">${new Date(t.purchased_at).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'})}</span>
             <button class="icon-btn btn-delete" title="Remove from history" data-id="${t.id}">🗑</button>
           </div>
         </div>
       `).join('');
 
       list.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
+        btn.addEventListener('click', async e => {
           const id = e.currentTarget.dataset.id;
-          if (!confirm('Remove this token record? The token itself remains valid.')) return;
-          await tokenApi.deleteHistory(id);
+          if (!confirm('Remove this token record?\n\nThe token itself stays valid on your meter — only the history entry is removed.')) return;
+          await tokenApi.deleteHistory(id).catch(() => {});
           render();
         });
       });
     }
 
     render();
-
-    document.getElementById('btn-logout').addEventListener('click', () => {
-      import('../js/store.js').then(({ clearUser }) => { clearUser(); location.href = '../index.html'; });
-    });
   </script>
 </body>
 </html>
