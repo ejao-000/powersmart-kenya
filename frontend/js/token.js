@@ -203,9 +203,37 @@ async function afterTokenReceived(token) {
  * Fetches the full token history list.
  * Returns an array of token objects, newest first.
  */
-export async function fetchHistory() {
-  const result = await tokensApi.listHistory();
-  return Array.isArray(result) ? result : (result.data || []);
+// Token history management 
+const TOKEN_HISTORY_KEY = 'ps_token_history';
+
+export function saveTokenToHistory(tokenData) {
+  const history = getTokenHistory();
+  history.unshift({
+    ...tokenData,
+    timestamp: new Date().toISOString(),
+    id: Date.now()
+  });
+  // Keep last 100 tokens
+  if (history.length > 100) history.pop();
+  localStorage.setItem(TOKEN_HISTORY_KEY, JSON.stringify(history));
+  return history;
+}
+
+export function getTokenHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(TOKEN_HISTORY_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+export function clearTokenHistory() {
+  localStorage.removeItem(TOKEN_HISTORY_KEY);
+}
+
+export function getTokensByMeter(meterAccount) {
+  const history = getTokenHistory();
+  return history.filter(token => token.meter_account === meterAccount);
 }
 
 /**
