@@ -8,169 +8,77 @@
   <link rel="stylesheet" href="../css/dashboard.css"/>
   <link rel="stylesheet" href="../css/tokens.css"/>
   <style>
-    /* ── Page-specific styles ── */
-    .buy-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      align-items: start;
-    }
-
-    /* Amount presets */
-    .amount-presets {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      margin-bottom: 1rem;
-    }
+    .buy-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start; }
+    .amount-presets { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:1rem; }
     .amount-preset {
-      padding: 0.6rem 0.4rem;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--bg);
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.15s;
-      color: var(--text);
+      padding:0.6rem 0.4rem; border:1.5px solid var(--border); border-radius:var(--radius-sm);
+      background:var(--bg); font-size:0.85rem; font-weight:600; cursor:pointer;
+      text-align:center; transition:all 0.15s; color:var(--text);
     }
-    .amount-preset:hover   { border-color: var(--accent); color: var(--accent); }
-    .amount-preset.selected { border-color: var(--accent); background: #f0faf3; color: var(--accent); }
-    html.dark .amount-preset.selected { background: #0e2416; }
-
-    /* Units preview */
-    .units-preview-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 1.25rem;
-    }
-    .units-preview-row label { flex: 1; margin-bottom: 0; }
-    #units-preview {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--accent);
-      white-space: nowrap;
-      min-width: 80px;
-      text-align: right;
-    }
-
-    /* Phone field */
-    #phone-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 1.25rem;
-    }
-
-    /* Status panel — shown during payment flow */
+    .amount-preset:hover   { border-color:var(--accent); color:var(--accent); }
+    .amount-preset.selected{ border-color:var(--accent); background:#f0faf3; color:var(--accent); }
+    html.dark .amount-preset.selected { background:#0e2416; }
+    .units-preview-row { display:flex; align-items:center; gap:10px; margin-bottom:1.25rem; }
+    .units-preview-row label { flex:1; margin-bottom:0; }
+    #units-preview { font-size:0.9rem; font-weight:700; color:var(--accent); white-space:nowrap; min-width:80px; text-align:right; }
+    #phone-group { display:flex; flex-direction:column; gap:6px; margin-bottom:1.25rem; }
     .payment-status-panel {
-      padding: 1.25rem;
-      border-radius: var(--radius-sm);
-      border: 1.5px solid var(--border);
-      background: var(--bg);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      text-align: center;
+      padding:1.25rem; border-radius:var(--radius-sm); border:1.5px solid var(--border);
+      background:var(--bg); display:none; flex-direction:column; align-items:center; gap:12px; text-align:center;
     }
-    .payment-status-panel.visible { display: flex; }
+    .payment-status-panel.visible { display:flex; }
     .status-spinner {
-      width: 36px; height: 36px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      width:36px; height:36px; border:3px solid var(--border);
+      border-top-color:var(--accent); border-radius:50%;
+      animation:spin 0.8s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .status-icon-success { font-size: 2.5rem; }
-    .status-title { font-size: 1rem; font-weight: 700; }
-    .status-body  { font-size: 0.875rem; color: var(--muted); }
-
-    /* Token result card */
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .status-title { font-size:1rem; font-weight:700; }
+    .status-body  { font-size:0.875rem; color:var(--muted); }
     .token-result {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      padding: 1.25rem;
-      background: var(--bg);
-      border: 2px solid var(--ok);
-      border-radius: var(--radius-sm);
+      display:none; flex-direction:column; gap:12px; padding:1.25rem;
+      background:var(--bg); border:2px solid var(--ok); border-radius:var(--radius-sm);
     }
-    .token-result.visible { display: flex; }
-    .token-result-number {
-      font-family: monospace;
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: var(--text);
-      word-break: break-all;
-    }
-    .token-result-meta { font-size: 0.85rem; color: var(--muted); }
-    .token-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    /* Bank details block */
+    .token-result.visible { display:flex; }
+    .token-result-number { font-family:monospace; font-size:1.3rem; font-weight:700; letter-spacing:0.12em; word-break:break-all; }
+    .token-result-meta   { font-size:0.85rem; color:var(--muted); }
+    .token-actions { display:flex; gap:8px; flex-wrap:wrap; }
     .bank-details {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      padding: 1.25rem;
-      background: var(--bg);
-      border: 1.5px solid var(--warn);
-      border-radius: var(--radius-sm);
-      font-size: 0.875rem;
+      display:none; flex-direction:column; gap:10px; padding:1.25rem;
+      background:var(--bg); border:1.5px solid var(--warn); border-radius:var(--radius-sm); font-size:0.875rem;
     }
-    .bank-details.visible { display: flex; }
-    .bank-row { display: flex; justify-content: space-between; align-items: center; }
-    .bank-label { color: var(--muted); font-size: 0.8rem; }
-    .bank-value { font-weight: 700; font-family: monospace; }
-
-    /* Summary card (right column) */
-    .summary-card { position: sticky; top: 2rem; }
-    .summary-row  {
-      display: flex; justify-content: space-between;
-      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
-      font-size: 0.875rem;
-    }
-    .summary-row:last-child { border-bottom: none; font-weight: 700; font-size: 0.95rem; }
-    .summary-label { color: var(--muted); }
-
-    /* Bluetooth bar */
+    .bank-details.visible { display:flex; }
+    .bank-row { display:flex; justify-content:space-between; align-items:center; }
+    .bank-label { color:var(--muted); font-size:0.8rem; }
+    .bank-value { font-weight:700; font-family:monospace; }
+    .summary-card { position:sticky; top:2rem; }
+    .summary-row  { display:flex; justify-content:space-between; padding:0.6rem 0; border-bottom:1px solid var(--border); font-size:0.875rem; }
+    .summary-row:last-child { border-bottom:none; font-weight:700; font-size:0.95rem; }
+    .summary-label { color:var(--muted); }
     .bt-bar {
-      display: flex; align-items: center; gap: 10px;
-      padding: 0.75rem 1rem;
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      margin-bottom: 1.25rem;
-      font-size: 0.85rem;
+      display:flex; align-items:center; gap:10px; padding:0.75rem 1rem;
+      background:var(--bg); border:1.5px solid var(--border); border-radius:var(--radius-sm);
+      margin-bottom:1.25rem; font-size:0.85rem;
     }
-    .bt-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-    .bt-dot.on { background: var(--ok); }
-    .bt-bar-text { flex: 1; }
-
-    @media (max-width: 768px) {
-      .buy-grid { grid-template-columns: 1fr; }
-      .amount-presets { grid-template-columns: repeat(4, 1fr); }
-      .summary-card { position: static; }
-    }
-    @media (max-width: 400px) {
-      .amount-presets { grid-template-columns: repeat(2, 1fr); }
-    }
+    .bt-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; }
+    .bt-dot.on { background:var(--ok); }
+    .bt-bar-text { flex:1; }
+    @media(max-width:768px){ .buy-grid{grid-template-columns:1fr;} .summary-card{position:static;} }
+    @media(max-width:400px){ .amount-presets{grid-template-columns:repeat(2,1fr);} }
   </style>
 </head>
 <body>
   <nav class="sidebar">
-    <div class="brand"><span class="brand-icon">⚡</span><span>PowerSmart</span></div>
-    <a href="../dashboard.html" class="nav-item">◎ Dashboard</a>
-    <a href="tokens.html"    class="nav-item active">⊕ Buy Tokens</a>
-    <a href="history.html"   class="nav-item">☰ Token History</a>
-    <a href="alerts.html"    class="nav-item">⚑ Alerts</a>
-    <a href="settings.html"  class="nav-item">⚙ Settings</a>
+    <a href="../dashboard.html" class="brand" style="text-decoration:none">
+      <span class="brand-icon">⚡</span><span>PowerSmart</span>
+    </a>
+    <a href="../dashboard.html" class="nav-item"        data-page="dashboard">◎ Dashboard</a>
+    <a href="tokens.html"       class="nav-item active" data-page="tokens">⊕ Buy Tokens</a>
+    <a href="history.html"      class="nav-item"        data-page="history">☰ Token History</a>
+    <a href="alerts.html"       class="nav-item"        data-page="alerts">⚑ Alerts</a>
+    <a href="settings.html"     class="nav-item"        data-page="settings">⚙ Settings</a>
     <div class="nav-spacer"></div>
-    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+    <button id="btn-logout" class="nav-item nav-logout">↩ Sign Out</button>
   </nav>
 
   <main class="content">
@@ -182,22 +90,20 @@
     </header>
 
     <div class="buy-grid">
-
-      <!-- LEFT: Buy form ------------------------------------------------- -->
-      <div class="buy-col">
-
-        <!-- Bluetooth status bar -->
+      <!-- LEFT column -->
+      <div>
+        <!-- Bluetooth bar -->
         <div class="bt-bar" id="bt-bar">
           <span class="bt-dot" id="bt-dot"></span>
           <span class="bt-bar-text" id="bt-bar-text">Bluetooth not connected — token won't auto-push</span>
           <button class="btn btn-outline btn-sm" id="btn-bt-connect">Connect</button>
         </div>
 
-        <!-- Payment method -->
         <div class="card" style="margin-bottom:1.5rem">
-          <h2 style="margin-bottom:1rem;font-size:1rem">Payment Method</h2>
+          <!-- Payment method -->
+          <h2 style="font-size:1rem;margin-bottom:1rem">Payment Method</h2>
           <div class="payment-methods">
-            <div class="payment-method" data-channel="mpesa">
+            <div class="payment-method selected" data-channel="mpesa">
               <span class="payment-method-icon">📱</span>
               <span class="payment-method-name">M-Pesa</span>
             </div>
@@ -211,60 +117,57 @@
             </div>
           </div>
 
-          <!-- Amount -->
-          <h2 style="margin-bottom:0.75rem;font-size:1rem">Amount (Ksh)</h2>
+          <!-- Amount presets -->
+          <h2 style="font-size:1rem;margin:1.25rem 0 0.75rem">Amount (Ksh)</h2>
           <div class="amount-presets">
             <button class="amount-preset" data-amount="100">100</button>
             <button class="amount-preset" data-amount="200">200</button>
             <button class="amount-preset" data-amount="500">500</button>
-            <button class="amount-preset" data-amount="1000">1,000</button>
+            <button class="amount-preset selected" data-amount="1000">1,000</button>
             <button class="amount-preset" data-amount="2000">2,000</button>
             <button class="amount-preset" data-amount="3000">3,000</button>
             <button class="amount-preset" data-amount="5000">5,000</button>
             <button class="amount-preset" data-amount="10000">10,000</button>
           </div>
 
+          <!-- Custom amount + live kWh preview -->
           <div class="units-preview-row">
-            <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text);">
+            <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)">
               Custom amount
               <input type="number" id="inp-amount" min="50" step="50"
-                     placeholder="e.g. 750" style="width:140px;flex:none"/>
+                     value="1000" placeholder="e.g. 750" style="width:130px;flex:none"/>
             </label>
-            <span id="units-preview"></span>
+            <span id="units-preview">≈ 200.0 kWh</span>
           </div>
 
-          <!-- Phone (hidden for bank) -->
+          <!-- Phone field (hidden for bank) -->
           <div id="phone-group">
             <label>
               Phone number
-              <input type="tel" id="inp-phone" placeholder="0712 345 678"/>
-              <span class="field-hint">Enter the M-Pesa / Airtel number to receive the payment prompt.</span>
+              <input type="tel" id="inp-phone" placeholder="0712 345 678" autocomplete="tel"/>
+              <span class="field-hint">The M-Pesa / Airtel number that will receive the payment prompt.</span>
             </label>
           </div>
 
-          <!-- Submit -->
-          <button id="btn-buy" class="btn btn-primary btn-full" style="margin-top:0.5rem">
-            Buy Token
-          </button>
+          <button id="btn-buy" class="btn btn-primary btn-full">Buy Token</button>
           <p id="buy-error" class="form-error hidden"></p>
         </div>
 
-        <!-- Payment status panel (shown during flow) -->
+        <!-- Status panel -->
         <div class="payment-status-panel card" id="status-panel">
           <div class="status-spinner" id="status-spinner"></div>
-          <span class="status-icon-success hidden" id="status-icon">✅</span>
-          <div class="status-title" id="status-title">Sending payment prompt…</div>
+          <span id="status-icon" class="hidden" style="font-size:2rem">✅</span>
+          <div class="status-title" id="status-title">Initiating…</div>
           <div class="status-body"  id="status-body">Please wait</div>
         </div>
 
-        <!-- Token result (shown after success) -->
+        <!-- Token result -->
         <div class="token-result card" id="token-result">
           <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:1.4rem">⚡</span>
-            <strong>Token Received</strong>
+            <span style="font-size:1.4rem">⚡</span><strong>Token Received</strong>
           </div>
           <div class="token-result-number" id="result-token-number">—</div>
-          <div class="token-result-meta" id="result-token-meta">— kWh · Ksh —</div>
+          <div class="token-result-meta"   id="result-token-meta">—</div>
           <div class="token-actions">
             <button class="btn btn-outline btn-sm" id="btn-copy-token">Copy Token</button>
             <button class="btn btn-outline btn-sm" id="btn-push-bt" style="display:none">Push via Bluetooth</button>
@@ -273,277 +176,199 @@
           <div id="result-push-status" style="font-size:0.8rem;color:var(--muted)"></div>
         </div>
 
-        <!-- Bank transfer details -->
+        <!-- Bank details -->
         <div class="bank-details card" id="bank-details">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-            <span style="font-size:1.2rem">🏦</span>
-            <strong>Complete Your Bank Transfer</strong>
+            <span style="font-size:1.2rem">🏦</span><strong>Complete Your Bank Transfer</strong>
           </div>
           <p style="font-size:0.85rem;color:var(--muted);margin-bottom:0.5rem">
-            Transfer the exact amount below to the account shown. Tokens are issued within 1 business day after payment is confirmed.
+            Transfer the exact amount to the account below. Tokens are issued within 1 business day.
           </p>
-          <div class="bank-row">
-            <span class="bank-label">Bank</span>
-            <span class="bank-value" id="bank-name">—</span>
-          </div>
-          <div class="bank-row">
-            <span class="bank-label">Account Number</span>
-            <span class="bank-value" id="bank-account">—</span>
-          </div>
-          <div class="bank-row">
-            <span class="bank-label">Reference</span>
-            <span class="bank-value" id="bank-reference">—</span>
-          </div>
-          <div class="bank-row">
-            <span class="bank-label">Amount</span>
-            <span class="bank-value" id="bank-amount">—</span>
-          </div>
+          <div class="bank-row"><span class="bank-label">Bank</span>         <span class="bank-value" id="bank-name">—</span></div>
+          <div class="bank-row"><span class="bank-label">Account Number</span><span class="bank-value" id="bank-account">—</span></div>
+          <div class="bank-row"><span class="bank-label">Reference</span>    <span class="bank-value" id="bank-reference">—</span></div>
+          <div class="bank-row"><span class="bank-label">Amount</span>       <span class="bank-value" id="bank-amount">—</span></div>
           <p style="font-size:0.78rem;color:var(--warn);margin-top:4px">
-            ⚠ Use the exact reference number or your token may be delayed.
+            ⚠ Use the exact reference or your token may be delayed.
           </p>
         </div>
       </div>
 
-      <!-- RIGHT: Order summary ------------------------------------------- -->
-      <div class="buy-col">
+      <!-- RIGHT column: order summary -->
+      <div>
         <div class="card summary-card">
           <h2 style="font-size:1rem;margin-bottom:1rem">Order Summary</h2>
-          <div class="summary-row">
-            <span class="summary-label">Meter account</span>
-            <span id="sum-meter-account">—</span>
-          </div>
-          <div class="summary-row">
-            <span class="summary-label">Payment method</span>
-            <span id="sum-channel">M-Pesa</span>
-          </div>
-          <div class="summary-row">
-            <span class="summary-label">Amount</span>
-            <span id="sum-amount">Ksh 0</span>
-          </div>
-          <div class="summary-row">
-            <span class="summary-label">Est. units</span>
-            <span id="sum-units">0 kWh</span>
-          </div>
-          <div class="summary-row" style="margin-top:0.5rem">
-            <span>Total to pay</span>
-            <span id="sum-total">Ksh 0</span>
-          </div>
+          <div class="summary-row"><span class="summary-label">Meter account</span><span id="sum-meter">—</span></div>
+          <div class="summary-row"><span class="summary-label">Payment method</span><span id="sum-channel">M-Pesa</span></div>
+          <div class="summary-row"><span class="summary-label">Amount</span>        <span id="sum-amount">Ksh 1,000</span></div>
+          <div class="summary-row"><span class="summary-label">Est. units</span>    <span id="sum-units">200.0 kWh</span></div>
+          <div class="summary-row"><span>Total to pay</span>                        <span id="sum-total">Ksh 1,000</span></div>
           <p style="font-size:0.75rem;color:var(--muted);margin-top:1rem">
-            Units are estimated at the current Kenya Power tariff and may vary slightly.
-            The final kWh amount is set by Kenya Power at the time of token issuance.
+            Units are estimated at the current KP tariff (~20 kWh per Ksh 100) and finalised by Kenya Power at issuance.
           </p>
         </div>
 
-        <!-- Auto top-up nudge card -->
         <div class="card" style="margin-top:1.5rem">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:0.5rem">
-            <span style="font-size:1.2rem">🔄</span>
-            <strong style="font-size:0.95rem">Auto Top-Up</strong>
+            <span style="font-size:1.2rem">🔄</span><strong style="font-size:0.95rem">Auto Top-Up</strong>
           </div>
           <p class="hint" style="margin-bottom:0.75rem">
-            Never run out of power. Set a unit threshold and PowerSmart will buy tokens automatically when your balance gets low.
+            Never run out. Set a threshold and PowerSmart will top up automatically.
           </p>
           <a href="settings.html#auto-topup" class="btn btn-outline btn-sm">Configure →</a>
         </div>
       </div>
-
-    </div><!-- /buy-grid -->
+    </div>
   </main>
 
   <script type="module">
     import { requireAuth, attachLogoutButton } from '../js/auth.js';
-    import {
-      initChannelSelector, initAmountPresets, buyToken,
-      pushStatusBadge, formatTokenNumber, estimateUnits, cancelPoll,
-    } from '../js/tokens.js';
-    import { connectToMeter, getConnectedDeviceName, pushTokenToMeter } from '../js/bluetooth.js';
+    import { initChannelSelector, initAmountPresets, buyToken,
+             formatTokenNumber, estimateUnits, cancelPoll } from '../js/tokens.js';
+    import { getConnectedDeviceName, connectToMeter, pushTokenToMeter } from '../js/bluetooth.js';
     import { setBluetoothDevice, getUser } from '../js/store.js';
     import { toast } from '../js/notifications.js';
-    import { meter as meterApi } from '../js/api.js';
 
     requireAuth('../index.html');
     attachLogoutButton('btn-logout', '../index.html');
 
-    // ── Init ─────────────────────────────────────────────────────────────
     initChannelSelector();
     initAmountPresets();
 
-    // Populate meter label and summary
+    // Meter label
     const user = getUser();
     if (user) {
       document.getElementById('meter-label').textContent =
         `Meter: ${user.meter_number} · Account: ${user.meter_account}`;
-      document.getElementById('sum-meter-account').textContent = user.meter_account;
+      document.getElementById('sum-meter').textContent = user.meter_account;
     }
 
-    // ── Bluetooth bar ─────────────────────────────────────────────────────
+    // ── Bluetooth bar ──────────────────────────────────────────────────
     function refreshBtBar() {
       const name = getConnectedDeviceName();
-      const dot  = document.getElementById('bt-dot');
-      const text = document.getElementById('bt-bar-text');
-      const btn  = document.getElementById('btn-bt-connect');
-      if (name) {
-        dot.classList.add('on');
-        text.textContent = `${name} connected — tokens will push automatically`;
-        btn.textContent = 'Disconnect';
-      } else {
-        dot.classList.remove('on');
-        text.textContent = 'Bluetooth not connected — token won\'t auto-push';
-        btn.textContent = 'Connect';
-      }
+      document.getElementById('bt-dot').classList.toggle('on', !!name);
+      document.getElementById('bt-bar-text').textContent = name
+        ? `${name} connected — tokens will push automatically`
+        : "Bluetooth not connected — token won't auto-push";
+      document.getElementById('btn-bt-connect').textContent = name ? 'Disconnect' : 'Connect';
     }
     refreshBtBar();
     document.addEventListener('bluetooth:connected', refreshBtBar);
-    document.addEventListener('meter:disconnected', refreshBtBar);
+    document.addEventListener('meter:disconnected',  refreshBtBar);
 
     document.getElementById('btn-bt-connect').addEventListener('click', async () => {
-      const name = getConnectedDeviceName();
-      if (name) {
+      if (getConnectedDeviceName()) {
         const { disconnect } = await import('../js/bluetooth.js');
-        disconnect();
-        refreshBtBar();
-        return;
+        disconnect(); refreshBtBar(); return;
       }
       try {
-        const { connectToMeter } = await import('../js/bluetooth.js');
-        const deviceName = await connectToMeter();
-        setBluetoothDevice(deviceName);
-        refreshBtBar();
-        toast.success(`Connected to ${deviceName}`);
-      } catch (e) {
-        if (e.name !== 'NotFoundError') toast.error('Bluetooth: ' + e.message);
-      }
+        const name = await connectToMeter();
+        setBluetoothDevice(name); refreshBtBar();
+        toast.success(`Connected to ${name}`);
+      } catch (e) { if (e.name !== 'NotFoundError') toast.error('Bluetooth: ' + e.message); }
     });
 
-    // ── Live summary update ───────────────────────────────────────────────
-    const channelNames = { mpesa: 'M-Pesa', airtel: 'Airtel Money', bank: 'Bank Transfer' };
-
+    // ── Live summary ───────────────────────────────────────────────────
+    const channelLabels = { mpesa:'M-Pesa', airtel:'Airtel Money', bank:'Bank Transfer' };
     function refreshSummary() {
-      const amount = parseInt(document.getElementById('inp-amount').value, 10) || 0;
+      const amount  = parseInt(document.getElementById('inp-amount').value, 10) || 0;
       const channel = document.querySelector('.payment-method.selected')?.dataset.channel || 'mpesa';
-      document.getElementById('sum-channel').textContent = channelNames[channel] || channel;
+      document.getElementById('sum-channel').textContent = channelLabels[channel];
       document.getElementById('sum-amount').textContent  = `Ksh ${amount.toLocaleString()}`;
       document.getElementById('sum-units').textContent   = `${estimateUnits(amount)} kWh`;
       document.getElementById('sum-total').textContent   = `Ksh ${amount.toLocaleString()}`;
     }
-
     document.getElementById('inp-amount').addEventListener('input', refreshSummary);
-    document.querySelectorAll('.payment-method').forEach(c =>
-      c.addEventListener('click', refreshSummary));
+    document.querySelectorAll('.payment-method').forEach(c => c.addEventListener('click', refreshSummary));
     refreshSummary();
 
-    // ── Status panel helpers ──────────────────────────────────────────────
-    function showStatusPanel(msg, sub, loading = true) {
-      const panel   = document.getElementById('status-panel');
-      const spinner = document.getElementById('status-spinner');
-      const icon    = document.getElementById('status-icon');
-      panel.classList.add('visible');
-      spinner.style.display = loading ? 'block' : 'none';
-      icon.classList.toggle('hidden', loading);
-      document.getElementById('status-title').textContent = msg;
-      document.getElementById('status-body').textContent  = sub;
+    // ── Status helpers ─────────────────────────────────────────────────
+    function showStatus(title, body, loading=true) {
+      const p = document.getElementById('status-panel');
+      p.classList.add('visible');
+      document.getElementById('status-spinner').style.display = loading ? 'block' : 'none';
+      document.getElementById('status-icon').classList.toggle('hidden', loading);
+      document.getElementById('status-title').textContent = title;
+      document.getElementById('status-body').textContent  = body;
     }
-    function hideStatusPanel() {
-      document.getElementById('status-panel').classList.remove('visible');
-    }
+    function hideStatus() { document.getElementById('status-panel').classList.remove('visible'); }
+
     function showTokenResult(token) {
-      const el = document.getElementById('token-result');
-      el.classList.add('visible');
+      document.getElementById('token-result').classList.add('visible');
       document.getElementById('result-token-number').textContent = formatTokenNumber(token.token_number);
-      document.getElementById('result-token-meta').textContent =
+      document.getElementById('result-token-meta').textContent   =
         `${token.units} kWh · Ksh ${token.amount_ksh}`;
-
-      // Show push button only if BT is connected
       const btBtn = document.getElementById('btn-push-bt');
-      if (getConnectedDeviceName()) btBtn.style.display = 'inline-flex';
-
-      btBtn.addEventListener('click', async () => {
-        btBtn.disabled = true;
-        btBtn.textContent = 'Pushing…';
+      btBtn.style.display = getConnectedDeviceName() ? 'inline-flex' : 'none';
+      btBtn.onclick = async () => {
+        btBtn.disabled = true; btBtn.textContent = 'Pushing…';
         try {
           await pushTokenToMeter(token.id, token.token_number);
-          document.getElementById('result-push-status').textContent = '✓ Pushed to meter via Bluetooth';
+          document.getElementById('result-push-status').textContent = '✓ Pushed to meter';
           document.getElementById('result-push-status').style.color = 'var(--ok)';
           toast.success('Token pushed to meter!');
         } catch (e) {
           document.getElementById('result-push-status').textContent = '✗ Push failed — enter manually';
           document.getElementById('result-push-status').style.color = 'var(--danger)';
-          toast.error('Bluetooth push failed: ' + e.message);
-        } finally {
-          btBtn.disabled = false;
-          btBtn.textContent = 'Push via Bluetooth';
-        }
-      });
+          toast.error('Push failed: ' + e.message);
+        } finally { btBtn.disabled = false; btBtn.textContent = 'Push via Bluetooth'; }
+      };
     }
-    function showBankDetails(resp) {
-      const el = document.getElementById('bank-details');
-      el.classList.add('visible');
+    function showBankDetails(resp, amount) {
+      document.getElementById('bank-details').classList.add('visible');
       document.getElementById('bank-name').textContent      = resp.bank_name      || '—';
       document.getElementById('bank-account').textContent   = resp.bank_account   || '—';
       document.getElementById('bank-reference').textContent = resp.bank_reference || resp.reference || '—';
-      document.getElementById('bank-amount').textContent    = `Ksh ${resp.amount_ksh || '—'}`;
+      document.getElementById('bank-amount').textContent    = `Ksh ${amount.toLocaleString()}`;
     }
 
-    // ── Copy token button ─────────────────────────────────────────────────
     document.getElementById('btn-copy-token').addEventListener('click', () => {
-      const num = document.getElementById('result-token-number').textContent.replace(/-/g, '');
-      navigator.clipboard.writeText(num).then(() => toast.success('Token number copied!'));
+      const num = document.getElementById('result-token-number').textContent.replace(/-/g,'');
+      navigator.clipboard.writeText(num).then(() => toast.success('Token copied!'));
     });
 
-    // ── Buy submit ────────────────────────────────────────────────────────
+    // ── Status messages map ────────────────────────────────────────────
+    const statusMsg = {
+      initiating:      ['Initiating payment…',              'Please wait'],
+      stk_sent:        ['Payment prompt sent',              'Complete payment on your phone'],
+      waiting_payment: ['Waiting for confirmation…',        'This may take up to 3 minutes'],
+      success:         ['Payment confirmed!',               'Generating your token…'],
+      bank_pending:    ['Bank details ready',               'Transfer to receive your token'],
+      timeout:         ['Timed out',                        'Check token history in a few minutes'],
+    };
+
+    // ── Buy submit ─────────────────────────────────────────────────────
     document.getElementById('btn-buy').addEventListener('click', async () => {
-      const errEl  = document.getElementById('buy-error');
-      const amount = parseInt(document.getElementById('inp-amount').value, 10);
-      const phone  = document.getElementById('inp-phone').value.trim();
+      const errEl   = document.getElementById('buy-error');
+      const amount  = parseInt(document.getElementById('inp-amount').value, 10);
+      const phone   = document.getElementById('inp-phone').value.trim();
       const channel = document.querySelector('.payment-method.selected')?.dataset.channel || 'mpesa';
 
       errEl.classList.add('hidden');
-
-      if (!amount || amount < 50) {
-        errEl.textContent = 'Please enter an amount of at least Ksh 50.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-      if ((channel === 'mpesa' || channel === 'airtel') && !phone) {
-        errEl.textContent = `Please enter your ${channel === 'mpesa' ? 'M-Pesa' : 'Airtel'} phone number.`;
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      // Reset result panels
       document.getElementById('token-result').classList.remove('visible');
       document.getElementById('bank-details').classList.remove('visible');
+
+      if (!amount || amount < 50) {
+        errEl.textContent = 'Enter an amount of at least Ksh 50.'; errEl.classList.remove('hidden'); return;
+      }
+      if ((channel === 'mpesa' || channel === 'airtel') && !phone) {
+        errEl.textContent = `Enter your ${channel === 'mpesa' ? 'M-Pesa' : 'Airtel'} phone number.`;
+        errEl.classList.remove('hidden'); return;
+      }
+
       document.getElementById('btn-buy').disabled = true;
-
-      const statusMessages = {
-        initiating:    ['Initiating payment…',             'Please wait'],
-        stk_sent:      ['Payment prompt sent',             'Complete the payment on your phone'],
-        waiting_payment:['Waiting for payment confirmation…','This may take up to 3 minutes'],
-        success:       ['Payment confirmed!',              'Generating your token…'],
-        bank_pending:  ['Bank details ready',              'Complete the transfer to receive your token'],
-        timeout:       ['Timed out',                       'Check your token history in a few minutes'],
-      };
-
       try {
-        showStatusPanel('Initiating payment…', 'Please wait', true);
-
-        const result = await buyToken(amount, phone, (status) => {
-          const [title, body] = statusMessages[status] || [status, ''];
-          const loading = status !== 'success' && status !== 'timeout' && status !== 'bank_pending';
-          showStatusPanel(title, body, loading);
+        showStatus('Initiating payment…', 'Please wait', true);
+        const result = await buyToken(amount, phone, (s) => {
+          const [title, body] = statusMsg[s] || [s, ''];
+          showStatus(title, body, s !== 'success' && s !== 'timeout' && s !== 'bank_pending');
         });
-
-        hideStatusPanel();
-
-        if (channel === 'bank') {
-          showBankDetails({ ...result, amount_ksh: amount });
-        } else {
-          showTokenResult(result);
-        }
+        hideStatus();
+        if (channel === 'bank') showBankDetails(result, amount);
+        else                    showTokenResult(result);
       } catch (err) {
-        hideStatusPanel();
-        errEl.textContent = err.message;
-        errEl.classList.remove('hidden');
+        hideStatus();
+        errEl.textContent = err.message; errEl.classList.remove('hidden');
       } finally {
         document.getElementById('btn-buy').disabled = false;
       }
