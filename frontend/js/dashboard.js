@@ -1,14 +1,19 @@
-// dashboard.js — orchestrates the main dashboard view.
-// Wires up meter stats, prediction ring, Bluetooth, and recent token preview.
+// dashboard.js — Main dashboard page logic.
 
 import { meter as meterApi, tokens as tokenApi } from './api.js';
-import { setMeter, setPrediction, setBluetoothDevice, getBluetoothDevice, isLoggedIn, clearUser, applyTheme, getTheme } from './store.js';
+import { requireAuth, attachLogoutButton } from './auth.js';
+import { setMeter, setPrediction, setBluetoothDevice,
+         getBluetoothDevice, getUser, applyTheme, getTheme } from './store.js';
 import { fetchPrediction, estimateLocally, checkAlerts } from './predictor.js';
-import { connectToMeter, autoPushIfConnected, isBluetoothSupported, disconnect, getConnectedDeviceName } from './bluetooth.js';
+import { toast } from './notifications.js';
 
-if (!isLoggedIn()) location.href = 'index.html';
+requireAuth('index.html');
+attachLogoutButton('btn-logout', 'index.html');
 
-// ── DOM refs ─────────────────────────────────────────────────────────────
+// Apply stored theme
+applyTheme(getTheme());
+
+// ── DOM refs ──────────────────────────────────────────────────────────────────
 const ringArc      = document.getElementById('ring-arc');
 const ringValue    = document.getElementById('ring-value');
 const valDays      = document.getElementById('val-days');
@@ -21,44 +26,39 @@ const alertBannerText = document.getElementById('alert-banner-text');
 const btLabel      = document.getElementById('bt-label');
 const btIcon       = document.getElementById('bt-icon');
 
-// ── Helpers ───────────────────────────────────────────────────────────────
-const RING_CIRCUMFERENCE = 2 * Math.PI * 80; // matches r=80 in SVG
-const MAX_UNITS = 100; // ring is "full" at 100 kWh
+const RING_CIRC = 2 * Math.PI * 80; // r=80
+const MAX_UNITS = 100;
 
+// ── Render helpers ────────────────────────────────────────────────────────────
 function updateRing(units) {
-  const pct = Math.min(units / MAX_UNITS, 1);
-  const offset = RING_CIRCUMFERENCE * (1 - pct);
+  const pct    = Math.min(units / MAX_UNITS, 1);
+  const offset = RING_CIRC * (1 - pct);
   ringArc.style.strokeDashoffset = offset;
   ringValue.textContent = units.toFixed(1);
-
-  // Color the ring based on alert level
   ringArc.classList.remove('ring-ok', 'ring-warn', 'ring-critical');
-  if (pct < 0.1) ringArc.classList.add('ring-critical');
+  if      (pct < 0.10) ringArc.classList.add('ring-critical');
   else if (pct < 0.25) ringArc.classList.add('ring-warn');
-  else ringArc.classList.add('ring-ok');
+  else                 ringArc.classList.add('ring-ok');
 }
 
 function renderPrediction(pred) {
   if (!pred) return;
   valDays.textContent = pred.daysRemaining != null ? `${pred.daysRemaining} days` : '—';
   valAvg.textContent  = pred.dailyAvgUnits ? `${pred.dailyAvgUnits.toFixed(2)} kWh` : '—';
-
   if (pred.depletionDate) {
-    const d = new Date(pred.depletionDate);
-    valDepletion.textContent = d.toLocaleDateString('en-KE', { weekday: 'short', day: 'numeric', month: 'short' });
+    valDepletion.textContent = new Date(pred.depletionDate).toLocaleDateString('en-KE',
+      { weekday:'short', day:'numeric', month:'short' });
   }
-
-  // Alert banner
   if (pred.alertLevel === 'critical') {
     alertBanner.classList.remove('hidden');
-    alertBannerText.textContent = '⚠ Power critically low — top up immediately!';
     alertBanner.dataset.level = 'critical';
+    alertBannerText.textContent = '⚠ Power critically low — top up immediately!';
     alertBadge.classList.remove('hidden');
     alertBadge.textContent = 'Critical';
   } else if (pred.alertLevel === 'warning') {
     alertBanner.classList.remove('hidden');
-    alertBannerText.textContent = `Running low — approximately ${pred.daysRemaining} days of power remaining.`;
     alertBanner.dataset.level = 'warning';
+    alertBannerText.textContent = `Power running low — approximately ${pred.daysRemaining} days remaining.`;
     alertBadge.classList.remove('hidden');
     alertBadge.textContent = 'Low';
   } else {
@@ -68,101 +68,126 @@ function renderPrediction(pred) {
 }
 
 async function renderRecentTokens() {
-  const list = document.getElementById('recent-tokens');
-  const data = await tokenApi.listHistory().catch(() => []);
-  const recent = data.slice(0, 3);
-  if (!recent.length) {
-    list.innerHTML = '<p class="empty-state">No tokens yet.</p>';
-    return;
+  const listEl = document.getElementById('recent-tokens');
+  try {
+    const result = await tokenApi.listHistory();
+    const data   = Array.isArray(result) ? result : (result.data || []);
+    const recent = data.slice(0, 3);
+    if (!recent.length) {
+      listEl.innerHTML = `<p class="empty-state">No tokens yet. <a href="pages/tokens.html" style="color:var(--accent)">Buy your first →</a></p>`;
+      return;
+    }
+    listEl.innerHTML = recent.map(t => `
+      <div class="token-row">
+        <span class="token-num-sm">${(t.token_number||'').replace(/(\d{4})(?=\d)/g,'$1-')}</span>
+        <span class="token-units">${t.units} kWh</span>
+        <span class="token-amount">Ksh ${(t.amount_ksh||0).toLocaleString()}</span>
+        <span title="${t.push_status}">${t.push_status === 'success' ? '✓' : '○'}</span>
+      </div>`).join('');
+  } catch {
+    listEl.innerHTML = '<p class="empty-state">Could not load history.</p>';
   }
-  list.innerHTML = recent.map(t => `
-    <div class="token-row">
-      <span class="token-num-sm">${t.token_number}</span>
-      <span class="token-units">${t.units} kWh</span>
-      <span class="token-amount">Ksh ${t.amount_ksh}</span>
-      <span class="token-push-icon" title="${t.push_status}">${t.push_status === 'success' ? '✓' : '○'}</span>
-    </div>
-  `).join('');
 }
 
-// ── Main load ─────────────────────────────────────────────────────────────
+// ── Meter account label ───────────────────────────────────────────────────────
+const user = getUser();
+if (user) {
+  document.getElementById('meter-account-label').textContent =
+    `Meter: ${user.meter_number} · Account: ${user.meter_account}`;
+}
+
+// ── Main load ─────────────────────────────────────────────────────────────────
 async function init() {
-  const [meterData, pred] = await Promise.all([
-    meterApi.getStatus().catch(() => null),
-    fetchPrediction().catch(() => null),
-  ]);
-
-  if (meterData) {
-    setMeter(meterData);
-    updateRing(meterData.units_remaining);
-    valUpdated.textContent = meterData.last_reading_at
-      ? new Date(meterData.last_reading_at).toLocaleTimeString('en-KE')
-      : 'Not yet recorded';
-
-    const localEst = estimateLocally(meterData.units_remaining, meterData.daily_avg_units);
-    const display = pred || localEst;
-    renderPrediction(display);
-    setPrediction(display);
-
-    await checkAlerts(meterData.units_remaining, display.daysRemaining);
+  try {
+    const [meterData, pred] = await Promise.all([
+      meterApi.getStatus().catch(() => null),
+      fetchPrediction().catch(() => null),
+    ]);
+    if (meterData) {
+      setMeter(meterData);
+      updateRing(meterData.units_remaining);
+      valUpdated.textContent = meterData.last_reading_at
+        ? new Date(meterData.last_reading_at).toLocaleTimeString('en-KE')
+        : 'Not yet recorded';
+      const display = pred || estimateLocally(meterData.units_remaining, meterData.daily_avg_units);
+      renderPrediction(display);
+      setPrediction(display);
+      checkAlerts(meterData.units_remaining, display.daysRemaining).catch(() => {});
+    } else {
+      ringValue.textContent = '—';
+      valUpdated.textContent = 'Connect meter to see readings';
+    }
+  } catch (err) {
+    console.warn('Dashboard init error:', err);
   }
-
   await renderRecentTokens();
-
-  // Bluetooth status
   updateBtButton();
 }
 
-// ── Manual reading update ─────────────────────────────────────────────────
+// ── Manual reading ────────────────────────────────────────────────────────────
 document.getElementById('btn-update-reading').addEventListener('click', async () => {
   const val = parseFloat(document.getElementById('input-units').value);
-  if (isNaN(val) || val < 0) { alert('Enter a valid unit reading.'); return; }
-  await meterApi.postTelemetry(val);
-  await init(); // refresh all stats
+  const msgEl = document.getElementById('reading-msg');
+  if (isNaN(val) || val < 0) {
+    msgEl.textContent = 'Enter a valid unit reading (e.g. 42.5)';
+    msgEl.style.color = 'var(--danger)';
+    msgEl.classList.remove('hidden');
+    return;
+  }
+  try {
+    await meterApi.postTelemetry(val);
+    msgEl.textContent = '✓ Reading updated';
+    msgEl.style.color = 'var(--ok)';
+    msgEl.classList.remove('hidden');
+    setTimeout(() => msgEl.classList.add('hidden'), 3000);
+    document.getElementById('input-units').value = '';
+    await init();
+  } catch (err) {
+    toast.error('Failed to update reading: ' + err.message);
+  }
 });
 
-// ── Bluetooth ─────────────────────────────────────────────────────────────
+// ── Bluetooth ─────────────────────────────────────────────────────────────────
 function updateBtButton() {
-  const name = getConnectedDeviceName();
-  if (name) {
-    btLabel.textContent = name;
-    btIcon.textContent = '●';
-    document.getElementById('btn-bluetooth').classList.add('bt-connected');
-  } else {
-    btLabel.textContent = 'Connect Meter';
-    btIcon.textContent = '⬡';
-    document.getElementById('btn-bluetooth').classList.remove('bt-connected');
-  }
+  const name = getBluetoothDevice();
+  btLabel.textContent = name || 'Connect Meter';
+  btIcon.textContent  = name ? '●' : '⬡';
+  document.getElementById('btn-bluetooth').classList.toggle('bt-connected', !!name);
 }
 
 document.getElementById('btn-bluetooth').addEventListener('click', async () => {
-  if (!isBluetoothSupported()) {
-    alert('Web Bluetooth is not supported on this browser. Use Chrome on Android or desktop.');
+  // Lazy-import bluetooth so the page doesn't crash on browsers without BLE
+  const bt = await import('./bluetooth.js').catch(() => null);
+  if (!bt) { toast.error('Bluetooth is not available on this browser.'); return; }
+
+  if (!bt.isBluetoothSupported()) {
+    toast.warning('Web Bluetooth requires Chrome on Android or desktop.');
     return;
   }
-  if (getConnectedDeviceName()) { disconnect(); updateBtButton(); return; }
+  if (getBluetoothDevice()) {
+    bt.disconnect();
+    setBluetoothDevice(null);
+    updateBtButton();
+    return;
+  }
   try {
-    const name = await connectToMeter();
+    const name = await bt.connectToMeter();
     setBluetoothDevice(name);
     updateBtButton();
-    alert(`Connected to ${name}. New tokens will be pushed automatically.`);
-  } catch (err) {
-    if (err.name !== 'NotFoundError') alert(`Bluetooth error: ${err.message}`);
+    toast.success(`Connected to ${name}`);
+  } catch (e) {
+    if (e.name !== 'NotFoundError') toast.error('Bluetooth: ' + e.message);
   }
 });
 
-document.addEventListener('meter:disconnected', updateBtButton);
-
-// ── Theme toggle ──────────────────────────────────────────────────────────
-document.getElementById('btn-theme').addEventListener('click', () => {
-  const next = getTheme() === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
+document.addEventListener('meter:disconnected', () => {
+  setBluetoothDevice(null);
+  updateBtButton();
 });
 
-// ── Logout ────────────────────────────────────────────────────────────────
-document.getElementById('btn-logout').addEventListener('click', () => {
-  clearUser();
-  location.href = 'index.html';
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+document.getElementById('btn-theme').addEventListener('click', () => {
+  applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
 });
 
 init();
