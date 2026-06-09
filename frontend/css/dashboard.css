@@ -90,3 +90,29 @@
   .brand { padding-bottom: 0; }
   .nav-spacer { display: none; }
 }
+
+/* ── Quick action cards (dashboard bottom) ── */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.quick-card {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 1.25rem 0.5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); text-align: center;
+  font-size: 0.85rem; font-weight: 600; color: var(--muted);
+  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+}
+.quick-card:hover {
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.quick-icon { font-size: 1.4rem; }
+
+@media (max-width: 500px) {
+  .quick-actions { grid-template-columns: repeat(2, 1fr); }
+}
