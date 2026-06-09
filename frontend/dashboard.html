@@ -8,8 +8,7 @@
   <link rel="stylesheet" href="css/dashboard.css"/>
 </head>
 <body>
-
-  <!-- ── Sidebar nav ─────────────────────────────────────────────────── -->
+  <!-- Sidebar nav -->
   <nav class="sidebar">
     <a href="dashboard.html" class="brand" style="text-decoration:none">
       <span class="brand-icon">⚡</span>
@@ -35,8 +34,8 @@
       <span class="nav-icon">↩</span> Sign Out
     </button>
   </nav>
-
-  <!-- ── Main content ────────────────────────────────────────────────── -->
+  
+  <!-- Main content -->
   <main class="content">
     <header class="page-header">
       <div>
@@ -51,7 +50,7 @@
         <button id="btn-theme" class="icon-btn" title="Toggle theme">◑</button>
       </div>
     </header>
-
+    
     <!-- Units ring + stats -->
     <section class="metrics-grid">
       <div class="card card-ring">
@@ -66,7 +65,6 @@
           <span id="alert-badge" class="alert-badge hidden">Low</span>
         </div>
       </div>
-
       <div class="stats-col">
         <div class="stat-card">
           <span class="stat-label">Est. days left</span>
@@ -86,13 +84,13 @@
         </div>
       </div>
     </section>
-
+    
     <!-- Alert banner -->
     <div id="alert-banner" class="alert-banner hidden">
       <span id="alert-banner-text"></span>
       <a href="pages/tokens.html" class="btn btn-sm">Buy Now</a>
     </div>
-
+    
     <!-- Manual reading update -->
     <section class="card manual-entry">
       <h2>Update Units Reading</h2>
@@ -106,7 +104,7 @@
       </div>
       <p id="reading-msg" class="form-error hidden" style="color:var(--ok)"></p>
     </section>
-
+    
     <!-- Recent token history -->
     <section class="card">
       <div class="card-header">
@@ -117,7 +115,7 @@
         <p class="empty-state">Loading…</p>
       </div>
     </section>
-
+    
     <!-- Quick actions -->
     <section class="quick-actions">
       <a href="pages/tokens.html"   class="quick-card">
@@ -138,7 +136,6 @@
       </a>
     </section>
   </main>
-
   <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>
