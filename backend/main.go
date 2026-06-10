@@ -1,14 +1,58 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/powersmart/config"
 	"github.com/powersmart/handlers"
 	"github.com/powersmart/middleware"
 )
+
+// Response structure for the API
+type MessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
+// SpaFileServer serves SPA files with fallback to index.html
+type SpaFileServer struct {
+	fs      http.FileSystem
+	indexFile string
+}
+
+func (sfs *SpaFileServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Check if the requested file exists
+	path := r.URL.Path
+	if path == "/" {
+		path = "/index.html"
+	}
+	
+	// Try to open the file
+	f, err := sfs.fs.Open(strings.TrimPrefix(path, "/"))
+	if err == nil {
+		f.Close()
+		http.FileServer(sfs.fs).ServeHTTP(w, r)
+		return
+	}
+	
+	// File doesn't exist, serve index.html (for client-side routing)
+	indexFile, err := sfs.fs.Open(sfs.indexFile)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer indexFile.Close()
+	
+	// Serve index.html
+	stat, _ := indexFile.Stat()
+	http.ServeContent(w, r, sfs.indexFile, stat.ModTime(), indexFile)
+}
 
 func main() {
 	// Load environment + connect database
@@ -25,11 +69,22 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	// ── Public routes ──────────────────────────────────────────────────
+	// ── API Routes ─────────────────────────────────────────────────────────
+	
+	// Public API routes
 	mux.HandleFunc("POST /api/auth/register", authH.Register)
 	mux.HandleFunc("POST /api/auth/login", authH.Login)
+	
+	// Health check endpoint
+	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(MessageResponse{
+			Status:  "success",
+			Message: "Backend is running",
+		})
+	})
 
-	// ── Protected routes (JWT middleware applied per-group) ────────────
+	// Protected routes (JWT middleware applied per-group)
 	protected := middleware.Chain(
 		middleware.RequireAuth,
 		middleware.RateLimit,
@@ -64,15 +119,106 @@ func main() {
 	mux.Handle("PUT /api/alerts/{id}", protected(http.HandlerFunc(alertH.Update)))
 	mux.Handle("DELETE /api/alerts/{id}", protected(http.HandlerFunc(alertH.Delete)))
 
+	// ── Frontend Static File Serving ──────────────────────────────────────
+	
+	// Determine the frontend directory (supports multiple common paths)
+	frontendDir := getFrontendDirectory()
+	log.Printf("Serving frontend from: %s", frontendDir)
+	
+	// Create a file server for the frontend directory
+	fs := http.Dir(frontendDir)
+	
+	// Serve static files with SPA support
+	spaHandler := &SpaFileServer{
+		fs:        fs,
+		indexFile: "index.html",
+	}
+	
+	// Serve all non-API routes with the SPA handler
+	mux.Handle("/", spaHandler)
+
+	// ── Server Configuration ───────────────────────────────────────────────
+	
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
+	// Apply CORS middleware to all routes
 	handler := middleware.CORS(mux)
 
+	// Log all registered routes for debugging
+	logRoutes(mux)
+
 	log.Printf("PowerSmart API listening on :%s", port)
+	log.Printf("Frontend available at http://localhost:%s", port)
+	
 	if err := http.ListenAndServe(":"+port, handler); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// getFrontendDirectory attempts to find the frontend directory
+func getFrontendDirectory() string {
+	// Check common locations for frontend files
+	possiblePaths := []string{
+		"./frontend",           // Default: frontend folder in current directory
+		"./static",             // Alternative: static folder
+		"../frontend",          // One level up (for cmd/server structure)
+		"./public",             // Alternative: public folder
+		"./frontend/dist",      // For built frontend (Vite/React build output)
+		"./dist",               // Common build output directory
+	}
+	
+	// Check if FRONTEND_DIR environment variable is set
+	if envDir := os.Getenv("FRONTEND_DIR"); envDir != "" {
+		possiblePaths = append([]string{envDir}, possiblePaths...)
+	}
+	
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			// Check if index.html exists in this directory
+			indexPath := filepath.Join(path, "index.html")
+			if _, err := os.Stat(indexPath); err == nil {
+				return path
+			}
+		}
+	}
+	
+	// Default fallback - create frontend directory if it doesn't exist
+	os.MkdirAll("./frontend", 0755)
+	return "./frontend"
+}
+
+// logRoutes prints all registered routes for debugging
+func logRoutes(mux *http.ServeMux) {
+	log.Println("Registered routes:")
+	log.Println("  POST /api/auth/register")
+	log.Println("  POST /api/auth/login")
+	log.Println("  GET  /api/health")
+	log.Println("  GET  /api/auth/me")
+	log.Println("  POST /api/auth/logout")
+	log.Println("  GET  /api/meter")
+	log.Println("  POST /api/meter/telemetry")
+	log.Println("  GET  /api/meter/prediction")
+	log.Println("  PUT  /api/meter/settings")
+	log.Println("  GET  /api/tokens")
+	log.Println("  POST /api/tokens/buy")
+	log.Println("  POST /api/tokens/{id}/push-bluetooth")
+	log.Println("  DELETE /api/tokens/{id}")
+	log.Println("  POST /api/payments/mpesa/initiate")
+	log.Println("  POST /api/payments/airtel/initiate")
+	log.Println("  POST /api/payments/bank/initiate")
+	log.Println("  POST /api/payments/mpesa/callback")
+	log.Println("  POST /api/payments/airtel/callback")
+	log.Println("  GET  /api/alerts")
+	log.Println("  POST /api/alerts")
+	log.Println("  PUT  /api/alerts/{id}")
+	log.Println("  DELETE /api/alerts/{id}")
+	log.Println("  /*   (SPA frontend)")
+}
+
+// Optional: Add a route to serve specific frontend pages
+func serveFrontendFile(w http.ResponseWriter, r *http.Request, filePath string) {
+	http.ServeFile(w, r, filepath.Join("./frontend", filePath))
 }
