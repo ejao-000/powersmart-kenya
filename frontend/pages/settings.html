@@ -4,6 +4,9 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Settings — PowerSmart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="../css/main.css"/>
   <link rel="stylesheet" href="../css/dashboard.css"/>
   <style>
@@ -54,7 +57,7 @@
     .setting-row-title { font-size: 0.9rem; font-weight: 500; }
     .setting-row-desc  { font-size: 0.8rem; color: var(--muted); }
 
-    /* Toggle switch (reuse from alerts.css pattern) */
+    /* Toggle switch */
     .toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .toggle-slider {
@@ -68,6 +71,19 @@
     }
     .toggle input:checked + .toggle-slider { background: var(--ok); }
     .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Legacy toggle (sw) */
+    .sw {
+      width: 44px; height: 24px; background: var(--border); border-radius: 99px;
+      position: relative; cursor: pointer; transition: background 0.2s;
+    }
+    .sw.on { background: var(--ok); }
+    .sw-knob {
+      width: 18px; height: 18px; background: white; border-radius: 50%;
+      position: absolute; top: 3px; left: 3px;
+      transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .sw.on .sw-knob { transform: translateX(20px); }
 
     /* Auto top-up sub-fields (hidden when disabled) */
     #auto-topup-fields {
@@ -153,11 +169,54 @@
     }
     .save-feedback.visible { opacity: 1; }
 
+    /* Profile grid */
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .profile-card {
+      padding: 12px;
+      background: var(--bg-alt);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .profile-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .profile-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* Field hint */
+    .field-hint {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1rem 0;
+    }
+
+    /* Responsive */
     @media (max-width: 640px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-grid .span-2 { grid-column: 1; }
       #auto-topup-fields { grid-template-columns: 1fr; }
       .theme-options { flex-wrap: wrap; }
+      .profile-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -165,12 +224,12 @@
   <nav class="sidebar">
     <div class="brand"><span class="brand-icon">⚡</span><span>PowerSmart</span></div>
     <a href="../dashboard.html" class="nav-item">◎ Dashboard</a>
-    <a href="tokens.html"    class="nav-item">⊕ Buy Tokens</a>
-    <a href="history.html"   class="nav-item">☰ Token History</a>
-    <a href="alerts.html"    class="nav-item">⚑ Alerts</a>
-    <a href="settings.html"  class="nav-item active">⚙ Settings</a>
+    <a href="tokens.html"       class="nav-item">⊕ Buy Tokens</a>
+    <a href="history.html"      class="nav-item">☰ Token History</a>
+    <a href="alerts.html"       class="nav-item">⚑ Alerts</a>
+    <a href="settings.html"     class="nav-item active">⚙ Settings</a>
     <div class="nav-spacer"></div>
-    <button id="btn-logout" class="nav-item nav-logout">Sign Out</button>
+    <button id="btn-logout" class="nav-item nav-logout">↩ Sign Out</button>
   </nav>
 
   <main class="content">
@@ -181,10 +240,15 @@
       </div>
     </header>
 
-    <!-- ── Profile ────────────────────────────────────────────────────── -->
+    <!-- ── Profile Section ────────────────────────────────────────────────────── -->
     <div class="settings-section">
       <p class="section-label">Profile</p>
       <div class="card">
+        <div id="profile-grid" class="profile-grid"></div>
+        <button class="btn btn-outline btn-sm" id="btn-edit-profile">✏ Edit profile</button>
+        
+        <div class="divider"></div>
+        
         <form id="form-profile">
           <div class="form-grid">
             <label>
@@ -256,37 +320,53 @@
     <div class="settings-section" id="auto-topup">
       <p class="section-label">Meter &amp; Auto Top-Up</p>
       <div class="card">
-        <form id="form-meter-settings">
-          <div class="setting-row">
-            <div class="setting-row-info">
-              <span class="setting-row-title">Auto Top-Up</span>
-              <span class="setting-row-desc">Automatically buy tokens when your balance drops below a threshold.</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="chk-auto-topup"/>
-              <span class="toggle-slider"></span>
-            </label>
+        <!-- Auto-load toggle (legacy style) -->
+        <div class="toggle-row" style="margin-bottom: 1rem;">
+          <div class="toggle-info">
+            <div class="toggle-title">⚡ Auto-meter loading</div>
+            <div class="toggle-sub">Tokens auto-loaded after payment — no manual 20-digit entry</div>
           </div>
+          <div class="sw" id="sw-autoload"><div class="sw-knob"></div></div>
+        </div>
 
-          <!-- Sub-fields shown only when auto top-up is on -->
-          <div id="auto-topup-fields">
-            <label>
-              Top-up threshold (kWh)
-              <input type="number" id="inp-topup-threshold" min="1" max="100" step="1" value="5"/>
-              <span class="field-hint">Buy tokens when units fall below this level.</span>
-            </label>
-            <label>
-              Top-up amount (Ksh)
-              <input type="number" id="inp-topup-amount" min="50" max="100000" step="50" value="200"/>
-              <span class="field-hint">Amount to spend on each automatic top-up.</span>
-            </label>
+        <!-- Auto Top-Up toggle -->
+        <div class="setting-row">
+          <div class="setting-row-info">
+            <span class="setting-row-title">Auto Top-Up</span>
+            <span class="setting-row-desc">Automatically buy tokens when your balance drops below a threshold.</span>
           </div>
+          <label class="toggle">
+            <input type="checkbox" id="chk-auto-topup"/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
 
-          <div class="form-save-row" style="margin-top:1rem">
-            <span class="save-feedback" id="meter-settings-saved">✓ Saved</span>
-            <button type="submit" class="btn btn-primary">Save Meter Settings</button>
-          </div>
-        </form>
+        <!-- Sub-fields shown only when auto top-up is on -->
+        <div id="auto-topup-fields">
+          <label>
+            Top-up threshold (kWh)
+            <input type="number" id="inp-topup-threshold" min="1" max="100" step="1" value="5"/>
+            <span class="field-hint">Buy tokens when units fall below this level.</span>
+          </label>
+          <label>
+            Top-up amount (Ksh)
+            <input type="number" id="inp-topup-amount" min="50" max="100000" step="50" value="200"/>
+            <span class="field-hint">Amount to spend on each automatic top-up.</span>
+          </label>
+        </div>
+
+        <!-- Meter number display -->
+        <div class="field" style="margin-top: 1rem;">
+          <label>Meter / account number</label>
+          <input type="text" id="inp-meter" placeholder="e.g. 00234861" readonly
+                 style="background:var(--bg-alt); color:var(--muted);"/>
+          <span class="field-hint">Contact support to change your meter number.</span>
+        </div>
+
+        <div class="form-save-row" style="margin-top:1rem">
+          <span class="save-feedback" id="meter-settings-saved">✓ Saved</span>
+          <button type="submit" id="btn-save-meter" class="btn btn-primary">Save Meter Settings</button>
+        </div>
       </div>
     </div>
 
@@ -326,14 +406,14 @@
           </div>
           <button id="btn-enable-notifications" class="btn btn-outline btn-sm">Enable</button>
         </div>
-        <p class="hint" style="margin-top:0.5rem">
+        <p class="field-hint" style="margin-top:0.5rem">
           PowerSmart will notify you when your power is running low, when a token is purchased, and when a Bluetooth push completes.
           <a href="alerts.html" style="color:var(--accent)">Configure thresholds →</a>
         </p>
       </div>
     </div>
 
-    <!-- ── Bluetooth ───────────────────────────────────────────────────── -->
+    <!-- ── Bluetooth & Meter Connection ───────────────────────────────── -->
     <div class="settings-section">
       <p class="section-label">Bluetooth &amp; Meter Connection</p>
       <div class="card" id="section-bluetooth">
@@ -346,7 +426,7 @@
           </div>
           <button id="btn-bt-disconnect" class="btn btn-outline btn-sm" style="display:none">Disconnect</button>
         </div>
-        <p class="hint" style="margin-top:0.75rem">
+        <p class="field-hint" style="margin-top:0.75rem">
           Connect your Kenya Power prepaid meter via Bluetooth to push tokens automatically. The meter must be within Bluetooth range.
         </p>
         <a href="tokens.html" class="btn btn-outline btn-sm" style="margin-top:0.5rem">
@@ -359,8 +439,28 @@
     <div class="settings-section">
       <p class="section-label">Danger Zone</p>
       <div class="card danger-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem;">
+          <div>
+            <div style="font-size:13px;font-weight:600">Clear token purchase history</div>
+            <div style="font-size:12px;color:var(--muted)">Permanently delete all purchase records</div>
+          </div>
+          <a href="history.html" class="btn btn-danger btn-sm">Go to History →</a>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem;">
+          <div>
+            <div style="font-size:13px;font-weight:600">Sign out of all devices</div>
+            <div style="font-size:12px;color:var(--muted)">Clears your session on this device</div>
+          </div>
+          <button class="btn btn-danger btn-sm" id="btn-signout-device">Sign out</button>
+        </div>
+        
+        <div class="divider"></div>
+        
         <h2 style="font-size:1rem;margin-bottom:0.5rem">Delete Account</h2>
-        <p class="hint">
+        <p class="field-hint">
           Permanently delete your PowerSmart account and all token history.
           Your Kenya Power meter account and any purchased tokens remain valid.
           This action <strong>cannot be undone</strong>.
@@ -374,6 +474,9 @@
 
   </main>
 
+  <!-- Toast notification -->
+  <div id="toast" style="position:fixed;bottom:24px;right:24px;background:var(--ok);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:.3s;z-index:400">✅ Saved</div>
+
   <script type="module">
     import { requireAuth, attachLogoutButton, validatePassword, passwordStrength } from '../js/auth.js';
     import {
@@ -386,12 +489,68 @@
     } from '../js/settings.js';
     import { requestPermission } from '../js/notifications.js';
     import { getConnectedDeviceName } from '../js/bluetooth.js';
-    import { toast } from '../js/notifications.js';
+    import { toast, showToast } from '../js/notifications.js';
+    import { getUser, clearAuth, getSettings, saveSettings } from '../js/store.js';
 
     requireAuth('../index.html');
     attachLogoutButton('btn-logout', '../index.html');
 
-    // ── Bootstrap ─────────────────────────────────────────────────────────
+    // Helper for inline toast
+    function showInlineToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.background = isError ? 'var(--danger)' : 'var(--ok)';
+      t.style.transform = 'translateY(0)';
+      t.style.opacity = '1';
+      setTimeout(() => {
+        t.style.transform = 'translateY(80px)';
+        t.style.opacity = '0';
+      }, 2500);
+    }
+
+    // ── Profile Display Grid ─────────────────────────────────────────────
+    const user = getUser();
+    const profileFields = [
+      ['Full name', user?.fullName || user?.name || '--'],
+      ['Username', '@' + (user?.username || '--')],
+      ['Email', user?.email || '--'],
+      ['Meter number', user?.meterNumber || user?.meter_account || '--'],
+    ];
+    
+    const profileGrid = document.getElementById('profile-grid');
+    if (profileGrid) {
+      profileGrid.innerHTML = profileFields.map(([label, value]) => `
+        <div class="profile-card">
+          <div class="profile-label">${label}</div>
+          <div class="profile-value">${value}</div>
+        </div>
+      `).join('');
+    }
+
+    // Edit profile button
+    document.getElementById('btn-edit-profile')?.addEventListener('click', () => {
+      showInlineToast('Profile editing coming soon!');
+    });
+
+    // Sign out button
+    document.getElementById('btn-signout-device')?.addEventListener('click', () => {
+      clearAuth();
+      location.replace('../index.html');
+    });
+
+    // ── Auto-load toggle (legacy) ────────────────────────────────────────
+    const settings = getSettings();
+    const swAutoload = document.getElementById('sw-autoload');
+    if (swAutoload && settings.autoLoadEnabled) {
+      swAutoload.classList.add('on');
+    }
+    swAutoload?.addEventListener('click', () => {
+      swAutoload.classList.toggle('on');
+      saveSettings({ autoLoadEnabled: swAutoload.classList.contains('on') });
+      showInlineToast('✓ Auto-load settings saved');
+    });
+
+    // ── Bootstrap settings forms ─────────────────────────────────────────
     populateProfileForm();
     populateMeterSettings();
     initThemeSelector();
@@ -400,62 +559,79 @@
     updateNotificationPermissionUI();
 
     // ── Profile form ──────────────────────────────────────────────────────
-    document.getElementById('form-profile').addEventListener('submit', async (e) => {
+    document.getElementById('form-profile')?.addEventListener('submit', async (e) => {
       await handleProfileSave(e);
       const fb = document.getElementById('profile-saved');
-      fb.classList.add('visible');
-      setTimeout(() => fb.classList.remove('visible'), 3000);
+      fb?.classList.add('visible');
+      setTimeout(() => fb?.classList.remove('visible'), 3000);
+      showInlineToast('✓ Profile updated');
     });
 
     // ── Password form ─────────────────────────────────────────────────────
-    document.getElementById('inp-new-password').addEventListener('input', (e) => {
-      const { score, label, color } = passwordStrength(e.target.value);
-      const bar = document.getElementById('strength-bar');
-      const lbl = document.getElementById('strength-label');
-      bar.style.width      = `${(score / 4) * 100}%`;
-      bar.style.background = color;
-      lbl.textContent      = e.target.value ? label : '';
-      lbl.style.color      = color;
-    });
+    const newPasswordInput = document.getElementById('inp-new-password');
+    if (newPasswordInput) {
+      newPasswordInput.addEventListener('input', (e) => {
+        const { score, label, color } = passwordStrength(e.target.value);
+        const bar = document.getElementById('strength-bar');
+        const lbl = document.getElementById('strength-label');
+        if (bar) bar.style.width = `${(score / 4) * 100}%`;
+        if (bar) bar.style.background = color;
+        if (lbl) lbl.textContent = e.target.value ? label : '';
+        if (lbl) lbl.style.color = color;
+      });
+    }
 
-    document.getElementById('form-password').addEventListener('submit', async (e) => {
+    document.getElementById('form-password')?.addEventListener('submit', async (e) => {
       await handlePasswordChange(e);
     });
 
     // ── Meter settings ────────────────────────────────────────────────────
-    document.getElementById('chk-auto-topup').addEventListener('change', (e) => {
-      toggleAutoTopupFields(e.target.checked);
-    });
+    const autoTopupCheckbox = document.getElementById('chk-auto-topup');
+    if (autoTopupCheckbox) {
+      autoTopupCheckbox.addEventListener('change', (e) => {
+        toggleAutoTopupFields(e.target.checked);
+      });
+    }
 
-    document.getElementById('form-meter-settings').addEventListener('submit', async (e) => {
-      await handleMeterSettingsSave(e);
-      const fb = document.getElementById('meter-settings-saved');
-      fb.classList.add('visible');
-      setTimeout(() => fb.classList.remove('visible'), 3000);
-    });
+    const saveMeterBtn = document.getElementById('btn-save-meter');
+    if (saveMeterBtn) {
+      saveMeterBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        await handleMeterSettingsSave(e);
+        const fb = document.getElementById('meter-settings-saved');
+        fb?.classList.add('visible');
+        setTimeout(() => fb?.classList.remove('visible'), 3000);
+        showInlineToast('✓ Meter settings saved');
+      });
+    }
 
     // ── Notifications ─────────────────────────────────────────────────────
-    document.getElementById('btn-enable-notifications').addEventListener('click', async () => {
+    document.getElementById('btn-enable-notifications')?.addEventListener('click', async () => {
       const granted = await requestPermission();
       updateNotificationPermissionUI();
-      if (granted) toast.success('Browser notifications enabled!');
-      else         toast.warning('Notification permission denied. Check your browser settings.');
+      if (granted) {
+        showInlineToast('✓ Browser notifications enabled!');
+      } else {
+        showInlineToast('✗ Notification permission denied', true);
+      }
     });
 
     // ── Bluetooth ─────────────────────────────────────────────────────────
-    document.getElementById('btn-bt-disconnect').addEventListener('click', () => {
+    document.getElementById('btn-bt-disconnect')?.addEventListener('click', () => {
       handleBluetoothDisconnect();
     });
     document.addEventListener('meter:disconnected', () => updateBluetoothStatus(null));
     document.addEventListener('bluetooth:connected', (e) => updateBluetoothStatus(e.detail));
 
     // ── Danger zone ───────────────────────────────────────────────────────
-    document.getElementById('btn-delete-account').addEventListener('click', handleDeleteAccount);
+    document.getElementById('btn-delete-account')?.addEventListener('click', handleDeleteAccount);
 
     // ── Hash navigation (e.g. settings.html#auto-topup) ──────────────────
     if (location.hash) {
       const target = document.querySelector(location.hash);
-      if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      if (target) {
+        setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+      }
     }
   </script>
 </body>
