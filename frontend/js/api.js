@@ -18,23 +18,20 @@ async function request(method, path, body) {
   try {
     res = await fetch(BASE + path, opts);
   } catch (netErr) {
-    // fetch completely failed (network down, backend not running, CORS blocked before response)
     throw new Error(
       'Network error. Is the backend server running and reachable? ' +
       `(Tried: ${BASE}${path})`
     );
   }
 
-  // Try to read the response body as JSON, but don't fail if it's empty
   let data = {};
   try {
-    data = await res.clone().json();  // clone so we can still read it if needed
+    data = await res.clone().json();
   } catch {
-    // Not JSON (e.g. HTML error page) – leave data empty
+    // Response is not JSON (e.g., HTML error page)
   }
 
   if (!res.ok) {
-    // Build a clear error message from what the server returned
     const reason =
       data.error ||
       data.message ||
