@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"errors"
@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/utils"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/utils"
 )
 
 var (
@@ -30,7 +30,7 @@ func NewAuthService(userRepo *repositories.UserRepo, meterRepo *repositories.Met
 }
 
 // Register validates the Kenya Power meter account, then creates the user + meter record.
-func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthResponse, error) {
+func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse, error) {
 	// 1. Validate meter account with Kenya Power
 	meterNumber, err := s.kpValidator.ValidateAndGetMeterNumber(req.MeterAccount)
 	if err != nil {
@@ -49,7 +49,7 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 	}
 
 	// 4. Create user
-	user := &models.User{
+	user := &model.User{
 		ID:           uuid.NewString(),
 		Name:         req.Name,
 		Email:        req.Email,
@@ -64,7 +64,7 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 	}
 
 	// 5. Create associated meter record
-	meter := &models.Meter{
+	meter := &model.Meter{
 		ID:             uuid.NewString(),
 		UserID:         user.ID,
 		UnitsRemaining: 0,
@@ -84,11 +84,11 @@ func (s *AuthService) Register(req *models.RegisterRequest) (*models.AuthRespons
 		return nil, err
 	}
 
-	return &models.AuthResponse{Token: token, User: *user}, nil
+	return &model.AuthResponse{Token: token, User: *user}, nil
 }
 
 // Login verifies credentials and returns a JWT.
-func (s *AuthService) Login(req *models.LoginRequest) (*models.AuthResponse, error) {
+func (s *AuthService) Login(req *model.LoginRequest) (*model.AuthResponse, error) {
 	user, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		return nil, ErrInvalidCredentials
@@ -103,5 +103,5 @@ func (s *AuthService) Login(req *models.LoginRequest) (*models.AuthResponse, err
 		return nil, err
 	}
 
-	return &models.AuthResponse{Token: token, User: *user}, nil
+	return &model.AuthResponse{Token: token, User: *user}, nil
 }

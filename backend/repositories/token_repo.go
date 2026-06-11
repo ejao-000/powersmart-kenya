@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/powersmart/models"
+	"powersmart-backend/model"
 )
 
 type TokenRepo struct {
@@ -15,7 +15,7 @@ func NewTokenRepo(db *sql.DB) *TokenRepo {
 	return &TokenRepo{db: db}
 }
 
-func (r *TokenRepo) Create(t *models.Token) error {
+func (r *TokenRepo) Create(t *model.Token) error {
 	_, err := r.db.Exec(`
 		INSERT INTO tokens
 			(id, user_id, meter_id, token_number, units, amount_ksh, payment_ref, push_status, purchased_at)
@@ -27,7 +27,7 @@ func (r *TokenRepo) Create(t *models.Token) error {
 }
 
 // ListByUser returns all non-deleted tokens for a user, newest first.
-func (r *TokenRepo) ListByUser(userID string) ([]*models.Token, error) {
+func (r *TokenRepo) ListByUser(userID string) ([]*model.Token, error) {
 	rows, err := r.db.Query(`
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
 		       payment_ref, pushed_at, push_status, purchased_at
@@ -39,9 +39,9 @@ func (r *TokenRepo) ListByUser(userID string) ([]*models.Token, error) {
 	}
 	defer rows.Close()
 
-	var tokens []*models.Token
+	var tokens []*model.Token
 	for rows.Next() {
-		t := &models.Token{}
+		t := &model.Token{}
 		err := rows.Scan(
 			&t.ID, &t.UserID, &t.MeterID, &t.TokenNumber, &t.Units,
 			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PurchasedAt,
@@ -54,8 +54,8 @@ func (r *TokenRepo) ListByUser(userID string) ([]*models.Token, error) {
 	return tokens, rows.Err()
 }
 
-func (r *TokenRepo) GetByID(id string) (*models.Token, error) {
-	t := &models.Token{}
+func (r *TokenRepo) GetByID(id string) (*model.Token, error) {
+	t := &model.Token{}
 	err := r.db.QueryRow(`
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
 		       payment_ref, pushed_at, push_status, purchased_at
@@ -83,7 +83,7 @@ func (r *TokenRepo) SoftDelete(id, userID string) error {
 }
 
 // UpdatePushStatus records the outcome of a Bluetooth push attempt.
-func (r *TokenRepo) UpdatePushStatus(id string, status models.PushStatus, pushedAt interface{}) error {
+func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, pushedAt interface{}) error {
 	_, err := r.db.Exec(
 		`UPDATE tokens SET push_status = ?, pushed_at = ? WHERE id = ?`,
 		status, pushedAt, id)

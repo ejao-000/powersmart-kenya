@@ -1,9 +1,9 @@
 package utils
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"errors"
-	"net/http"
+	//"net/http"
 	"os"
 	"time"
 
@@ -46,18 +46,4 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 	return claims, nil
 }
 
-// ── JSON response helpers ────────────────────────────────────────────────────
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
-func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
-}
-
-func RespondError(w http.ResponseWriter, status int, message string) {
-	RespondJSON(w, status, ErrorResponse{Error: message})
-}
+// 

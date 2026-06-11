@@ -6,11 +6,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/powersmart/middleware"
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/services"
-	"github.com/powersmart/utils"
+	"powersmart-backend/middleware"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/service"
+	"powersmart-backend/utils"
 )
 
 // PaymentHandler exposes:
@@ -20,7 +20,7 @@ import (
 //   POST /api/payments/mpesa/callback    [public]    — Safaricom async callback
 //   POST /api/payments/airtel/callback   [public]    — Airtel async callback
 type PaymentHandler struct {
-	paymentSvc *services.PaymentService
+	paymentSvc *service.PaymentService
 }
 
 func NewPaymentHandler(db *sql.DB) *PaymentHandler {
@@ -29,8 +29,8 @@ func NewPaymentHandler(db *sql.DB) *PaymentHandler {
 	txRepo    := repositories.NewTransactionRepo(db)
 
 	// TokenService is a dependency of PaymentService (issues token after payment)
-	tokenSvc   := services.NewTokenService(tokenRepo, meterRepo, txRepo)
-	paymentSvc := services.NewPaymentService(txRepo, tokenSvc)
+	tokenSvc   := service.NewTokenService(tokenRepo, meterRepo, txRepo)
+	paymentSvc := service.NewPaymentService(txRepo, tokenSvc)
 
 	return &PaymentHandler{paymentSvc: paymentSvc}
 }
@@ -47,7 +47,7 @@ func NewPaymentHandler(db *sql.DB) *PaymentHandler {
 func (h *PaymentHandler) InitiateMpesa(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var req services.PaymentInitRequest
+	var req service.PaymentInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
@@ -57,7 +57,7 @@ func (h *PaymentHandler) InitiateMpesa(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.paymentSvc.InitiateMpesa(userID, &req)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrPaymentFailed):
+		case errors.Is(err, service.ErrPaymentFailed):
 			utils.RespondError(w, http.StatusBadGateway, err.Error())
 		default:
 			utils.RespondBadRequest(w, err.Error())
@@ -77,7 +77,7 @@ func (h *PaymentHandler) InitiateMpesa(w http.ResponseWriter, r *http.Request) {
 func (h *PaymentHandler) InitiateAirtel(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var req services.PaymentInitRequest
+	var req service.PaymentInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
@@ -87,7 +87,7 @@ func (h *PaymentHandler) InitiateAirtel(w http.ResponseWriter, r *http.Request) 
 	resp, err := h.paymentSvc.InitiateAirtel(userID, &req)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrPaymentFailed):
+		case errors.Is(err, service.ErrPaymentFailed):
 			utils.RespondError(w, http.StatusBadGateway, err.Error())
 		default:
 			utils.RespondBadRequest(w, err.Error())
@@ -108,7 +108,7 @@ func (h *PaymentHandler) InitiateAirtel(w http.ResponseWriter, r *http.Request) 
 func (h *PaymentHandler) InitiateBank(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var req services.PaymentInitRequest
+	var req service.PaymentInitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
@@ -132,7 +132,7 @@ func (h *PaymentHandler) InitiateBank(w http.ResponseWriter, r *http.Request) {
 // Safaricom Daraja posts the payment result here. No JWT is required.
 // The endpoint must return HTTP 200 promptly; Safaricom retries on non-200.
 func (h *PaymentHandler) MpesaCallback(w http.ResponseWriter, r *http.Request) {
-	var body models.MpesaCallback
+	var body model.MpesaCallback
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		// Always return 200 to stop Safaricom retrying with malformed data
 		utils.RespondJSON(w, http.StatusOK, map[string]string{"ResultCode": "0", "ResultDesc": "Accepted"})
@@ -140,7 +140,7 @@ func (h *PaymentHandler) MpesaCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.paymentSvc.HandleMpesaCallback(&body); err != nil {
-		if errors.Is(err, services.ErrTransactionNotFound) {
+		if errors.Is(err, service.ErrTransactionNotFound) {
 			// Unknown reference — ack so Safaricom does not retry
 			utils.RespondJSON(w, http.StatusOK, map[string]string{"ResultCode": "0", "ResultDesc": "Unknown transaction"})
 			return
@@ -169,7 +169,7 @@ func (h *PaymentHandler) AirtelCallback(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.paymentSvc.HandleAirtelCallback(payload); err != nil {
-		if errors.Is(err, services.ErrTransactionNotFound) {
+		if errors.Is(err, service.ErrTransactionNotFound) {
 			utils.RespondJSON(w, http.StatusOK, map[string]string{"status": "unknown"})
 			return
 		}

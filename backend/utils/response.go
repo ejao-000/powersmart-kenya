@@ -7,6 +7,9 @@ import (
 )
 
 // ── Standard envelope types ──────────────────────────────────────────────────
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 // SuccessResponse wraps any successful payload with a consistent shape.
 type SuccessResponse struct {

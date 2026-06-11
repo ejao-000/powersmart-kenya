@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
 )
 
 // MeterService handles all business logic for a user's smart meter:
@@ -26,7 +26,7 @@ func NewMeterService(meterRepo *repositories.MeterRepo) *MeterService {
 
 // GetStatus returns the current meter state for a user.
 // Returns a descriptive error if the meter record hasn't been created yet.
-func (s *MeterService) GetStatus(userID string) (*models.Meter, error) {
+func (s *MeterService) GetStatus(userID string) (*model.Meter, error) {
 	meter, err := s.meterRepo.GetByUserID(userID)
 	if err != nil {
 		if errors.Is(err, repositories.ErrNotFound) {
@@ -60,7 +60,7 @@ func (s *MeterService) RecordReading(userID string, unitsRemaining float64) erro
 	}
 
 	// 2. Append history record for trend / prediction
-	history := &models.UsageHistory{
+	history := &model.UsageHistory{
 		ID:             uuid.NewString(),
 		MeterID:        meter.ID,
 		UnitsRemaining: unitsRemaining,
@@ -89,16 +89,16 @@ func (s *MeterService) RecordReading(userID string, unitsRemaining float64) erro
 // AutoTopupNeeded returns true when the meter is configured for auto top-up
 // and the current units are at or below the configured threshold.
 // Handlers can call this after RecordReading to decide whether to invoke PaymentService.
-func (s *MeterService) AutoTopupNeeded(meter *models.Meter) bool {
+func (s *MeterService) AutoTopupNeeded(meter *model.Meter) bool {
 	return s.shouldTriggerAutoTopup(meter)
 }
 
-func (s *MeterService) shouldTriggerAutoTopup(m *models.Meter) bool {
+func (s *MeterService) shouldTriggerAutoTopup(m *model.Meter) bool {
 	return m.AutoTopup && m.UnitsRemaining <= m.TopupThreshold
 }
 
 // UpdateSettings saves auto top-up and threshold preferences.
-func (s *MeterService) UpdateSettings(userID string, settings *models.MeterSettings) error {
+func (s *MeterService) UpdateSettings(userID string, settings *model.MeterSettings) error {
 	if err := s.validateSettings(settings); err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (s *MeterService) UpdateSettings(userID string, settings *models.MeterSetti
 	return nil
 }
 
-func (s *MeterService) validateSettings(settings *models.MeterSettings) error {
+func (s *MeterService) validateSettings(settings *model.MeterSettings) error {
 	if settings.TopupThreshold < 0 {
 		return fmt.Errorf("top-up threshold cannot be negative")
 	}
@@ -127,7 +127,7 @@ func (s *MeterService) validateSettings(settings *models.MeterSettings) error {
 	return nil
 }
 
-// GetMeterByUserID is a convenience alias used by other services.
-func (s *MeterService) GetMeterByUserID(userID string) (*models.Meter, error) {
+// GetMeterByUserID is a convenience alias used by other service.
+func (s *MeterService) GetMeterByUserID(userID string) (*model.Meter, error) {
 	return s.meterRepo.GetByUserID(userID)
 }

@@ -2,16 +2,16 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/powersmart/config"
-	"github.com/powersmart/handlers"
-	"github.com/powersmart/middleware"
+	"powersmart-backend/config"
+	"powersmart-backend/handlers"
+	"powersmart-backend/middleware"
 )
 
 // Response structure for the API

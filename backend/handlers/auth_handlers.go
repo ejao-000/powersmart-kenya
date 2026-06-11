@@ -6,11 +6,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/powersmart/middleware"
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/services"
-	"github.com/powersmart/utils"
+	"powersmart-backend/middleware"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/service"
+	"powersmart-backend/utils"
 )
 
 // AuthHandler exposes:
@@ -19,7 +19,7 @@ import (
 //   GET  /api/auth/me         — return the authenticated user profile
 //   POST /api/auth/logout     — client-side JWT discard (stateless; server acks)
 type AuthHandler struct {
-	authSvc  *services.AuthService
+	authSvc  *service.AuthService
 	userRepo *repositories.UserRepo
 }
 
@@ -29,7 +29,7 @@ func NewAuthHandler(db *sql.DB) *AuthHandler {
 	kpv       := utils.NewKPValidator()
 
 	return &AuthHandler{
-		authSvc:  services.NewAuthService(userRepo, meterRepo, kpv),
+		authSvc:  service.NewAuthService(userRepo, meterRepo, kpv),
 		userRepo: userRepo,
 	}
 }
@@ -40,7 +40,7 @@ func NewAuthHandler(db *sql.DB) *AuthHandler {
 // Validates the Kenya Power meter account number via the KP lookup API before
 // allowing registration. Only genuine KP prepaid customers can sign up.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req models.RegisterRequest
+	var req model.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
@@ -59,9 +59,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.authSvc.Register(&req)
 	if err != nil {
 		switch {
-		case errors.Is(err, services.ErrInvalidMeterAccount):
+		case errors.Is(err, service.ErrInvalidMeterAccount):
 			utils.RespondUnprocessable(w, err.Error())
-		case errors.Is(err, services.ErrAccountTaken):
+		case errors.Is(err, service.ErrAccountTaken):
 			utils.RespondConflict(w, err.Error())
 		default:
 			utils.RespondError(w, http.StatusInternalServerError, "registration failed: "+err.Error())
@@ -78,7 +78,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // Returns a signed JWT valid for 30 days. The client must include it as
 // "Authorization: Bearer <token>" on all protected requests.
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req models.LoginRequest
+	var req model.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
@@ -90,7 +90,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.authSvc.Login(&req)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidCredentials) {
+		if errors.Is(err, service.ErrInvalidCredentials) {
 			// Return 401 for both "user not found" and "wrong password"
 			// so attackers cannot enumerate registered emails.
 			utils.RespondUnauthorized(w, "invalid email or password")

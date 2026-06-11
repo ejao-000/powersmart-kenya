@@ -5,12 +5,12 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
-	_ "github.com/go-sql-driver/mysql"
+	_ "modernc.org/sqlite"
+	//_ "github.com/go-sql-driver/mysql"
 )
 
 func ConnectDB() *sql.DB {
-	driver := Getenv("DB_DRIVER", "sqlite3")
+	driver := Getenv("DB_DRIVER", "sqlite")
 	dsn := Getenv("DB_DSN", "./powersmart.db")
 
 	db, err := sql.Open(driver, dsn)
