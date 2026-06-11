@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/powersmart/middleware"
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/utils"
+	"powersmart-backend/middleware"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/utils"
 )
 
 // AlertHandler exposes:
@@ -41,7 +41,7 @@ func (h *AlertHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if alerts == nil {
-		alerts = []*models.Alert{} // return [] not null when empty
+		alerts = []*model.Alert{} // return [] not null when empty
 	}
 	utils.RespondSuccess(w, http.StatusOK, alerts)
 }
@@ -58,21 +58,21 @@ func (h *AlertHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var req models.AlertCreateRequest
+	var req model.AlertCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondBadRequest(w, "request body is not valid JSON")
 		return
 	}
 
 	// Validate type
-	if req.Type != models.AlertLowUnits && req.Type != models.AlertDaysLeft {
+	if req.Type != model.AlertLowUnits && req.Type != model.AlertDaysLeft {
 		utils.RespondBadRequest(w, "type must be one of: low_units, days_left")
 		return
 	}
 	// Validate channel
-	if req.Channel != models.AlertChannelPush &&
-		req.Channel != models.AlertChannelSMS &&
-		req.Channel != models.AlertChannelEmail {
+	if req.Channel != model.AlertChannelPush &&
+		req.Channel != model.AlertChannelSMS &&
+		req.Channel != model.AlertChannelEmail {
 		utils.RespondBadRequest(w, "channel must be one of: push, sms, email")
 		return
 	}
@@ -82,11 +82,11 @@ func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Enforce a sensible cap per type
-	if req.Type == models.AlertLowUnits && req.Threshold > 500 {
+	if req.Type == model.AlertLowUnits && req.Threshold > 500 {
 		utils.RespondBadRequest(w, "low_units threshold cannot exceed 500 kWh")
 		return
 	}
-	if req.Type == models.AlertDaysLeft && req.Threshold > 90 {
+	if req.Type == model.AlertDaysLeft && req.Threshold > 90 {
 		utils.RespondBadRequest(w, "days_left threshold cannot exceed 90 days")
 		return
 	}
@@ -100,7 +100,7 @@ func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	alert := &models.Alert{
+	alert := &model.Alert{
 		ID:        uuid.NewString(),
 		UserID:    userID,
 		Type:      req.Type,
@@ -146,7 +146,7 @@ func (h *AlertHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// Decode partial update — only override fields that are present
 	var patch struct {
 		Threshold *float64            `json:"threshold"`
-		Channel   *models.AlertChannel `json:"channel"`
+		Channel   *model.AlertChannel `json:"channel"`
 		Enabled   *bool               `json:"enabled"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
@@ -162,9 +162,9 @@ func (h *AlertHandler) Update(w http.ResponseWriter, r *http.Request) {
 		alert.Threshold = *patch.Threshold
 	}
 	if patch.Channel != nil {
-		if *patch.Channel != models.AlertChannelPush &&
-			*patch.Channel != models.AlertChannelSMS &&
-			*patch.Channel != models.AlertChannelEmail {
+		if *patch.Channel != model.AlertChannelPush &&
+			*patch.Channel != model.AlertChannelSMS &&
+			*patch.Channel != model.AlertChannelEmail {
 			utils.RespondBadRequest(w, "channel must be one of: push, sms, email")
 			return
 		}
@@ -218,7 +218,7 @@ type alertRepo struct{ db *sql.DB }
 
 func newAlertRepo(db *sql.DB) *alertRepo { return &alertRepo{db: db} }
 
-func (r *alertRepo) create(a *models.Alert) error {
+func (r *alertRepo) create(a *model.Alert) error {
 	_, err := r.db.Exec(`
 		INSERT INTO alerts (id, user_id, type, threshold, channel, enabled, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -226,7 +226,7 @@ func (r *alertRepo) create(a *models.Alert) error {
 	return err
 }
 
-func (r *alertRepo) listByUser(userID string) ([]*models.Alert, error) {
+func (r *alertRepo) listByUser(userID string) ([]*model.Alert, error) {
 	rows, err := r.db.Query(`
 		SELECT id, user_id, type, threshold, channel, enabled, last_fired_at, created_at
 		FROM alerts WHERE user_id = ? ORDER BY created_at DESC`, userID)
@@ -235,9 +235,9 @@ func (r *alertRepo) listByUser(userID string) ([]*models.Alert, error) {
 	}
 	defer rows.Close()
 
-	var list []*models.Alert
+	var list []*model.Alert
 	for rows.Next() {
-		a := &models.Alert{}
+		a := &model.Alert{}
 		if err := rows.Scan(
 			&a.ID, &a.UserID, &a.Type, &a.Threshold, &a.Channel,
 			&a.Enabled, &a.LastFiredAt, &a.CreatedAt,
@@ -249,8 +249,8 @@ func (r *alertRepo) listByUser(userID string) ([]*models.Alert, error) {
 	return list, rows.Err()
 }
 
-func (r *alertRepo) getByID(id string) (*models.Alert, error) {
-	a := &models.Alert{}
+func (r *alertRepo) getByID(id string) (*model.Alert, error) {
+	a := &model.Alert{}
 	err := r.db.QueryRow(`
 		SELECT id, user_id, type, threshold, channel, enabled, last_fired_at, created_at
 		FROM alerts WHERE id = ?`, id).
@@ -262,7 +262,7 @@ func (r *alertRepo) getByID(id string) (*models.Alert, error) {
 	return a, err
 }
 
-func (r *alertRepo) update(a *models.Alert) error {
+func (r *alertRepo) update(a *model.Alert) error {
 	_, err := r.db.Exec(`
 		UPDATE alerts SET threshold = ?, channel = ?, enabled = ? WHERE id = ?`,
 		a.Threshold, a.Channel, a.Enabled, a.ID)

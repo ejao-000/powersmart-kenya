@@ -5,23 +5,23 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/powersmart/middleware"
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/services"
-	"github.com/powersmart/utils"
+	"powersmart-backend/middleware"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/service"
+	"powersmart-backend/utils"
 )
 
 type MeterHandler struct {
-	meterSvc      *services.MeterService
-	predictionSvc *services.PredictionService
+	meterSvc      *service.MeterService
+	predictionSvc *service.PredictionService
 }
 
 func NewMeterHandler(db *sql.DB) *MeterHandler {
 	meterRepo := repositories.NewMeterRepo(db)
 	return &MeterHandler{
-		meterSvc:      services.NewMeterService(meterRepo),
-		predictionSvc: services.NewPredictionService(meterRepo),
+		meterSvc:      service.NewMeterService(meterRepo),
+		predictionSvc: service.NewPredictionService(meterRepo),
 	}
 }
 
@@ -41,7 +41,7 @@ func (h *MeterHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 func (h *MeterHandler) PostTelemetry(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var payload models.TelemetryPayload
+	var payload model.TelemetryPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Invalid payload")
 		return
@@ -74,7 +74,7 @@ func (h *MeterHandler) GetPrediction(w http.ResponseWriter, r *http.Request) {
 func (h *MeterHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var settings models.MeterSettings
+	var settings model.MeterSettings
 	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Invalid settings payload")
 		return

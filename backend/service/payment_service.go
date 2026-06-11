@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"encoding/base64"
@@ -15,8 +15,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
 )
 
 // ── Errors ────────────────────────────────────────────────────────────────────
@@ -142,15 +142,15 @@ func (s *PaymentService) InitiateMpesa(userID string, req *PaymentInitRequest) (
 	}
 
 	// 3. Persist pending transaction; token is created after callback confirms payment
-	tx := &models.Transaction{
+	tx := &model.Transaction{
 		ID:          uuid.NewString(),
 		UserID:      userID,
-		Channel:     models.ChannelMpesa,
+		Channel:     model.ChannelMpesa,
 		Phone:       req.Phone,
 		AmountKsh:   req.AmountKsh,
 		Reference:   internalRef,
 		ProviderRef: stkResp.CheckoutRequestID,
-		Status:      models.TxPending,
+		Status:      model.TxPending,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -197,7 +197,7 @@ func (s *PaymentService) mpesaAccessToken() (string, error) {
 
 // HandleMpesaCallback processes the asynchronous payment result from Safaricom.
 // Called by POST /api/payments/mpesa/callback (public — no JWT required).
-func (s *PaymentService) HandleMpesaCallback(body *models.MpesaCallback) error {
+func (s *PaymentService) HandleMpesaCallback(body *model.MpesaCallback) error {
 	stk := body.Body.STKCallback
 
 	// Find the pending transaction by CheckoutRequestID
@@ -209,20 +209,20 @@ func (s *PaymentService) HandleMpesaCallback(body *models.MpesaCallback) error {
 	if stk.ResultCode != 0 {
 		// Payment failed or was cancelled by user
 		log.Printf("[mpesa_callback] payment failed for tx %s: %s", tx.ID, stk.ResultDesc)
-		return s.txRepo.UpdateStatus(tx.ID, models.TxFailed, stk.CheckoutRequestID)
+		return s.txRepo.UpdateStatus(tx.ID, model.TxFailed, stk.CheckoutRequestID)
 	}
 
 	// Payment succeeded — extract M-Pesa receipt number from metadata
 	mpesaReceipt := extractMpesaMeta(stk.CallbackMetadata, "MpesaReceiptNumber")
 	log.Printf("[mpesa_callback] payment confirmed for tx %s, receipt: %s", tx.ID, mpesaReceipt)
 
-	if err := s.txRepo.UpdateStatus(tx.ID, models.TxSuccess, mpesaReceipt); err != nil {
+	if err := s.txRepo.UpdateStatus(tx.ID, model.TxSuccess, mpesaReceipt); err != nil {
 		return fmt.Errorf("failed to update transaction status: %w", err)
 	}
 
 	// Fetch updated transaction and issue the KP token
 	tx.ProviderRef = mpesaReceipt
-	tx.Status     = models.TxSuccess
+	tx.Status     = model.TxSuccess
 	if _, err := s.tokenSvc.FinaliseTokenAfterPayment(tx); err != nil {
 		log.Printf("[mpesa_callback] token issuance failed for tx %s: %v", tx.ID, err)
 		// Don't return error — payment was received; retry token issuance manually
@@ -295,15 +295,15 @@ func (s *PaymentService) InitiateAirtel(userID string, req *PaymentInitRequest) 
 		return nil, fmt.Errorf("%w: invalid Airtel response", ErrPaymentFailed)
 	}
 
-	tx := &models.Transaction{
+	tx := &model.Transaction{
 		ID:          uuid.NewString(),
 		UserID:      userID,
-		Channel:     models.ChannelAirtel,
+		Channel:     model.ChannelAirtel,
 		Phone:       req.Phone,
 		AmountKsh:   req.AmountKsh,
 		Reference:   internalRef,
 		ProviderRef: airtelResp.Data.Transaction.ID,
-		Status:      models.TxPending,
+		Status:      model.TxPending,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
@@ -338,15 +338,15 @@ func (s *PaymentService) HandleAirtelCallback(payload map[string]interface{}) er
 
 	if status != "TS" {
 		log.Printf("[airtel_callback] payment failed for tx %s, status: %s", tx.ID, status)
-		return s.txRepo.UpdateStatus(tx.ID, models.TxFailed, providerRef)
+		return s.txRepo.UpdateStatus(tx.ID, model.TxFailed, providerRef)
 	}
 
 	airtelMoneyID, _ := txMap["airtel_money_id"].(string)
-	if err := s.txRepo.UpdateStatus(tx.ID, models.TxSuccess, airtelMoneyID); err != nil {
+	if err := s.txRepo.UpdateStatus(tx.ID, model.TxSuccess, airtelMoneyID); err != nil {
 		return err
 	}
 
-	tx.Status      = models.TxSuccess
+	tx.Status      = model.TxSuccess
 	tx.ProviderRef = airtelMoneyID
 	if _, err := s.tokenSvc.FinaliseTokenAfterPayment(tx); err != nil {
 		log.Printf("[airtel_callback] token issuance failed for tx %s: %v", tx.ID, err)
@@ -372,14 +372,14 @@ func (s *PaymentService) InitiateBank(userID string, req *PaymentInitRequest) (*
 		bankName    = "Equity Bank"
 	}
 
-	tx := &models.Transaction{
+	tx := &model.Transaction{
 		ID:          uuid.NewString(),
 		UserID:      userID,
-		Channel:     models.ChannelBank,
+		Channel:     model.ChannelBank,
 		AmountKsh:   req.AmountKsh,
 		Reference:   internalRef,
 		ProviderRef: "",
-		Status:      models.TxPending,
+		Status:      model.TxPending,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}

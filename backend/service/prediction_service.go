@@ -1,11 +1,11 @@
-package services
+package service
 
 import (
 	"math"
 	"time"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
 )
 
 type PredictionService struct {
@@ -17,7 +17,7 @@ func NewPredictionService(meterRepo *repositories.MeterRepo) *PredictionService 
 }
 
 // Predict calculates how long the current units will last based on usage history.
-func (s *PredictionService) Predict(meter *models.Meter) (*models.Prediction, error) {
+func (s *PredictionService) Predict(meter *model.Meter) (*model.Prediction, error) {
 	// Pull last 14 readings for slope calculation
 	history, err := s.meterRepo.GetRecentHistory(meter.ID, 14)
 	if err != nil {
@@ -35,7 +35,7 @@ func (s *PredictionService) Predict(meter *models.Meter) (*models.Prediction, er
 		confidence = "high"
 	}
 
-	pred := &models.Prediction{
+	pred := &model.Prediction{
 		UnitsRemaining:  meter.UnitsRemaining,
 		DailyAvgUnits:   dailyAvg,
 		ConfidenceLevel: confidence,
@@ -71,7 +71,7 @@ func (s *PredictionService) Predict(meter *models.Meter) (*models.Prediction, er
 }
 
 // UpdateDailyAverage recalculates and persists the rolling daily average after a new reading.
-func (s *PredictionService) UpdateDailyAverage(meter *models.Meter) error {
+func (s *PredictionService) UpdateDailyAverage(meter *model.Meter) error {
 	history, err := s.meterRepo.GetRecentHistory(meter.ID, 14)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (s *PredictionService) UpdateDailyAverage(meter *models.Meter) error {
 }
 
 // calculateDailyAvg computes average units consumed per day from sampled readings.
-func (s *PredictionService) calculateDailyAvg(history []*models.UsageHistory) float64 {
+func (s *PredictionService) calculateDailyAvg(history []*model.UsageHistory) float64 {
 	if len(history) < 2 {
 		return 0
 	}

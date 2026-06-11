@@ -1,18 +1,19 @@
-package models
+package model
 
 import "time"
 
 // Meter holds the current state of a user's prepaid meter.
 type Meter struct {
-	ID              string     `json:"id"`
-	UserID          string     `json:"user_id"`
-	UnitsRemaining  float64    `json:"units_remaining"`  // kWh left
-	DailyAvgUnits   float64    `json:"daily_avg_units"`  // rolling 7-day average
-	LastReadingAt   *time.Time `json:"last_reading_at"`
-	AutoTopup       bool       `json:"auto_topup"`
-	TopupThreshold  float64    `json:"topup_threshold"` // trigger top-up below this kWh
-	TopupAmountKsh  int        `json:"topup_amount_ksh"`
-	UpdatedAt       time.Time  `json:"updated_at"`
+        ID              string     `json:"id"`
+        UserID          string     `json:"user_id"`
+        MeterNumber     string     `json:"meter_number"`     // ← add this
+        UnitsRemaining  float64    `json:"units_remaining"`
+        DailyAvgUnits   float64    `json:"daily_avg_units"`
+        LastReadingAt   *time.Time `json:"last_reading_at"`
+        AutoTopup       bool       `json:"auto_topup"`
+        TopupThreshold  float64    `json:"topup_threshold"`
+        TopupAmountKsh  int        `json:"topup_amount_ksh"`
+        UpdatedAt       time.Time  `json:"updated_at"`
 }
 
 // TelemetryPayload is POSTed by the frontend (from meter BLE reading or manual input).

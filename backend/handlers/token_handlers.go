@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/powersmart/middleware"
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
-	"github.com/powersmart/services"
-	"github.com/powersmart/utils"
+	"powersmart-backend/middleware"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
+	"powersmart-backend/service"
+	"powersmart-backend/utils"
 )
 
 type TokenHandler struct {
-	tokenSvc     *services.TokenService
-	bluetoothSvc *services.BluetoothService
+	tokenSvc     *service.TokenService
+	bluetoothSvc *service.BluetoothService
 }
 
 func NewTokenHandler(db *sql.DB) *TokenHandler {
@@ -23,8 +23,8 @@ func NewTokenHandler(db *sql.DB) *TokenHandler {
 	txRepo := repositories.NewTransactionRepo(db)
 
 	return &TokenHandler{
-		tokenSvc:     services.NewTokenService(tokenRepo, meterRepo, txRepo),
-		bluetoothSvc: services.NewBluetoothService(tokenRepo),
+		tokenSvc:     service.NewTokenService(tokenRepo, meterRepo, txRepo),
+		bluetoothSvc: service.NewBluetoothService(tokenRepo),
 	}
 }
 
@@ -43,7 +43,7 @@ func (h *TokenHandler) ListHistory(w http.ResponseWriter, r *http.Request) {
 func (h *TokenHandler) BuyToken(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 
-	var req models.BuyTokenRequest
+	var req model.BuyTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.RespondError(w, http.StatusBadRequest, "Invalid request body")
 		return

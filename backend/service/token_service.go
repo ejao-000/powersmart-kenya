@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"errors"
@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
 )
 
 var (
@@ -73,7 +73,7 @@ func NewTokenServiceWithProvider(
 // callback. In those cases BuyToken creates the transaction and token record
 // with status "pending"; the PaymentService callback handler calls
 // FinaliseTokenAfterPayment once payment is confirmed.
-func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*models.Token, error) {
+func (s *TokenService) BuyToken(userID string, req *model.BuyTokenRequest) (*model.Token, error) {
 	// -- Validate -----------------------------------------------------------
 	if req.AmountKsh < 50 {
 		return nil, ErrInvalidAmount
@@ -93,14 +93,14 @@ func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*mo
 
 	// -- Create pending transaction -----------------------------------------
 	internalRef := fmt.Sprintf("PS-%s-%d", uuid.NewString()[:8], time.Now().UnixMilli())
-	txRecord := &models.Transaction{
+	txRecord := &model.Transaction{
 		ID:        uuid.NewString(),
 		UserID:    userID,
-		Channel:   models.PaymentChannel(req.PaymentChannel),
+		Channel:   model.PaymentChannel(req.PaymentChannel),
 		Phone:     req.Phone,
 		AmountKsh: req.AmountKsh,
 		Reference: internalRef,
-		Status:    models.TxPending,
+		Status:    model.TxPending,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -114,12 +114,12 @@ func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*mo
 	tokenNumber, units, err := s.kpProvider.IssueToken(meter.MeterNumber, req.AmountKsh)
 	if err != nil {
 		// Mark transaction as failed
-		_ = s.txRepo.UpdateStatus(txRecord.ID, models.TxFailed, "")
+		_ = s.txRepo.UpdateStatus(txRecord.ID, model.TxFailed, "")
 		return nil, fmt.Errorf("KP token issuance failed: %w", err)
 	}
 
 	// -- Persist token ------------------------------------------------------
-	token := &models.Token{
+	token := &model.Token{
 		ID:          uuid.NewString(),
 		UserID:      userID,
 		MeterID:     meter.ID,
@@ -127,7 +127,7 @@ func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*mo
 		Units:       units,
 		AmountKsh:   req.AmountKsh,
 		PaymentRef:  internalRef,
-		PushStatus:  models.PushPending,
+		PushStatus:  model.PushPending,
 		PurchasedAt: time.Now(),
 	}
 	if err := s.tokenRepo.Create(token); err != nil {
@@ -136,7 +136,7 @@ func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*mo
 
 	// -- Link token to transaction, mark success ----------------------------
 	_ = s.txRepo.LinkToken(txRecord.ID, token.ID)
-	_ = s.txRepo.UpdateStatus(txRecord.ID, models.TxSuccess, internalRef)
+	_ = s.txRepo.UpdateStatus(txRecord.ID, model.TxSuccess, internalRef)
 
 	return token, nil
 }
@@ -144,7 +144,7 @@ func (s *TokenService) BuyToken(userID string, req *models.BuyTokenRequest) (*mo
 // FinaliseTokenAfterPayment is called by the PaymentService once a mobile money
 // callback confirms payment. It issues the KP token and updates the token record
 // that was initially created in "pending" state.
-func (s *TokenService) FinaliseTokenAfterPayment(txRecord *models.Transaction) (*models.Token, error) {
+func (s *TokenService) FinaliseTokenAfterPayment(txRecord *model.Transaction) (*model.Token, error) {
 	meter, err := s.meterRepo.GetByUserID(txRecord.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("meter not found: %w", err)
@@ -155,7 +155,7 @@ func (s *TokenService) FinaliseTokenAfterPayment(txRecord *models.Transaction) (
 		return nil, fmt.Errorf("KP token issuance failed after payment: %w", err)
 	}
 
-	token := &models.Token{
+	token := &model.Token{
 		ID:          uuid.NewString(),
 		UserID:      txRecord.UserID,
 		MeterID:     meter.ID,
@@ -163,7 +163,7 @@ func (s *TokenService) FinaliseTokenAfterPayment(txRecord *models.Transaction) (
 		Units:       units,
 		AmountKsh:   txRecord.AmountKsh,
 		PaymentRef:  txRecord.Reference,
-		PushStatus:  models.PushPending,
+		PushStatus:  model.PushPending,
 		PurchasedAt: time.Now(),
 	}
 	if err := s.tokenRepo.Create(token); err != nil {
@@ -175,7 +175,7 @@ func (s *TokenService) FinaliseTokenAfterPayment(txRecord *models.Transaction) (
 }
 
 // ListHistory returns all non-deleted tokens for a user, newest first.
-func (s *TokenService) ListHistory(userID string) ([]*models.Token, error) {
+func (s *TokenService) ListHistory(userID string) ([]*model.Token, error) {
 	tokens, err := s.tokenRepo.ListByUser(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch token history: %w", err)
@@ -218,7 +218,7 @@ type mockKPProvider struct{}
 
 func (m *mockKPProvider) IssueToken(meterNumber string, amountKsh int) (string, float64, error) {
 	// Generate a deterministic-looking 20-digit token from the amount and time
-	token := fmt.Sprintf("%020d", time.Now().UnixMilli()%100_000_000_000_000_000_000)
+	token := fmt.Sprintf("%020d", time.Now().UnixMilli()% 10_000_000_000_000_000)
 	units := float64(amountKsh) * 0.20 // ~20 kWh per Ksh 100 (mock rate)
 	return token, units, nil
 }

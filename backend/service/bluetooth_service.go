@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"errors"
@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/powersmart/models"
-	"github.com/powersmart/repositories"
+	"powersmart-backend/model"
+	"powersmart-backend/repositories"
 )
 
 // BluetoothService handles the server-side record-keeping for BLE token pushes.
@@ -23,7 +23,7 @@ func NewBluetoothService(tokenRepo *repositories.TokenRepo) *BluetoothService {
 
 // MarkPushRequested is called when the user initiates a Bluetooth push from the frontend.
 // The frontend will attempt the BLE write and then call ConfirmPush or ReportPushFailed.
-func (s *BluetoothService) MarkPushRequested(tokenID, userID string) (*models.Token, error) {
+func (s *BluetoothService) MarkPushRequested(tokenID, userID string) (*model.Token, error) {
 	token, err := s.tokenRepo.GetByID(tokenID)
 	if err != nil {
 		return nil, err
@@ -31,13 +31,13 @@ func (s *BluetoothService) MarkPushRequested(tokenID, userID string) (*models.To
 	if token.UserID != userID {
 		return nil, errors.New("access denied")
 	}
-	if token.PushStatus == models.PushSuccess {
+	if token.PushStatus == model.PushSuccess {
 		return nil, fmt.Errorf("token already successfully pushed at %v", token.PushedAt)
 	}
-	if err := s.tokenRepo.UpdatePushStatus(tokenID, models.PushPending, nil); err != nil {
+	if err := s.tokenRepo.UpdatePushStatus(tokenID, model.PushPending, nil); err != nil {
 		return nil, err
 	}
-	token.PushStatus = models.PushPending
+	token.PushStatus = model.PushPending
 	return token, nil
 }
 
@@ -52,7 +52,7 @@ func (s *BluetoothService) ConfirmPush(tokenID, userID string) error {
 	}
 	now := time.Now()
 	log.Printf("Token %s pushed to meter via Bluetooth at %v", tokenID, now)
-	return s.tokenRepo.UpdatePushStatus(tokenID, models.PushSuccess, now)
+	return s.tokenRepo.UpdatePushStatus(tokenID, model.PushSuccess, now)
 }
 
 // ReportPushFailed is called when the frontend BLE write fails (meter out of range, etc.).
@@ -64,5 +64,5 @@ func (s *BluetoothService) ReportPushFailed(tokenID, userID string) error {
 	if token.UserID != userID {
 		return errors.New("access denied")
 	}
-	return s.tokenRepo.UpdatePushStatus(tokenID, models.PushFailed, nil)
+	return s.tokenRepo.UpdatePushStatus(tokenID, model.PushFailed, nil)
 }

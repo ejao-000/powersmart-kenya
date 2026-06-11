@@ -1,74 +1,68 @@
 package middleware
 
 import (
-	"log"
+	"net"
 	"net/http"
-	"os"
 	"strings"
+	"sync"
+	"time"
+
+	"powersmart-backend/utils"
+	"golang.org/x/time/rate"
 )
 
-// allowedOrigins is the set of origins that may call the API.
-// Populate CORS_ALLOWED_ORIGINS in .env as a comma-separated list.
-// Defaults to "*" in development when the env var is absent.
-var allowedOrigins = parseAllowedOrigins()
-
-func parseAllowedOrigins() map[string]bool {
-	raw := os.Getenv("CORS_ALLOWED_ORIGINS")
-	set := make(map[string]bool)
-	if raw == "" {
-		return set // empty → wildcard mode
-	}
-	for _, o := range strings.Split(raw, ",") {
-		o = strings.TrimSpace(o)
-		if o != "" {
-			set[o] = true
-		}
-	}
-	return set
+type client struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
 }
 
-// isAllowed returns true when the request origin is permitted.
-func isAllowed(origin string) bool {
-	if len(allowedOrigins) == 0 {
-		return true // wildcard / development mode
-	}
-	return allowedOrigins[origin]
-}
+var (
+	clients   = make(map[string]*client)
+	clientsMu sync.Mutex
+)
 
-// CORS adds cross-origin resource sharing headers to every response and handles
-// pre-flight OPTIONS requests. It is applied as the outermost middleware so all
-// routes — including error responses — carry the correct headers.
-//
-//   Production .env example:
-//     CORS_ALLOWED_ORIGINS=https://powersmart.co.ke,https://app.powersmart.co.ke
-func CORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-
-		if origin != "" {
-			if isAllowed(origin) {
-				w.Header().Set("Access-Control-Allow-Origin", origin)
-				// Vary: Origin tells caches not to serve the same response to
-				// different origins.
-				w.Header().Add("Vary", "Origin")
-			} else {
-				log.Printf("[cors] blocked origin: %s", origin)
-				http.Error(w, "origin not allowed", http.StatusForbidden)
-				return
+func init() {
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			clientsMu.Lock()
+			for ip, c := range clients {
+				if time.Since(c.lastSeen) > 3*time.Minute {
+					delete(clients, ip)
+				}
 			}
-		} else if len(allowedOrigins) == 0 {
-			// Non-browser / same-origin requests in dev: allow all
-			w.Header().Set("Access-Control-Allow-Origin", "*")
+			clientsMu.Unlock()
+		}
+	}()
+}
+
+func getLimiter(ip string) *rate.Limiter {
+	clientsMu.Lock()
+	defer clientsMu.Unlock()
+
+	if c, ok := clients[ip]; ok {
+		c.lastSeen = time.Now()
+		return c.limiter
+	}
+
+	l := rate.NewLimiter(rate.Every(time.Second/10), 20) // 10 req/s, burst 20
+	clients[ip] = &client{limiter: l, lastSeen: time.Now()}
+	return l
+}
+
+// RateLimit limits requests per client IP.
+func RateLimit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Prefer X-Forwarded-For when behind a proxy
+		ip := r.Header.Get("X-Forwarded-For")
+		if ip == "" {
+			ip, _, _ = net.SplitHostPort(r.RemoteAddr)
+		} else {
+			ip = strings.TrimSpace(strings.Split(ip, ",")[0])
 		}
 
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-ID")
-		w.Header().Set("Access-Control-Expose-Headers", "X-Request-ID")
-		w.Header().Set("Access-Control-Max-Age", "86400") // 24 h pre-flight cache
-
-		// Short-circuit pre-flight; no body needed
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+		if !getLimiter(ip).Allow() {
+			utils.RespondError(w, http.StatusTooManyRequests, "Rate limit exceeded")
 			return
 		}
 
