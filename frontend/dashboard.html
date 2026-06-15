@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PowerSmart Kenya Dashboard</title>
+
   <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -11,74 +12,96 @@
 
 <div class="app-shell">
 
-  <!-- SIDEBAR -->
+  <!-- =========================================
+       SIDEBAR
+  ========================================== -->
+
   <aside class="sidebar">
 
     <div class="brand">
+
       <span class="brand-mark">⚡</span>
 
       <div>
         <strong>PowerSmart</strong>
         <span>Kenya</span>
       </div>
+
     </div>
 
     <nav class="nav-list">
 
-      <a href="#" class="nav-link active" data-page="overviewPage">
-        Dashboard Overview
+      <a href="#" class="nav-link active"
+         data-page="overviewPage">
+         Dashboard Overview
       </a>
 
-      <a href="#" class="nav-link" data-page="metersPage">
-        Meter Management
+      <a href="#" class="nav-link"
+         data-page="metersPage">
+         Meter Management
       </a>
 
-      <a href="#" class="nav-link" data-page="tokensPage">
-        Token Management
+      <a href="#" class="nav-link"
+         data-page="tokensPage">
+         Token Management
       </a>
 
-      <a href="#" class="nav-link" data-page="automationPage">
-        Automation
+      <a href="#" class="nav-link"
+         data-page="automationPage">
+         Automation
       </a>
 
-      <a href="#" class="nav-link" data-page="outagesPage">
-        Outages
+      <a href="#" class="nav-link"
+         data-page="outagesPage">
+         Outages
       </a>
 
-      <a href="#" class="nav-link" data-page="analysisPage">
-        Analysis
+      <a href="#" class="nav-link"
+         data-page="analysisPage">
+         Analysis
       </a>
 
-      <a href="#" class="nav-link" data-page="communityPage">
-        Community
+      <a href="#" class="nav-link"
+         data-page="communityPage">
+         Community
       </a>
 
     </nav>
+
+    <!-- USER PROFILE -->
 
     <div class="sync-panel">
 
       <span class="status-dot"></span>
 
       <div>
+
         <strong id="userName">
           PowerSmart User
         </strong>
 
-        <span>
-          Dashboard Connected
+        <span id="userEmail">
+          user@example.com
         </span>
+
       </div>
 
     </div>
 
   </aside>
 
-  <!-- MAIN CONTENT -->
+  <!-- =========================================
+       MAIN CONTENT
+  ========================================== -->
+
   <main class="content">
+
+    <!-- HEADER -->
 
     <header class="topbar">
 
       <div>
+
         <p class="eyebrow">
           Smart Electricity Platform
         </p>
@@ -86,15 +109,20 @@
         <h1>
           PowerSmart Kenya Dashboard
         </h1>
+
       </div>
 
       <div class="top-actions">
 
-        <button id="syncNow" class="secondary-button">
+        <button
+          id="syncNow"
+          class="secondary-button">
           Sync
         </button>
 
-        <button id="logoutBtn" class="primary-button">
+        <button
+          id="logoutBtn"
+          class="primary-button">
           Logout
         </button>
 
@@ -102,54 +130,106 @@
 
     </header>
 
-    <!-- OVERVIEW PAGE -->
-    <section id="overviewPage" class="dashboard-page">
+    <!-- =====================================
+         OVERVIEW PAGE
+    ====================================== -->
+
+    <section
+      id="overviewPage"
+      class="dashboard-page">
 
       <div class="summary-grid">
 
         <article class="metric-card">
+
           <span>Total Units</span>
-          <strong id="totalUnits">0 kWh</strong>
-          <small>Across all meters</small>
+
+          <strong id="totalUnits">
+            0 kWh
+          </strong>
+
+          <small>
+            Across all meters
+          </small>
+
         </article>
 
         <article class="metric-card">
+
           <span>Runway</span>
-          <strong id="runway">0 Days</strong>
-          <small>Estimated power remaining</small>
+
+          <strong id="runway">
+            0 Days
+          </strong>
+
+          <small>
+            Estimated remaining power
+          </small>
+
         </article>
 
         <article class="metric-card alert">
+
           <span>Risk Meters</span>
-          <strong id="riskMeters">0</strong>
-          <small>Need immediate recharge</small>
+
+          <strong id="riskMeters">
+            0
+          </strong>
+
+          <small>
+            Need recharge soon
+          </small>
+
         </article>
 
         <article class="metric-card">
+
           <span>Savings</span>
-          <strong id="goalProgress">KSh 0</strong>
-          <small>Estimated savings</small>
+
+          <strong id="goalProgress">
+            KSh 0
+          </strong>
+
+          <small>
+            Estimated savings
+          </small>
+
         </article>
 
       </div>
 
     </section>
 
-    <!-- METERS PAGE -->
-    <section id="metersPage" class="dashboard-page hidden">
+    <!-- =====================================
+         METERS PAGE
+    ====================================== -->
+
+    <section
+      id="metersPage"
+      class="dashboard-page hidden">
 
       <div class="section-heading">
         <h2>Meter Management</h2>
       </div>
 
-      <div id="meterGrid" class="meter-grid"></div>
+      <div
+        id="meterGrid"
+        class="meter-grid">
+      </div>
 
     </section>
 
-    <!-- TOKENS PAGE -->
-    <section id="tokensPage" class="dashboard-page hidden">
+    <!-- =====================================
+         TOKENS PAGE
+    ====================================== -->
+
+    <section
+      id="tokensPage"
+      class="dashboard-page hidden">
 
       <div class="two-column">
+
+        <!-- BUY TOKEN -->
 
         <div class="tool-panel">
 
@@ -160,16 +240,20 @@
           <div class="form-grid">
 
             <label>
+
               Amount
+
               <input
                 type="number"
                 id="buyAmount"
-                value="500"
-              >
+                value="500">
+
             </label>
 
             <label>
+
               Payment Method
+
               <select id="paymentChannel">
 
                 <option value="mpesa">
@@ -189,31 +273,35 @@
             </label>
 
             <label>
+
               Phone Number
+
               <input
                 type="tel"
                 id="paymentPhone"
-                value="254700000000"
-              >
+                value="254700000000">
+
             </label>
 
           </div>
 
           <button
             id="buyTokenBtn"
-            class="primary-button"
-          >
+            class="primary-button">
             Buy Token
           </button>
 
           <div
-            class="code-box"
             id="latestToken"
-          >
+            class="code-box">
+
             No token purchased yet
+
           </div>
 
         </div>
+
+        <!-- TOKEN HISTORY -->
 
         <div class="tool-panel">
 
@@ -229,8 +317,13 @@
 
     </section>
 
-    <!-- AUTOMATION PAGE -->
-    <section id="automationPage" class="dashboard-page hidden">
+    <!-- =====================================
+         AUTOMATION
+    ====================================== -->
+
+    <section
+      id="automationPage"
+      class="dashboard-page hidden">
 
       <div class="tool-panel">
 
@@ -241,21 +334,25 @@
         <div class="automation-grid">
 
           <label>
+
             Threshold Units
+
             <input
               type="number"
               id="thresholdUnits"
-              value="10"
-            >
+              value="10">
+
           </label>
 
           <label>
+
             Auto Purchase Amount
+
             <input
               type="number"
               id="autoAmount"
-              value="500"
-            >
+              value="500">
+
           </label>
 
         </div>
@@ -264,8 +361,13 @@
 
     </section>
 
-    <!-- OUTAGES PAGE -->
-    <section id="outagesPage" class="dashboard-page hidden">
+    <!-- =====================================
+         OUTAGES
+    ====================================== -->
+
+    <section
+      id="outagesPage"
+      class="dashboard-page hidden">
 
       <div class="tool-panel">
 
@@ -273,14 +375,23 @@
           <h2>Outage Reports</h2>
         </div>
 
-        <div id="outageFeed"></div>
+        <div id="outageFeed">
+
+          No active outages reported.
+
+        </div>
 
       </div>
 
     </section>
 
-    <!-- ANALYSIS PAGE -->
-    <section id="analysisPage" class="dashboard-page hidden">
+    <!-- =====================================
+         ANALYSIS
+    ====================================== -->
+
+    <section
+      id="analysisPage"
+      class="dashboard-page hidden">
 
       <div class="tool-panel">
 
@@ -292,17 +403,23 @@
 
         <div
           id="applianceInsight"
-          class="insight-strip"
-        >
+          class="insight-strip">
+
           Waiting for analysis...
+
         </div>
 
       </div>
 
     </section>
 
-    <!-- COMMUNITY PAGE -->
-    <section id="communityPage" class="dashboard-page hidden">
+    <!-- =====================================
+         COMMUNITY
+    ====================================== -->
+
+    <section
+      id="communityPage"
+      class="dashboard-page hidden">
 
       <div class="tool-panel">
 
@@ -313,6 +430,7 @@
         <div class="pool-meter">
 
           <div>
+
             <span id="poolAmount">
               KSh 0
             </span>
@@ -320,12 +438,13 @@
             <small>
               Community Fund
             </small>
+
           </div>
 
           <progress
             value="0"
-            max="10000"
-          ></progress>
+            max="10000">
+          </progress>
 
         </div>
 
@@ -336,8 +455,12 @@
     </section>
 
     <!-- FOOTER -->
+
     <footer class="dashboard-footer">
-      © 2026 - Kenya Power. All rights reserved.
+
+      © 2026 - PowerSmart Kenya.
+      All rights reserved.
+
     </footer>
 
   </main>
@@ -345,10 +468,11 @@
 </div>
 
 <!-- TOAST -->
+
 <div
   id="toast"
-  class="toast"
-></div>
+  class="toast">
+</div>
 
 <script src="app.js"></script>
 
