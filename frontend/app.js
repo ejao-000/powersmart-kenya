@@ -1,433 +1,497 @@
+// ======================================================
 // app.js
+// PowerSmart Kenya Dashboard
+// ======================================================
 
-const API_BASE = "/api";
+const TOKEN_KEY = "powersmart_token";
+const USER_KEY = "powersmart_user";
 
 const $ = (selector) => document.querySelector(selector);
 
+// ======================================================
+// APP STATE
+// ======================================================
+
 const state = {
-  currentPage: "overview",
 
-  meters: [
-    {
-      label: "Main House",
-      meter_number: "37101122093",
-      occupant_name: "Owner",
-      role: "owner",
-      units_remaining: 34.8,
-      daily_avg_units: 5.6,
-      threshold: 10
-    },
-    {
-      label: "Unit A",
-      meter_number: "37101122094",
-      occupant_name: "Tenant",
-      role: "tenant",
-      units_remaining: 8.2,
-      daily_avg_units: 3.1,
-      threshold: 10
-    },
-    {
-      label: "Unit B",
-      meter_number: "37101122095",
-      occupant_name: "Tenant",
-      role: "tenant",
-      units_remaining: 3.7,
-      daily_avg_units: 2.5,
-      threshold: 7
+    meters: [
+        {
+            label: "Main House",
+            meter_number: "37101122093",
+            role: "Owner",
+            units_remaining: 34.8,
+            daily_avg_units: 5.6,
+            threshold: 10
+        },
+        {
+            label: "Unit A",
+            meter_number: "37101122094",
+            role: "Tenant",
+            units_remaining: 8.2,
+            daily_avg_units: 3.1,
+            threshold: 10
+        },
+        {
+            label: "Unit B",
+            meter_number: "37101122095",
+            role: "Tenant",
+            units_remaining: 3.7,
+            daily_avg_units: 2.5,
+            threshold: 7
+        }
+    ],
+
+    tokenHistory: [
+        {
+            amount: 1000,
+            token: "5821 9044 3178 6632",
+            status: "Success"
+        }
+    ],
+
+    communityPool: {
+        target: 10000,
+        collected: 7400,
+        members: 10
     }
-  ],
-
-  tokenHistory: [
-    {
-      amount: 1000,
-      token: "5821 9044 3178 6632",
-      status: "Success"
-    }
-  ],
-
-  communityPool: {
-    target: 10000,
-    collected: 7400,
-    members: 10
-  }
 };
 
-/* =====================================
-   TOAST
-===================================== */
+// ======================================================
+// AUTH PROTECTION
+// ======================================================
+
+function protectDashboard() {
+
+    const token =
+        localStorage.getItem(TOKEN_KEY);
+
+    if (!token) {
+
+        window.location.href =
+            "index.html";
+    }
+}
+
+// ======================================================
+// LOAD USER
+// ======================================================
+
+function loadUserProfile() {
+
+    const user =
+        JSON.parse(
+            localStorage.getItem(USER_KEY) ||
+            "null"
+        );
+
+    if (!user) return;
+
+    const userName =
+        $("#userName");
+
+    if (userName) {
+
+        userName.textContent =
+            user.name || "PowerSmart User";
+    }
+}
+
+// ======================================================
+// TOAST
+// ======================================================
 
 function showToast(message) {
-  const toast = $("#toast");
 
-  if (!toast) return;
+    const toast = $("#toast");
 
-  toast.textContent = message;
-  toast.classList.add("show");
+    if (!toast) return;
 
-  clearTimeout(showToast.timer);
+    toast.textContent = message;
 
-  showToast.timer = setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
+    toast.classList.add("show");
+
+    clearTimeout(showToast.timer);
+
+    showToast.timer = setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    }, 3000);
 }
 
-/* =====================================
-   OVERVIEW
-===================================== */
+// ======================================================
+// OVERVIEW
+// ======================================================
 
 function renderOverview() {
-  const totalUnits = state.meters.reduce(
-    (sum, meter) => sum + meter.units_remaining,
-    0
-  );
 
-  const totalDaily = state.meters.reduce(
-    (sum, meter) => sum + meter.daily_avg_units,
-    0
-  );
+    const totalUnits =
+        state.meters.reduce(
+            (sum, meter) =>
+                sum + meter.units_remaining,
+            0
+        );
 
-  const riskMeters = state.meters.filter(
-    (meter) => meter.units_remaining <= meter.threshold
-  ).length;
+    const totalDaily =
+        state.meters.reduce(
+            (sum, meter) =>
+                sum + meter.daily_avg_units,
+            0
+        );
 
-  const savings = totalUnits * 18;
+    const riskMeters =
+        state.meters.filter(
+            meter =>
+                meter.units_remaining <=
+                meter.threshold
+        ).length;
 
-  $("#totalUnits").textContent =
-    totalUnits.toFixed(1) + " kWh";
+    const savings =
+        totalUnits * 18;
 
-  $("#runway").textContent =
-    (totalUnits / totalDaily).toFixed(1) + " days";
+    $("#totalUnits").textContent =
+        totalUnits.toFixed(1) + " kWh";
 
-  $("#riskMeters").textContent =
-    riskMeters + " meter(s)";
+    $("#runway").textContent =
+        (totalUnits / totalDaily).toFixed(1)
+        + " Days";
 
-  $("#goalProgress").textContent =
-    "KSh " + savings.toLocaleString();
+    $("#riskMeters").textContent =
+        riskMeters;
+
+    $("#goalProgress").textContent =
+        "KSh " +
+        savings.toLocaleString();
 }
 
-/* =====================================
-   METERS
-===================================== */
+// ======================================================
+// METERS
+// ======================================================
 
 function renderMeters() {
-  const container = $("#meterGrid");
 
-  if (!container) return;
+    const container =
+        $("#meterGrid");
 
-  container.innerHTML = state.meters
-    .map((meter) => {
-      const days =
-        meter.units_remaining /
-        meter.daily_avg_units;
+    if (!container) return;
 
-      return `
-      <article class="meter-card">
-        <div class="meter-header">
-          <div>
-            <strong>${meter.label}</strong>
-            <span>${meter.meter_number}</span>
-          </div>
+    container.innerHTML =
+        state.meters.map(meter => {
 
-          <span class="badge">
-            ${meter.role}
-          </span>
-        </div>
+            const days =
+                meter.units_remaining /
+                meter.daily_avg_units;
 
-        <div class="unit-line">
-          <strong>
-            ${meter.units_remaining.toFixed(1)} kWh
-          </strong>
+            return `
+            <article class="meter-card">
 
-          <span>
-            ${days.toFixed(1)} days
-          </span>
-        </div>
+                <div class="meter-header">
 
-        <progress
-          value="${meter.units_remaining}"
-          max="40">
-        </progress>
+                    <div>
+                        <strong>${meter.label}</strong>
+                        <div>${meter.meter_number}</div>
+                    </div>
 
-        <div class="meter-meta">
-          Avg ${meter.daily_avg_units} kWh/day
-        </div>
-      </article>
-    `;
-    })
-    .join("");
+                    <span class="badge">
+                        ${meter.role}
+                    </span>
+
+                </div>
+
+                <div class="unit-line">
+
+                    <strong>
+                        ${meter.units_remaining.toFixed(1)} kWh
+                    </strong>
+
+                    <span>
+                        ${days.toFixed(1)} days
+                    </span>
+
+                </div>
+
+                <progress
+                    value="${meter.units_remaining}"
+                    max="40">
+                </progress>
+
+                <small>
+                    Avg ${meter.daily_avg_units}
+                    kWh/day
+                </small>
+
+            </article>
+        `;
+        }).join("");
 }
 
-/* =====================================
-   TOKEN PURCHASE
-===================================== */
+// ======================================================
+// TOKENS
+// ======================================================
 
 function generateToken() {
-  let token = "";
 
-  for (let i = 0; i < 20; i++) {
-    token += Math.floor(Math.random() * 10);
-  }
+    let token = "";
 
-  return token.match(/.{1,4}/g).join(" ");
+    for (let i = 0; i < 20; i++) {
+
+        token +=
+            Math.floor(
+                Math.random() * 10
+            );
+    }
+
+    return token.match(/.{1,4}/g).join(" ");
 }
 
 function buyToken() {
-  const amount = Number(
-    $("#buyAmount")?.value || 0
-  );
 
-  if (amount <= 0) {
-    showToast("Enter valid amount");
-    return;
-  }
+    const amount =
+        Number(
+            $("#buyAmount")?.value
+        );
 
-  const token = generateToken();
+    if (!amount || amount <= 0) {
 
-  $("#latestToken").textContent = token;
+        showToast(
+            "Enter a valid amount"
+        );
 
-  state.tokenHistory.unshift({
-    amount,
-    token,
-    status: "Success"
-  });
+        return;
+    }
 
-  renderTokenHistory();
+    const token =
+        generateToken();
 
-  showToast("Token purchased successfully");
+    $("#latestToken").textContent =
+        token;
+
+    state.tokenHistory.unshift({
+        amount,
+        token,
+        status: "Success"
+    });
+
+    renderTokenHistory();
+
+    showToast(
+        "Token purchased successfully"
+    );
 }
-
-/* =====================================
-   TOKEN HISTORY
-===================================== */
 
 function renderTokenHistory() {
-  const container = $("#tokenHistory");
 
-  if (!container) return;
+    const container =
+        $("#tokenHistory");
 
-  container.innerHTML = state.tokenHistory
-    .map(
-      (item) => `
-      <div class="list-row">
-        <div>
-          <strong>KSh ${item.amount}</strong>
-          <small>${item.token}</small>
+    if (!container) return;
+
+    container.innerHTML =
+        state.tokenHistory.map(item => `
+        <div class="list-row">
+
+            <div>
+                <strong>
+                    KSh ${item.amount}
+                </strong>
+                <br>
+                <small>
+                    ${item.token}
+                </small>
+            </div>
+
+            <span class="badge">
+                ${item.status}
+            </span>
+
         </div>
-
-        <span class="badge">
-          ${item.status}
-        </span>
-      </div>
-    `
-    )
-    .join("");
+    `).join("");
 }
 
-/* =====================================
-   COMMUNITY
-===================================== */
+// ======================================================
+// COMMUNITY
+// ======================================================
 
 function renderCommunity() {
-  const pool = state.communityPool;
 
-  const amount = $("#poolAmount");
-  const progress =
-    document.querySelector(
-      ".pool-meter progress"
-    );
+    const pool =
+        state.communityPool;
 
-  if (amount)
-    amount.textContent =
-      "KSh " +
-      pool.collected.toLocaleString();
+    $("#poolAmount").textContent =
+        "KSh " +
+        pool.collected.toLocaleString();
 
-  if (progress) {
-    progress.value = pool.collected;
-    progress.max = pool.target;
-  }
+    const progress =
+        document.querySelector(
+            ".pool-meter progress"
+        );
 
-  const container =
-    $("#communityList");
+    if (progress) {
 
-  if (!container) return;
+        progress.value =
+            pool.collected;
 
-  container.innerHTML = `
-    <div class="list-row">
-      <div>
-        <strong>Community Pool</strong>
-        <small>
-          ${pool.members} members
-        </small>
-      </div>
+        progress.max =
+            pool.target;
+    }
 
-      <span class="badge">
-        Active
-      </span>
-    </div>
-  `;
+    $("#communityList").innerHTML = `
+        <div class="list-row">
+
+            <div>
+                <strong>
+                    Community Pool
+                </strong>
+                <br>
+                <small>
+                    ${pool.members} Members
+                </small>
+            </div>
+
+            <span class="badge">
+                Active
+            </span>
+
+        </div>
+    `;
 }
 
-/* =====================================
-   TARIFF
-===================================== */
+// ======================================================
+// PAGE NAVIGATION
+// ======================================================
 
-function calculateTariff() {
-  const usage =
-    Number($("#monthlyUsage")?.value) || 0;
+function initNavigation() {
 
-  const increase =
-    Number($("#tariffIncrease")?.value) || 0;
+    const links =
+        document.querySelectorAll(
+            ".nav-link"
+        );
 
-  const currentTariff = 31.75;
+    const pages =
+        document.querySelectorAll(
+            ".dashboard-page"
+        );
 
-  const extra =
-    usage *
-    currentTariff *
-    (increase / 100);
+    links.forEach(link => {
 
-  $("#tariffResult").textContent =
-    "Projected change: +KSh " +
-    Math.round(extra).toLocaleString();
-}
+        link.addEventListener(
+            "click",
+            (e) => {
 
-/* =====================================
-   SIDEBAR NAVIGATION
-===================================== */
+                e.preventDefault();
 
-function initSidebarNavigation() {
-  const links =
-    document.querySelectorAll(
-      ".nav-list a"
-    );
+                links.forEach(item =>
+                    item.classList.remove(
+                        "active"
+                    )
+                );
 
-  links.forEach((link) => {
-    link.addEventListener("click", () => {
-      links.forEach((item) =>
-        item.classList.remove("active")
-      );
+                pages.forEach(page =>
+                    page.classList.add(
+                        "hidden"
+                    )
+                );
 
-      link.classList.add("active");
+                link.classList.add(
+                    "active"
+                );
+
+                const pageId =
+                    link.dataset.page;
+
+                document
+                    .getElementById(pageId)
+                    .classList.remove(
+                        "hidden"
+                    );
+            }
+        );
     });
-  });
 }
 
-/* =====================================
-   LOGOUT
-===================================== */
+// ======================================================
+// LOGOUT
+// ======================================================
 
 function setupLogout() {
-  const logoutBtn =
-    $("#logoutBtn");
 
-  if (!logoutBtn) return;
+    const logoutBtn =
+        $("#logoutBtn");
 
-  logoutBtn.addEventListener(
-    "click",
-    () => {
-      localStorage.removeItem(
-        "powersmart_token"
-      );
+    if (!logoutBtn) return;
 
-      localStorage.removeItem(
-        "powersmart_user"
-      );
+    logoutBtn.addEventListener(
+        "click",
+        () => {
 
-      window.location.href =
-        "index.html";
-    }
-  );
-}
+            localStorage.removeItem(
+                TOKEN_KEY
+            );
 
-/* =====================================
-   API INTEGRATION HOOKS
-===================================== */
+            localStorage.removeItem(
+                USER_KEY
+            );
 
-async function fetchMeters() {
-  try {
-    const response = await fetch(
-      `${API_BASE}/meters`
+            window.location.href =
+                "index.html";
+        }
     );
-
-    if (!response.ok) return;
-
-    const data =
-      await response.json();
-
-    state.meters = data;
-
-    renderOverview();
-    renderMeters();
-  } catch (error) {
-    console.log(error);
-  }
 }
 
-async function fetchCommunityPool() {
-  try {
-    const response = await fetch(
-      `${API_BASE}/community`
-    );
-
-    if (!response.ok) return;
-
-    const data =
-      await response.json();
-
-    state.communityPool = data;
-
-    renderCommunity();
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-/* =====================================
-   EVENTS
-===================================== */
+// ======================================================
+// EVENTS
+// ======================================================
 
 function bindEvents() {
-  $("#buyTokenBtn")?.addEventListener(
-    "click",
-    buyToken
-  );
 
-  $("#calculateTariffBtn")?.addEventListener(
-    "click",
-    calculateTariff
-  );
+    $("#buyTokenBtn")
+        ?.addEventListener(
+            "click",
+            buyToken
+        );
 
-  $("#joinGroupBtn")?.addEventListener(
-    "click",
-    () => {
-      state.communityPool.collected += 400;
+    $("#syncNow")
+        ?.addEventListener(
+            "click",
+            () => {
 
-      renderCommunity();
+                renderOverview();
+                renderMeters();
+                renderCommunity();
 
-      showToast(
-        "Joined community purchase pool"
-      );
-    }
-  );
+                showToast(
+                    "Dashboard synced"
+                );
+            }
+        );
 }
 
-/* =====================================
-   INIT
-===================================== */
+// ======================================================
+// INIT
+// ======================================================
 
 function init() {
-  renderOverview();
-  renderMeters();
-  renderTokenHistory();
-  renderCommunity();
 
-  bindEvents();
+    protectDashboard();
 
-  setupLogout();
+    loadUserProfile();
 
-  initSidebarNavigation();
+    renderOverview();
+
+    renderMeters();
+
+    renderTokenHistory();
+
+    renderCommunity();
+
+    initNavigation();
+
+    setupLogout();
+
+    bindEvents();
 }
 
 document.addEventListener(
-  "DOMContentLoaded",
-  init
+    "DOMContentLoaded",
+    init
 );
