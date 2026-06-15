@@ -5,11 +5,9 @@ const API_BASE = "/api";
 const TOKEN_KEY = "powersmart_token";
 const USER_KEY = "powersmart_user";
 
-/*
-|--------------------------------------------------------------------------
-| Helpers
-|--------------------------------------------------------------------------
-*/
+/* =====================================================
+   HELPERS
+===================================================== */
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -61,189 +59,285 @@ async function api(path, options = {}) {
     return data;
 }
 
-/*
-|--------------------------------------------------------------------------
-| Redirect Logged-in Users
-|--------------------------------------------------------------------------
-*/
+/* =====================================================
+   AUTH TAB SWITCHING
+===================================================== */
 
-(function () {
-    const currentPage = window.location.pathname;
+function initializeTabs() {
+
+    const loginTab = $("#loginTab");
+    const registerTab = $("#registerTab");
+
+    const loginForm = $("#loginForm");
+    const registerForm = $("#registerForm");
 
     if (
-        localStorage.getItem(TOKEN_KEY) &&
-        currentPage.includes("index.html")
+        !loginTab ||
+        !registerTab ||
+        !loginForm ||
+        !registerForm
+    ) {
+        return;
+    }
+
+    loginTab.addEventListener("click", () => {
+
+        loginTab.classList.add("active");
+        registerTab.classList.remove("active");
+
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+    });
+
+    registerTab.addEventListener("click", () => {
+
+        registerTab.classList.add("active");
+        loginTab.classList.remove("active");
+
+        registerForm.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+    });
+}
+
+/* =====================================================
+   PAGE PROTECTION
+===================================================== */
+
+function protectPages() {
+
+    const page =
+        window.location.pathname.split("/").pop();
+
+    const token =
+        localStorage.getItem(TOKEN_KEY);
+
+    // User already logged in
+    if (
+        (page === "index.html" || page === "") &&
+        token
     ) {
         window.location.href = "dashboard.html";
+        return;
     }
-})();
 
-/*
-|--------------------------------------------------------------------------
-| Login
-|--------------------------------------------------------------------------
-*/
-
-const loginForm = $("#loginForm");
-
-if (loginForm) {
-    loginForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const email = $("#loginEmail").value.trim();
-        const password = $("#loginPassword").value;
-
-        try {
-            /*
-             * Backend version
-             *
-             * const result = await api("/auth/login", {
-             *   method: "POST",
-             *   body: JSON.stringify({ email, password })
-             * });
-             */
-
-            const result = {
-                token: "powersmart-demo-token",
-                user: {
-                    id: 1,
-                    name: "Emma Akinyi",
-                    email
-                }
-            };
-
-            saveSession(result.token, result.user);
-
-            showMessage("Login successful");
-
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 1000);
-
-        } catch (error) {
-            showMessage(error.message, "error");
-        }
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| Register
-|--------------------------------------------------------------------------
-*/
-
-const registerForm = $("#registerForm");
-
-if (registerForm) {
-    registerForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        const name = $("#registerName").value.trim();
-        const email = $("#registerEmail").value.trim();
-        const phone = $("#registerPhone").value.trim();
-        const meter = $("#registerMeter").value.trim();
-        const password = $("#registerPassword").value;
-
-        try {
-            /*
-             * Backend version
-             *
-             * const result = await api("/auth/register", {
-             *   method: "POST",
-             *   body: JSON.stringify({
-             *      name,
-             *      email,
-             *      phone,
-             *      meter_account: meter,
-             *      password
-             *   })
-             * });
-             */
-
-            const result = {
-                token: "powersmart-demo-token",
-                user: {
-                    id: 1,
-                    name,
-                    email,
-                    phone,
-                    meter
-                }
-            };
-
-            saveSession(result.token, result.user);
-
-            showMessage("Account created successfully");
-
-            setTimeout(() => {
-                window.location.href = "dashboard.html";
-            }, 1000);
-
-        } catch (error) {
-            showMessage(error.message, "error");
-        }
-    });
-}
-
-/*
-|--------------------------------------------------------------------------
-| Logout
-|--------------------------------------------------------------------------
-*/
-
-window.logoutUser = function () {
-    clearSession();
-    window.location.href = "index.html";
-};
-
-/*
-|--------------------------------------------------------------------------
-| Protect Dashboard
-|--------------------------------------------------------------------------
-*/
-
-(function () {
-    const currentPage = window.location.pathname;
-
+    // User not logged in
     if (
-        currentPage.includes("dashboard.html") &&
-        !localStorage.getItem(TOKEN_KEY)
+        page === "dashboard.html" &&
+        !token
     ) {
         window.location.href = "index.html";
     }
-})();
+}
 
-/*
-|--------------------------------------------------------------------------
-| Load User Info
-|--------------------------------------------------------------------------
-*/
+/* =====================================================
+   LOGIN
+===================================================== */
 
-window.loadUserProfile = function () {
-    const user = JSON.parse(
-        localStorage.getItem(USER_KEY) || "null"
+function initializeLogin() {
+
+    const loginForm = $("#loginForm");
+
+    if (!loginForm) return;
+
+    loginForm.addEventListener(
+        "submit",
+        async (e) => {
+
+            e.preventDefault();
+
+            const email =
+                $("#loginEmail").value.trim();
+
+            const password =
+                $("#loginPassword").value;
+
+            try {
+
+                /*
+                Backend Version
+
+                const result = await api(
+                    "/auth/login",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            email,
+                            password
+                        })
+                    }
+                );
+                */
+
+                // DEMO LOGIN
+
+                const result = {
+                    token: "powersmart-demo-token",
+                    user: {
+                        id: 1,
+                        name: "PowerSmart User",
+                        email
+                    }
+                };
+
+                saveSession(
+                    result.token,
+                    result.user
+                );
+
+                showMessage(
+                    "Login successful"
+                );
+
+                setTimeout(() => {
+                    window.location.href =
+                        "dashboard.html";
+                }, 1000);
+
+            } catch (error) {
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+            }
+        }
     );
+}
+
+/* =====================================================
+   REGISTER
+===================================================== */
+
+function initializeRegister() {
+
+    const registerForm =
+        $("#registerForm");
+
+    if (!registerForm) return;
+
+    registerForm.addEventListener(
+        "submit",
+        async (e) => {
+
+            e.preventDefault();
+
+            const name =
+                $("#registerName").value.trim();
+
+            const email =
+                $("#registerEmail").value.trim();
+
+            const phone =
+                $("#registerPhone").value.trim();
+
+            const meter =
+                $("#registerMeter").value.trim();
+
+            const password =
+                $("#registerPassword").value;
+
+            try {
+
+                /*
+                Backend Version
+
+                await api(
+                    "/auth/register",
+                    {
+                        method: "POST",
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            phone,
+                            meter_account: meter,
+                            password
+                        })
+                    }
+                );
+                */
+
+                showMessage(
+                    "Account created successfully. Please login."
+                );
+
+                registerForm.reset();
+
+                // Switch back to login tab
+
+                $("#loginTab").click();
+
+            } catch (error) {
+
+                showMessage(
+                    error.message,
+                    "error"
+                );
+            }
+        }
+    );
+}
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+function logoutUser() {
+
+    clearSession();
+
+    window.location.href =
+        "index.html";
+}
+
+window.logoutUser = logoutUser;
+
+/* =====================================================
+   LOAD USER PROFILE
+===================================================== */
+
+function loadUserProfile() {
+
+    const user =
+        JSON.parse(
+            localStorage.getItem(USER_KEY) ||
+            "null"
+        );
 
     if (!user) return;
 
-    const userName = $("#userName");
-    const userEmail = $("#userEmail");
+    const userName =
+        $("#userName");
+
+    const userEmail =
+        $("#userEmail");
 
     if (userName) {
-        userName.textContent = user.name || "User";
+        userName.textContent =
+            user.name || "User";
     }
 
     if (userEmail) {
-        userEmail.textContent = user.email || "";
+        userEmail.textContent =
+            user.email || "";
     }
-};
+}
 
-/*
-|--------------------------------------------------------------------------
-| Initialize
-|--------------------------------------------------------------------------
-*/
+/* =====================================================
+   INIT
+===================================================== */
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadUserProfile();
-});
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        protectPages();
+
+        initializeTabs();
+
+        initializeLogin();
+
+        initializeRegister();
+
+        loadUserProfile();
+    }
+);
