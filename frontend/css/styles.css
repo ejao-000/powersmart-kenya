@@ -1,0 +1,14 @@
+/* css/styles.css */
+
+.hidden-view {
+  display: none !important;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}

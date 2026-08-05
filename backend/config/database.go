@@ -35,11 +35,15 @@ func RunMigrations(db *sql.DB) {
 			password    TEXT NOT NULL,
 			meter_account TEXT UNIQUE NOT NULL,
 			meter_number  TEXT UNIQUE NOT NULL,
+			role        TEXT NOT NULL DEFAULT 'tenant',
 			created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
+		// Migration: Add role column to users table if it doesn't exist
+		`ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'tenant'`,
 		`CREATE TABLE IF NOT EXISTS meters (
 			id              TEXT PRIMARY KEY,
 			user_id         TEXT NOT NULL REFERENCES users(id),
+			landlord_id     TEXT REFERENCES users(id),
 			units_remaining REAL NOT NULL DEFAULT 0,
 			daily_avg_units REAL NOT NULL DEFAULT 0,
 			last_reading_at DATETIME,
@@ -48,6 +52,8 @@ func RunMigrations(db *sql.DB) {
 			topup_amount    INTEGER DEFAULT 200,
 			updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
+		// Migration: Add landlord_id column to meters table if it doesn't exist
+		`ALTER TABLE meters ADD COLUMN landlord_id TEXT REFERENCES users(id)`,
 		`CREATE TABLE IF NOT EXISTS tokens (
 			id            TEXT PRIMARY KEY,
 			user_id       TEXT NOT NULL REFERENCES users(id),

@@ -1,3 +1,8 @@
+// Package middleware provides shared HTTP middleware functions.
+//
+// This file will be extended to include role-based access control (RBAC) middleware
+// that verifies a user's role (tenant, landlord, admin) from their JWT claims
+// before allowing access to specific API endpoints.
 package middleware
 
 import (
@@ -5,12 +10,16 @@ import (
 	"net/http"
 	"strings"
 
+	"powersmart-backend/model"
 	"powersmart-backend/utils"
 )
 
 type contextKey string
 
-const userIDKey contextKey = "userID"
+const (
+	userIDKey contextKey = "userID"
+	userRoleKey contextKey = "userRole"
+)
 
 // RequireAuth validates the Authorization: Bearer <token> header.
 func RequireAuth(next http.Handler) http.Handler {
@@ -29,6 +38,7 @@ func RequireAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), userIDKey, claims.UserID)
+		ctx = context.WithValue(ctx, userRoleKey, claims.Role)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -39,6 +49,42 @@ func UserIDFromCtx(ctx context.Context) string {
 		return id
 	}
 	return ""
+}
+
+// UserRoleFromCtx extracts the authenticated user role from the request context.
+func UserRoleFromCtx(ctx context.Context) model.UserRole {
+	if role, ok := ctx.Value(userRoleKey).(model.UserRole); ok {
+		return role
+	}
+	return ""
+}
+
+// RequireRole is a middleware that restricts access to handlers based on user roles.
+func RequireRole(allowedRoles ...model.UserRole) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userRole := UserRoleFromCtx(r.Context())
+			if userRole == "" {
+				utils.RespondUnauthorized(w, "User role not found in context")
+				return
+			}
+
+			isAllowed := false
+			for _, role := range allowedRoles {
+				if userRole == role {
+					isAllowed = true
+					break
+				}
+			}
+
+			if !isAllowed {
+				utils.RespondForbidden(w, "Access denied: insufficient role")
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
 
 // Chain composes multiple middleware into a single handler wrapper.

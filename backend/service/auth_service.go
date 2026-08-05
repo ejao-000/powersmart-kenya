@@ -57,6 +57,7 @@ func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse,
 		Password:     string(hash),
 		MeterAccount: req.MeterAccount,
 		MeterNumber:  meterNumber,
+		Role:         model.RoleTenant, // Default role for new registrations
 		CreatedAt:    time.Now(),
 	}
 	if err := s.userRepo.Create(user); err != nil {
@@ -79,7 +80,7 @@ func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse,
 	}
 
 	// 6. Issue JWT
-	token, err := utils.GenerateJWT(user.ID)
+	token, err := utils.GenerateJWT(user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func (s *AuthService) Login(req *model.LoginRequest) (*model.AuthResponse, error
 		return nil, ErrInvalidCredentials
 	}
 
-	token, err := utils.GenerateJWT(user.ID)
+	token, err := utils.GenerateJWT(user.ID, user.Role)
 	if err != nil {
 		return nil, err
 	}

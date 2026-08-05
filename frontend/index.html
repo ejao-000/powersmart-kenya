@@ -3,195 +3,265 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>PowerSmart Kenya</title>
-
-  <link rel="stylesheet" href="styles.css">
+  <title>Portal Access | PowerSmart Kenya</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    .hidden-view { display: none !important; }
+  </style>
 </head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
 
-<body class="auth-body">
-
-  <div class="auth-wrapper">
-
-    <!-- ==================================
-         BRAND
-    =================================== -->
-
-    <div class="auth-brand">
-
-      <div class="logo">
-        ⚡
+  <!-- TOP BAR WITH BACK TO LANDING LINK -->
+  <header class="w-full border-b border-slate-200 bg-white/90 backdrop-blur-md py-4 px-6 shadow-sm">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <a href="landing.html" class="flex items-center gap-2 text-xs font-mono text-slate-600 hover:text-emerald-600 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>Back</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <div class="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 text-xs">⚡</div>
+        <span class="font-mono font-bold text-sm text-slate-900">PowerSmart Portal</span>
       </div>
-
-      <h1>
-        PowerSmart Kenya
-      </h1>
-
-      <p>
-        Smart Electricity Management System
-      </p>
-
     </div>
+  </header>
 
-    <!-- ==================================
-         AUTH CARD
-    =================================== -->
-
-    <div class="auth-card">
-
-      <!-- TABS -->
-
-      <div class="tab-buttons">
-
-        <button
-          type="button"
-          class="tab active"
-          id="loginTab">
-          Login
-        </button>
-
-        <button
-          type="button"
-          class="tab"
-          id="registerTab">
-          Sign Up
-        </button>
-
-      </div>
+  <!-- MAIN AUTH CONTAINER -->
+  <main class="flex-grow flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md bg-white border border-slate-200 p-8 rounded-3xl shadow-xl auth-card">
 
       <!-- MESSAGE AREA -->
+      <div id="authMessage" class="auth-message mb-4 text-xs font-mono text-center"></div>
 
-      <div
-        id="authMessage"
-        class="auth-message">
+      <!-- =====================================================
+            1. REGISTER VIEW (DEFAULT INITIAL VIEW)
+      ===================================================== -->
+      <div id="registerContainer" class="space-y-4">
+        <div>
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">New Registration</span>
+          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Create Account</h2>
+        </div>
+
+        <form id="registerForm" class="space-y-4" onsubmit="handleRegister(event)">
+          <!-- Select Account Type Dropdown -->
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="accountRole">Select Account Type</label>
+            <select id="accountRole" onchange="handleRoleChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500 cursor-pointer">
+              <option value="tenant">  </option>
+              <option value="tenant">Tenant / Consumer</option>
+              <option value="landlord">Landlord / Fleet Manager</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerName">Full Name</label>
+            <input type="text" id="registerName" placeholder="Emma Jane" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerEmail">Email Address</label>
+            <input type="email" id="registerEmail" placeholder="you@example.com" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerPhone">Phone Number</label>
+            <input type="tel" id="registerPhone" placeholder="+254700000000" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <!-- DYNAMIC ROLE-SPECIFIC FIELDS CONTAINER -->
+          <div id="signupDynamicFields" class="space-y-4"></div>
+
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerPassword">Password</label>
+            <input type="password" id="registerPassword" placeholder="Create Secure Password" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+
+          <button type="submit" id="registerSubmitBtn" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">Create Account</button>
+        </form>
+
+        <!-- Single Unified Sign In Link -->
+        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-center gap-2">
+          <span class="text-xs font-mono text-slate-500">Already have an account?</span>
+          <button type="button" onclick="switchView('unifiedLogin')" class="text-xs font-mono font-bold text-emerald-600 hover:text-emerald-700 underline">Sign In</button>
+        </div>
       </div>
 
-      <!-- ==================================
-           LOGIN FORM
-      =================================== -->
+      <!-- =====================================================
+            2. UNIFIED LOGIN VIEW (HIDDEN BY DEFAULT)
+      ===================================================== -->
+      <div id="unifiedLoginContainer" class="hidden-view space-y-4">
+        <div>
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">Portal Access</span>
+          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Sign In</h2>
+        </div>
 
-      <form
-        id="loginForm"
-        class="auth-form">
+        <form id="unifiedLoginForm" class="space-y-4" onsubmit="handleUnifiedLogin(event)">
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginRole">Account Type</label>
+            <select id="loginRole" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500 cursor-pointer">
+              <option value="tenant">Tenant / Consumer</option>
+              <option value="landlord">Landlord / Fleet Manager</option>
+            </select>
+          </div>
 
-        <h2>
-          Welcome Back
-        </h2>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginEmail">Email </label>
+            <input type="text" id="loginEmail" placeholder="you@example.com" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
 
-        <label for="loginEmail">
-          Email
-        </label>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
 
-        <input
-          type="email"
-          id="loginEmail"
-          placeholder="you@example.com"
-          required>
+          <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">Sign In</button>
+        </form>
 
-        <label for="loginPassword">
-          Password
-        </label>
+        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-between">
+          <button type="button" onclick="switchView('register')" class="text-xs font-mono text-slate-500 hover:text-emerald-600">← Back to Sign Up</button>
+        </div>
+      </div>
 
-        <input
-          type="password"
-          id="loginPassword"
-          placeholder="Password"
-          required>
+      <!-- =====================================================
+            3. ADMIN LOGIN VIEW (HIDDEN BY DEFAULT - NO PUBLIC LINK)
+      ===================================================== -->
+      <div id="adminContainer" class="hidden-view space-y-4">
+        <div>
+          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-600">Restricted Access</span>
+          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Admin Portal Login</h2>
+        </div>
 
-        <button
-          type="submit"
-          class="primary-button">
-          Login
-        </button>
+        <form id="adminForm" class="space-y-4" onsubmit="handleAdminLogin(event)">
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="adminEmail">Admin ID / Email</label>
+            <input type="text" id="adminEmail" placeholder="admin@powersmart.ke" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-rose-500">
+          </div>
 
-      </form>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="adminPassword">Master Security Key</label>
+            <input type="password" id="adminPassword" placeholder="••••••••••••" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-rose-500">
+          </div>
 
-      <!-- ==================================
-           REGISTER FORM
-      =================================== -->
+          <button type="submit" id="adminSubmitBtn" class="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-mono font-bold text-xs transition-all shadow-lg shadow-slate-900/20">Access Admin Dashboard</button>
+        </form>
 
-      <form
-        id="registerForm"
-        class="auth-form hidden">
-
-        <h2>
-          Create Account
-        </h2>
-
-        <label for="registerName">
-          Full Name
-        </label>
-
-        <input
-          type="text"
-          id="registerName"
-          placeholder="Emma Jane"
-          required>
-
-        <label for="registerEmail">
-          Email Address
-        </label>
-
-        <input
-          type="email"
-          id="registerEmail"
-          placeholder="you@example.com"
-          required>
-
-        <label for="registerPhone">
-          Phone Number
-        </label>
-
-        <input
-          type="tel"
-          id="registerPhone"
-          placeholder="254700000000"
-          required>
-
-        <label for="registerMeter">
-          Meter Number
-        </label>
-
-        <input
-          type="text"
-          id="registerMeter"
-          placeholder="37101122093"
-          required>
-
-        <label for="registerPassword">
-          Password
-        </label>
-
-        <input
-          type="password"
-          id="registerPassword"
-          placeholder="Create Password"
-          required>
-
-        <button
-          type="submit"
-          class="primary-button">
-          Create Account
-        </button>
-
-      </form>
+        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-center gap-2">
+          <span class="text-xs font-mono text-slate-500">Looking for standard portal?</span>
+          <button type="button" onclick="switchView('register')" class="text-xs font-mono font-bold text-emerald-600 hover:text-emerald-700 underline">User Sign Up</button>
+        </div>
+      </div>
 
     </div>
+  </main>
 
-    <!-- ==================================
-         FOOTER
-    =================================== -->
+  <!-- FOOTER -->
+  <footer class="w-full border-t border-slate-200 bg-white py-6 px-6 text-center shadow-inner">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-slate-500 gap-4">
+      <span>© 2026 • PowerSmart Kenya. All rights reserved.</span>
+      <span class="text-slate-400">Secure Client Interface</span>
+    </div>
+  </footer>
 
-    <footer class="auth-footer">
+  <!-- VIEW SWITCHING & AUTH SCRIPT -->
+  <script>
+    function switchView(viewType) {
+      const registerContainer = document.getElementById('registerContainer');
+      const unifiedLoginContainer = document.getElementById('unifiedLoginContainer');
+      const adminContainer = document.getElementById('adminContainer');
+      const authMessage = document.getElementById('authMessage');
+      
+      if (authMessage) authMessage.innerText = '';
 
-      © 2026 - PowerSmart Kenya.
-      All rights reserved.
+      if (registerContainer) registerContainer.classList.add('hidden-view');
+      if (unifiedLoginContainer) unifiedLoginContainer.classList.add('hidden-view');
+      if (adminContainer) adminContainer.classList.add('hidden-view');
 
-    </footer>
+      if (viewType === 'unifiedLogin') {
+        unifiedLoginContainer.classList.remove('hidden-view');
+      } else if (viewType === 'admin') {
+        adminContainer.classList.remove('hidden-view');
+      } else {
+        registerContainer.classList.remove('hidden-view');
+      }
+    }
 
-  </div>
+    function handleRoleChange() {
+      const roleSelect = document.getElementById('accountRole');
+      const registerSubmitBtn = document.getElementById('registerSubmitBtn');
+      const dynamicFieldsContainer = document.getElementById('signupDynamicFields');
 
-  <script src="auth.js"></script>
+      if (!roleSelect || !dynamicFieldsContainer) return;
 
+      if (roleSelect.value === 'tenant') {
+        if (registerSubmitBtn) registerSubmitBtn.innerText = "Create Account";
+        dynamicFieldsContainer.innerHTML = `
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="meterNumber">Smart Meter Number</label>
+            <input type="text" id="meterNumber" placeholder="KPLC-TR-948201" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="houseDetails">House / Apartment Number</label>
+            <input type="text" id="houseDetails" placeholder="Block B, Apt 402" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+        `;
+      } else {
+        if (registerSubmitBtn) registerSubmitBtn.innerText = "Create Account";
+        dynamicFieldsContainer.innerHTML = `
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="propertyName">Property Name / Building</label>
+            <input type="text" id="propertyName" placeholder="Sunrise Heights Estate" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="totalUnits">Total Managed Units</label>
+            <input type="number" id="totalUnits" placeholder="24" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
+          </div>
+        `;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      handleRoleChange();
+    });
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const role = document.getElementById('accountRole').value;
+      const emailInput = document.getElementById('registerEmail').value;
+      
+      if (role === 'tenant') {
+        localStorage.setItem('powersmart_session', 'active_tenant_token');
+        localStorage.setItem('tenant_email', emailInput);
+        window.location.replace('tenant-dashboard.html');
+      } else {
+        localStorage.setItem('powersmart_landlord_session', 'active_landlord_token');
+        localStorage.setItem('landlord_email', emailInput);
+        window.location.replace('landlord.html');
+      }
+    }
+
+    function handleUnifiedLogin(e) {
+      e.preventDefault();
+      const role = document.getElementById('loginRole').value;
+      const emailInput = document.getElementById('loginEmail').value;
+
+      if (role === 'tenant') {
+        localStorage.setItem('powersmart_session', 'active_tenant_token');
+        localStorage.setItem('tenant_email', emailInput);
+        window.location.replace('tenant-dashboard.html');
+      } else {
+        localStorage.setItem('powersmart_landlord_session', 'active_landlord_token');
+        localStorage.setItem('landlord_email', emailInput);
+        window.location.replace('landlord.html');
+      }
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      localStorage.setItem('powersmart_admin', 'active');
+      window.location.replace('admin-dashboard.html');
+    }
+  </script>
 </body>
 </html>

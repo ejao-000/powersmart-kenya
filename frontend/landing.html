@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerSmart Kenya | Smart Electricity Management & Vending</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-nav {
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .page-section {
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .page-section.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Hidden Trigger on the Right Header */
+    .hidden-theme-trigger {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .hidden-theme-trigger:hover,
+    header:hover .hidden-theme-trigger {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body id="pageBody" class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-between transition-colors duration-300">
+
+  <!-- =====================================================
+       HEADER NAVIGATION BAR
+  ===================================================== -->
+  <header class="fixed top-0 left-0 right-0 z-50 glass-nav border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0B0F19]/90 shadow-sm transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Company Logo Link -->
+      <a href="#home" onclick="switchPage('home', event)" class="flex items-center gap-3 group cursor-pointer">
+        <div class="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-md group-hover:scale-105 transition-transform">
+          ⚡
+        </div>
+        <div>
+          <span class="font-mono font-bold text-base tracking-tight text-slate-900 dark:text-slate-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">PowerSmart</span>
+          <span class="block text-[10px] font-mono text-slate-500 dark:text-slate-400 tracking-widest uppercase">Kenya Utility Engine</span>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl">
+        <button onclick="switchPage('home', event)" data-nav="home" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 border border-emerald-500/30">Home</button>
+        <button onclick="switchPage('about', event)" data-nav="about" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">About Us</button>
+        <button onclick="switchPage('services', event)" data-nav="services" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Services</button>
+        <button onclick="switchPage('pricing', event)" data-nav="pricing" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Pricing</button>
+        <button onclick="switchPage('blog', event)" data-nav="blog" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Resources</button>
+        <button onclick="switchPage('contact', event)" data-nav="contact" class="nav-link px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">Contact</button>
+      </nav>
+
+      <!-- Right Header Actions (Portal Login + Hidden Theme Switcher Button) -->
+      <div class="flex items-center gap-3">
+        <!-- Hidden/Discrete Theme Switcher on Right Header -->
+        <button onclick="toggleTheme()" id="hiddenThemeTrigger" class="hidden-theme-trigger px-2.5 py-1.5 rounded-xl bg-slate-200/70 dark:bg-slate-800 text-[10px] font-mono text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:text-emerald-600 transition-all flex items-center gap-1.5" title="Toggle Light/Dark Theme">
+          <span id="themeIcon">🌙</span> <span id="themeText"> </span>
+        </button>
+
+        <a href="index.html" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/20">
+          <span>Login</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- =====================================================
+       MAIN DYNAMIC SPA CONTENT CONTAINER
+  ===================================================== -->
+  <main class="flex-grow pt-28 pb-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+
+    <!-- 1. HOME -->
+    <section id="home" class="page-section active">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-12">
+        <div class="space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Next-Gen Token Vending & Fleet Management
+          </div>
+          <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            Automating Power & Utility Control Across <span class="text-emerald-600 dark:text-emerald-400">Kenya</span>.
+          </h1>
+          <p class="text-base text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+            Empowering tenants with real-time meter telemetry, landlords with multi-property bulk distributors, and automated M-Pesa STK push top-ups. Never get caught in the dark again.
+          </p>
+          <div class="flex flex-wrap gap-4 pt-2">
+            <button onclick="switchPage('services', event)" class="px-6 py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-sm hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">
+              Explore Services
+            </button>
+            <a href="index.html" class="px-6 py-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-mono font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 transition-all shadow-sm">
+              Launch Portal App
+            </a>
+          </div>
+        </div>
+
+        <!-- Grid Image Card -->
+        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xl relative group">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent z-10"></div>
+          <img src="70071a95fdcf3d892cb115d834ce26d3.webp" alt="Power Grid Telemetry Infrastructure" class="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-700">
+          <div class="absolute bottom-0 left-0 right-0 p-6 z-20 text-white">
+            <span class="text-[10px] font-mono uppercase tracking-widest px-2.5 py-1 rounded bg-emerald-500/30 border border-emerald-400/30 text-emerald-300">Live Grid Engine</span>
+            <h3 class="text-lg font-mono font-bold mt-2">National Grid Telemetry & Substation Control</h3>
+            <p class="text-xs text-slate-300 mt-1 font-sans">Automated remote switching and real-time load distribution monitoring deployed across Kenya.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ABOUT US -->
+    <section id="about" class="page-section">
+      <div class="max-w-3xl mx-auto space-y-8 py-8">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">About PowerSmart Kenya</span>
+          <h2 class="text-3xl font-extrabold text-slate-950 dark:text-slate-100 mt-2">Engineering reliability into every kilowatt.</h2>
+        </div>
+        <div class="space-y-4 text-slate-600 dark:text-slate-300 font-sans leading-relaxed">
+          <p>
+            Founded in Nairobi, PowerSmart Kenya was built to solve the persistent friction points in urban utility management. From apartment tenants struggling with unverified token generation to landlords managing dozens of detached meters across multi-residential blocks, our platform unifies the entire ecosystem.
+          </p>
+          <p>
+            Our core mission is to bridge smart energy IoT hardware with instantaneous M-Pesa mobile transactions, giving users precise forecasting, consumption tracking, and absolute transparency.
+          </p>
+        </div>
+        <div class="grid grid-cols-3 gap-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+          <div>
+            <p class="text-2xl font-mono font-extrabold text-emerald-600 dark:text-emerald-400">1,400+</p>
+            <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">Active Meters</p>
+          </div>
+          <div>
+            <p class="text-2xl font-mono font-extrabold text-emerald-600 dark:text-emerald-400">99.9%</p>
+            <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">Vending Success</p>
+          </div>
+          <div>
+            <p class="text-2xl font-mono font-extrabold text-emerald-600 dark:text-emerald-400">24/7</p>
+            <p class="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">Telemetry Support</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. SERVICES -->
+    <section id="services" class="page-section">
+      <div class="space-y-8 py-8">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">What We Offer</span>
+          <h2 class="text-3xl font-extrabold text-slate-950 dark:text-slate-100 mt-2">Platform Services & Core Modules</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div class="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 font-mono font-bold">01</div>
+            <h3 class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mb-2">Tenant Consumer Portal</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 font-sans leading-relaxed">Instant M-Pesa STK token generation, live appliance usage breakdown, and predictive exhaustion warnings.</p>
+          </div>
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div class="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-4 font-mono font-bold">02</div>
+            <h3 class="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 mb-2">Landlord Fleet Management</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 font-sans leading-relaxed">Multi-property meter overview, bulk token distribution across multiple housing units, and automated collection logs.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PRICING -->
+    <section id="pricing" class="page-section">
+      <div class="space-y-8 py-8">
+        <div class="text-center max-w-xl mx-auto">
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Transparent Pricing</span>
+          <h2 class="text-3xl font-extrabold text-slate-950 dark:text-slate-100 mt-2">Simple, upfront utility plans</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm flex flex-col justify-between">
+            <div>
+              <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">Tenant Plan</span>
+              <h3 class="text-3xl font-mono font-extrabold text-slate-900 dark:text-slate-100 mt-2">Free <span class="text-sm font-normal text-slate-500">/ forever</span></h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-3">Ideal for residential tenants tracking their prepaid meter usage and buying tokens instantly.</p>
+              <ul class="space-y-3 mt-6 text-xs font-mono text-slate-700 dark:text-slate-300">
+                <li class="flex items-center gap-2">✓ Instant M-Pesa STK Top-ups</li>
+                <li class="flex items-center gap-2">✓ Live Consumption Estimator</li>
+                <li class="flex items-center gap-2">✓ Token Vault History</li>
+              </ul>
+            </div>
+            <a href="index.html" class="mt-8 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-center font-mono font-bold text-xs text-slate-800 dark:text-slate-200 transition-all border border-slate-300 dark:border-slate-700">Get Started Free</a>
+          </div>
+
+          <div class="rounded-3xl bg-white dark:bg-slate-900 border-2 border-emerald-500/50 p-8 shadow-xl flex flex-col justify-between relative">
+            <div class="absolute -top-3 right-8 px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-mono font-bold uppercase tracking-wider shadow">Most Popular</div>
+            <div>
+              <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest font-bold">Landlord Fleet Plan</span>
+              <h3 class="text-3xl font-mono font-extrabold text-slate-900 dark:text-slate-100 mt-2">KSh 1,500 <span class="text-sm font-normal text-slate-500">/ month</span></h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-3">Built for property owners and managers overseeing multiple units and rental blocks.</p>
+              <ul class="space-y-3 mt-6 text-xs font-mono text-slate-700 dark:text-slate-300">
+                <li class="flex items-center gap-2">✓ Multi-Meter Fleet Dashboard</li>
+                <li class="flex items-center gap-2">✓ Bulk Token Distributor</li>
+                <li class="flex items-center gap-2">✓ Automated Tenant Billing Logs</li>
+              </ul>
+            </div>
+            <a href="index.html" class="mt-8 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-center font-mono font-bold text-xs text-white transition-all shadow-lg shadow-emerald-600/20">Upgrade Fleet</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. BLOG / RESOURCES -->
+    <section id="blog" class="page-section">
+      <div class="space-y-8 py-8">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Resources & Insights</span>
+          <h2 class="text-3xl font-extrabold text-slate-950 dark:text-slate-100 mt-2">Latest Articles & Case Studies</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">CASE STUDY • JULY 2026</span>
+            <h3 class="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-1 mb-2">How Sunrise Apartments Reduced Power Disconnections by 94%</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 font-sans leading-relaxed">Discover how automated threshold notifications and bulk landlord distribution streamlined rent and utility collections.</p>
+          </div>
+          <div class="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <span class="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">GUIDE • ENERGY EFFICIENCY</span>
+            <h3 class="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-1 mb-2">Optimizing Household Appliance Loads During Peak Hours</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 font-sans leading-relaxed">Learn practical strategies to manage heavy kilowatt consumers like water heaters and induction cookers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. CONTACT -->
+    <section id="contact" class="page-section">
+      <div class="max-w-2xl mx-auto space-y-8 py-8">
+        <div>
+          <span class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Get in Touch</span>
+          <h2 class="text-3xl font-extrabold text-slate-950 dark:text-slate-100 mt-2">We are here to assist your utility needs</h2>
+        </div>
+        <div class="rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 shadow-sm space-y-4">
+          <div>
+            <label class="block text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 uppercase">Your Name</label>
+            <input type="text" placeholder="Emma Jane" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 uppercase">Email Address</label>
+            <input type="email" placeholder="you@example.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="block text-xs font-mono text-slate-500 dark:text-slate-400 mb-1 uppercase">Message</label>
+            <textarea rows="4" placeholder="How can we help you?" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500"></textarea>
+          </div>
+          <button onclick="alert('Message sent successfully! Our support team will reach out.');" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">Send Inquiry</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================
+       FOOTER
+  ===================================================== -->
+  <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-6 transition-colors duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400 gap-4">
+      <p>© 2026 PowerSmart Kenya. All rights reserved.</p>
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Login</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- SPA & THEME SWITCHING SCRIPT -->
+  <script>
+    function toggleTheme() {
+      const htmlEl = document.documentElement;
+      const bodyEl = document.getElementById('pageBody');
+      const themeText = document.getElementById('themeText');
+      const themeIcon = document.getElementById('themeIcon');
+
+      if (htmlEl.classList.contains('dark')) {
+        htmlEl.classList.remove('dark');
+        bodyEl.className = "bg-slate-50 text-slate-800 font-sans antialiased selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-between transition-colors duration-300";
+        themeText.innerText = "Dark Mode";
+        themeIcon.innerText = "🌙";
+        localStorage.setItem('theme', 'light');
+      } else {
+        htmlEl.classList.add('dark');
+        bodyEl.className = "bg-[#0B0F19] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-between transition-colors duration-300";
+        themeText.innerText = "Light Mode";
+        themeIcon.innerText = "☀️";
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // Load saved preference on start
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('pageBody').className = "bg-[#0B0F19] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-between transition-colors duration-300";
+      document.getElementById('themeText').innerText = "Light Mode";
+      document.getElementById('themeIcon').innerText = "☀️";
+    }
+
+    function switchPage(pageId, event) {
+      if (event) event.preventDefault();
+      const sections = document.querySelectorAll('.page-section');
+      sections.forEach(sec => sec.classList.remove('active'));
+
+      const target = document.getElementById(pageId);
+      if (target) {
+        setTimeout(() => { target.classList.add('active'); }, 50);
+      }
+
+      const navButtons = document.querySelectorAll('.nav-link');
+      navButtons.forEach(btn => {
+        btn.classList.remove('text-emerald-700', 'dark:text-emerald-300', 'bg-emerald-500/15', 'border', 'border-emerald-500/30', 'font-bold');
+        btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-semibold');
+        if (btn.getAttribute('data-nav') === pageId) {
+          btn.classList.add('text-emerald-700', 'dark:text-emerald-300', 'bg-emerald-500/15', 'border', 'border-emerald-500/30', 'font-bold');
+          btn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-semibold');
+        }
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

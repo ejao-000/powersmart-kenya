@@ -1,8 +1,21 @@
+// Package model defines the data structures for the PowerSmart Kenya application.
+//
+// This file will be extended to include a 'Role' field in the User struct
+// to support role-based access control for tenant, landlord, and admin functionalities.
 package model
 
 import "time"
 
 // User represents a registered Kenya Power customer.
+type UserRole string
+
+const (
+	RoleTenant  UserRole = "tenant"
+	RoleLandlord UserRole = "landlord"
+	RoleAdmin   UserRole = "admin"
+)
+
+// User represents a registered PowerSmart Kenya user with an assigned role.
 type User struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
@@ -11,6 +24,7 @@ type User struct {
 	Password      string    `json:"-"` // never serialised to JSON
 	MeterAccount  string    `json:"meter_account"` // KP account number used at registration
 	MeterNumber   string    `json:"meter_number"`  // physical meter serial
+	Role          UserRole  `json:"role"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
