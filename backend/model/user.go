@@ -36,6 +36,7 @@ type RegisterRequest struct {
 	Phone        string `json:"phone"        validate:"required"`
 	Password     string `json:"password"     validate:"required,min=8"`
 	MeterAccount string `json:"meter_account" validate:"required"` // e.g. "1234567890"
+	Role         string `json:"role"`                              // optional; "tenant" (default) | "landlord"
 }
 
 // LoginRequest is the payload for POST /api/auth/login.

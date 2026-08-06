@@ -32,6 +32,14 @@ func init() {
 				}
 			}
 			clientsMu.Unlock()
+
+			authClientsMu.Lock()
+			for ip, c := range authClients {
+				if time.Since(c.lastSeen) > 3*time.Minute {
+					delete(authClients, ip)
+				}
+			}
+			authClientsMu.Unlock()
 		}
 	}()
 }
@@ -50,22 +58,56 @@ func getLimiter(ip string) *rate.Limiter {
 	return l
 }
 
+// clientIP extracts the caller's IP, honouring X-Forwarded-For when behind a proxy.
+func clientIP(r *http.Request) string {
+	ip := r.Header.Get("X-Forwarded-For")
+	if ip == "" {
+		ip, _, _ = net.SplitHostPort(r.RemoteAddr)
+	} else {
+		ip = strings.TrimSpace(strings.Split(ip, ",")[0])
+	}
+	return ip
+}
+
 // RateLimit limits requests per client IP.
 func RateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Prefer X-Forwarded-For when behind a proxy
-		ip := r.Header.Get("X-Forwarded-For")
-		if ip == "" {
-			ip, _, _ = net.SplitHostPort(r.RemoteAddr)
-		} else {
-			ip = strings.TrimSpace(strings.Split(ip, ",")[0])
-		}
-
-		if !getLimiter(ip).Allow() {
+		if !getLimiter(clientIP(r)).Allow() {
 			utils.RespondError(w, http.StatusTooManyRequests, "Rate limit exceeded")
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
 
+// authClient is a second limiter map dedicated to authentication endpoints so
+// a login/register flood cannot be hidden behind general API traffic.
+var authClients = make(map[string]*client)
+var authClientsMu sync.Mutex
+
+// getAuthLimiter returns a strict limiter (5 req/s, burst 10) per IP.
+func getAuthLimiter(ip string) *rate.Limiter {
+	authClientsMu.Lock()
+	defer authClientsMu.Unlock()
+
+	if c, ok := authClients[ip]; ok {
+		c.lastSeen = time.Now()
+		return c.limiter
+	}
+
+	l := rate.NewLimiter(rate.Every(time.Second/5), 10) // 5 req/s, burst 10
+	authClients[ip] = &client{limiter: l, lastSeen: time.Now()}
+	return l
+}
+
+// RateLimitAuth applies a stricter per-IP limiter to login/register endpoints
+// to slow brute-force attempts.
+func RateLimitAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !getAuthLimiter(clientIP(r)).Allow() {
+			utils.RespondError(w, http.StatusTooManyRequests, "Too many attempts. Please try again later.")
+			return
+		}
 		next.ServeHTTP(w, r)
 	})
 }

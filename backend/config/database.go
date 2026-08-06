@@ -44,6 +44,7 @@ func RunMigrations(db *sql.DB) {
 			id              TEXT PRIMARY KEY,
 			user_id         TEXT NOT NULL REFERENCES users(id),
 			landlord_id     TEXT REFERENCES users(id),
+			meter_number    TEXT,
 			units_remaining REAL NOT NULL DEFAULT 0,
 			daily_avg_units REAL NOT NULL DEFAULT 0,
 			last_reading_at DATETIME,
@@ -54,6 +55,14 @@ func RunMigrations(db *sql.DB) {
 		)`,
 		// Migration: Add landlord_id column to meters table if it doesn't exist
 		`ALTER TABLE meters ADD COLUMN landlord_id TEXT REFERENCES users(id)`,
+		// Migration: Add meter_number column to meters table if it doesn't exist
+		`ALTER TABLE meters ADD COLUMN meter_number TEXT`,
+		`CREATE TABLE IF NOT EXISTS usage_history (
+			id              TEXT PRIMARY KEY,
+			meter_id        TEXT NOT NULL REFERENCES meters(id),
+			units_remaining REAL NOT NULL,
+			recorded_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
 		`CREATE TABLE IF NOT EXISTS tokens (
 			id            TEXT PRIMARY KEY,
 			user_id       TEXT NOT NULL REFERENCES users(id),

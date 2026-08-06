@@ -3,537 +3,401 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Landlord & Property Manager Dashboard | PowerSmart Kenya</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for portfolio analytics graph -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Leaflet CSS & JS for Multi-Property Portfolio Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
+  <title>Landlord Dashboard · PowerSmart Kenya</title>
+  <meta name="description" content="Landlord multi-meter fleet management.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- SECURITY GUARD: Protects dashboard from unauthenticated access -->
-  <script>
-    if (localStorage.getItem('powersmart_landlord_session') !== 'active_landlord_token') {
-      window.location.replace('index.html');
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/portal.css">
   <style>
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .settings-section { display: none; }
-    .settings-section.active { display: block; }
-    #portfolioMap { height: 320px; width: 100%; border-radius: 1rem; z-index: 10; }
+    .bulk-preset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .bulk-preset button { padding: 12px 6px; border-radius: var(--r-sm); cursor: pointer; font: inherit; font-weight: 700; font-size: 13px; background: var(--bg-soft); color: var(--text); border: 1.5px solid var(--border-soft); transition: all var(--t-fast); }
+    .bulk-preset button.selected { border-color: var(--accent); background: rgba(245, 158, 11, 0.12); color: var(--accent-strong); }
+    .mini-token { font-family: "JetBrains Mono", monospace; }
   </style>
 </head>
-<body class="bg-blue-950 text-white font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-blue-950">
+<body class="page-shell">
 
-  <!-- TOP BAR -->
-  <header class="w-full border-b border-blue-800 bg-blue-900/90 backdrop-blur-md py-4 px-6 shadow-md sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <div class="h-7 w-7 rounded-lg bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-400 text-xs font-bold">🏢</div>
-        <span class="font-mono font-bold text-sm text-white">PowerSmart Landlord Portal</span>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🏢</div>
+      <div>
+        <span class="brand-name">PowerSmart</span>
+        <span class="brand-sub">Landlord Fleet Portal</span>
       </div>
-      <div class="flex items-center gap-4">
-        <span id="welcomeEmail" class="text-xs font-mono text-blue-200 hidden sm:inline"> User Session</span>
-        <button onclick="handleLogout()" class="text-xs font-mono text-amber-300 hover:text-amber-400 border border-amber-400/30 bg-amber-400/10 px-3 py-1.5 rounded-lg transition-colors font-bold">
-          Sign Out
-        </button>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px">
+      <div style="text-align:right">
+        <div id="userName" class="mono" style="font-size:12.5px; font-weight:700">—</div>
+        <div id="userEmail" style="font-size:11px; color:var(--text-faint)">—</div>
       </div>
+      <button class="btn btn-ghost btn-sm" onclick="PowerSmart.logout()">Sign out</button>
     </div>
   </header>
 
-  <!-- MAIN DASHBOARD CONTAINER WITH LEFT SIDEBAR LAYOUT -->
-  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-    
-    <!-- LEFT SIDEBAR NAVIGATION BUTTONS WITH SMOOTH TRANSITION -->
-    <aside class="md:col-span-1 bg-blue-900/80 border border-blue-800 p-4 rounded-3xl shadow-lg space-y-2 sticky top-24 backdrop-blur-md">
-      <div class="px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Portfolio Management</div>
-      <button onclick="switchTab('portfolio')" id="btn-portfolio" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-amber-400 text-blue-950 shadow-md shadow-amber-400/20 transition-all flex items-center gap-3">
-        <span>🏢</span> Multi-Meter Portfolio
-      </button>
-      <button onclick="switchTab('automated')" id="btn-automated" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-blue-950 text-blue-200 hover:bg-blue-800/50 transition-all flex items-center gap-3 border border-blue-800">
-        <span>⚡</span> Automated Token Workflow
-      </button>
-      <button onclick="switchTab('analytics')" id="btn-analytics" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-blue-950 text-blue-200 hover:bg-blue-800/50 transition-all flex items-center gap-3 border border-blue-800">
-        <span>📊</span> Oversight & Anomaly Alerts
-      </button>
-      <button onclick="switchTab('backup')" id="btn-backup" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-blue-950 text-blue-200 hover:bg-blue-800/50 transition-all flex items-center gap-3 border border-blue-800">
-        <span>📂</span> Backup & Audit Records
-      </button>
-      <button onclick="switchTab('settings')" id="btn-settings" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-blue-950 text-blue-200 hover:bg-blue-800/50 transition-all flex items-center gap-3 border-t border-blue-800 mt-2 pt-4">
-        <span>⚙️</span> Landlord Settings
-      </button>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-label">Portfolio Management</div>
+        <button class="nav-btn active" data-tab="portfolio"><span class="ico">🏢</span> Portfolio</button>
+        <button class="nav-btn" data-tab="workflow"><span class="ico">⚡</span> Token Workflow</button>
+        <button class="nav-btn" data-tab="audit"><span class="ico">📂</span> Oversight &amp; Audit</button>
+        <button class="nav-btn" data-tab="settings"><span class="ico">⚙️</span> Settings</button>
+      </div>
+      <div class="sidebar-footer">
+        <button class="nav-btn" onclick="PowerSmart.logout()"><span class="ico">🚪</span> Sign out</button>
+      </div>
     </aside>
 
-    <!-- RIGHT CONTENT AREA -->
-    <div class="md:col-span-3 space-y-6">
-      
-      <!-- HEADER INTRO BAR -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-blue-900/80 border border-blue-800 p-6 rounded-3xl shadow-lg backdrop-blur-md">
+    <main class="content">
+      <div class="page-head">
         <div>
-          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Multi-Unit Property Management</span>
-          <h1 class="text-2xl font-mono font-extrabold text-white mt-1">Landlord Dashboard</h1>
+          <div class="eyebrow">Multi-Unit Property Management</div>
+          <h1>Landlord Dashboard</h1>
         </div>
-        <div class="flex items-center gap-3 bg-blue-950 border border-blue-800 p-3 rounded-2xl">
-          <div class="h-3 w-3 rounded-full bg-amber-400 animate-pulse"></div>
-          <div>
-            <div class="text-[10px] font-mono text-blue-300 uppercase">Active Properties</div>
-            <div class="text-xs font-mono font-bold text-white">5 Units Managed (Sunrise Heights)</div>
-          </div>
-        </div>
+        <div class="pill pill-warn"><span class="dot dot-warn"></span> Fleet Manager Session</div>
       </div>
 
-      <!-- TAB 1: MULTI-METER PORTFOLIO MANAGEMENT -->
-      <section id="tab-portfolio" class="tab-content active space-y-6">
-        <div class="bg-blue-900/80 border border-blue-800 p-8 rounded-3xl shadow-lg backdrop-blur-md space-y-6">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-blue-800 pb-4">
+      <!-- ── PORTFOLIO ────────────────────────────────────────────── -->
+      <section class="tab-panel active" data-panel="portfolio">
+        <div class="grid grid-4">
+          <div class="stat">
+            <div class="stat-ico">📟</div>
+            <div class="stat-label">Your active meter</div>
+            <div class="stat-value info" id="pMeterNumber">—</div>
+            <div class="stat-hint" id="pMeterBalance">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-ico">🧾</div>
+            <div class="stat-label">Tokens purchased</div>
+            <div class="stat-value" id="pTokens">—</div>
+            <div class="stat-hint">all time</div>
+          </div>
+          <div class="stat">
+            <div class="stat-ico">💵</div>
+            <div class="stat-label">Total vended</div>
+            <div class="stat-value accent" id="pTotalVended">—</div>
+            <div class="stat-hint">across all purchases</div>
+          </div>
+          <div class="stat">
+            <div class="stat-ico">⏳</div>
+            <div class="stat-label">Est. days remaining</div>
+            <div class="stat-value" id="pDaysLeft">—</div>
+            <div class="stat-hint" id="pDepletion">—</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
             <div>
-              <h2 class="text-2xl font-mono font-extrabold text-white">Multi-Meter Portfolio Overview</h2>
-              <p class="text-xs font-mono text-blue-200 mt-1">Consolidated view of all sub-meters, tenant leases, and active access roles.</p>
+              <div class="card-title">Fleet provisioning</div>
+              <div class="card-sub">Link tenant meter accounts to your fleet for consolidated vending. Reach out to support to provision additional units.</div>
             </div>
-            <button onclick="addNewUnitModal()" class="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-blue-950 text-xs font-mono font-bold rounded-xl transition-all shadow-md shadow-amber-400/20">
-              ➕ Register New Property Unit
-            </button>
           </div>
-
-          <!-- Portfolio Map Container -->
-          <div class="space-y-3">
-            <span class="text-xs font-mono font-bold uppercase text-amber-400">Portfolio Property Locations Map</span>
-            <div id="portfolioMap"></div>
-          </div>
-
-          <!-- Units Table & Role Management -->
-          <div class="space-y-3 font-mono text-xs">
-            <span class="text-xs font-mono font-bold uppercase text-amber-400">Managed Sub-Meters & Tenant Assignments</span>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="bg-blue-950 text-blue-200 border border-blue-800">
-                    <th class="p-3 rounded-l-xl">Unit & Meter</th>
-                    <th class="p-3">Tenant Assigned</th>
-                    <th class="p-3">Balance (kWh)</th>
-                    <th class="p-3">Lease Status</th>
-                    <th class="p-3 rounded-r-xl text-right">Access Control</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-blue-800/50">
-                  <tr class="hover:bg-blue-800/30">
-                    <td class="p-3 font-bold text-white">Apt 101<br><span class="text-[10px] font-normal text-blue-300">KPLC-TR-100124</span></td>
-                    <td class="p-3 text-blue-100">Grace Akinyi<br><span class="text-[10px] text-blue-300">+254 722 111 222</span></td>
-                    <td class="p-3 text-amber-400 font-bold">14.2 kWh</td>
-                    <td class="p-3"><span class="px-2 py-1 bg-amber-400/10 border border-amber-400/30 text-amber-300 rounded-lg">Active Lease</span></td>
-                    <td class="p-3 text-right">
-                      <button onclick="toggleTenantAccess('101')" id="access-btn-101" class="px-3 py-1.5 bg-rose-500/20 border border-rose-400/30 text-rose-300 rounded-lg font-bold hover:bg-rose-500/30 transition-colors">Revoke Access</button>
-                    </td>
-                  </tr>
-                  <tr class="hover:bg-blue-800/30">
-                    <td class="p-3 font-bold text-white">Apt 202<br><span class="text-[10px] font-normal text-blue-300">KPLC-TR-200392</span></td>
-                    <td class="p-3 text-blue-100">Brian Ochieng<br><span class="text-[10px] text-blue-300">+254 733 444 555</span></td>
-                    <td class="p-3 text-amber-300 font-bold">3.8 kWh ⚠️</td>
-                    <td class="p-3"><span class="px-2 py-1 bg-amber-400/10 border border-amber-400/30 text-amber-300 rounded-lg">Active Lease</span></td>
-                    <td class="p-3 text-right">
-                      <button onclick="toggleTenantAccess('202')" id="access-btn-202" class="px-3 py-1.5 bg-rose-500/20 border border-rose-400/30 text-rose-300 rounded-lg font-bold hover:bg-rose-500/30 transition-colors">Revoke Access</button>
-                    </td>
-                  </tr>
-                  <tr class="hover:bg-blue-800/30">
-                    <td class="p-3 font-bold text-white">Apt 304<br><span class="text-[10px] font-normal text-blue-300">KPLC-TR-300812</span></td>
-                    <td class="p-3 text-blue-300">Vacant / Unassigned<br><span class="text-[10px] text-blue-400">Ready for lease</span></td>
-                    <td class="p-3 text-blue-400">0.0 kWh</td>
-                    <td class="p-3"><span class="px-2 py-1 bg-blue-950 border border-blue-800 text-blue-300 rounded-lg">Vacant</span></td>
-                    <td class="p-3 text-right">
-                      <button onclick="assignNewTenant('304')" class="px-3 py-1.5 bg-amber-400 text-blue-950 rounded-lg font-bold hover:bg-amber-300 transition-colors">Assign Tenant</button>
-                    </td>
-                  </tr>
-                  <tr class="hover:bg-blue-800/30">
-                    <td class="p-3 font-bold text-white">Apt 402<br><span class="text-[10px] font-normal text-blue-300">KPLC-TR-948201</span></td>
-                    <td class="p-3 text-blue-100">Alex Kiprop (You)<br><span class="text-[10px] text-blue-300">+254 712 345 678</span></td>
-                    <td class="p-3 text-amber-400 font-bold">24.5 kWh</td>
-                    <td class="p-3"><span class="px-2 py-1 bg-amber-400/10 border border-amber-400/30 text-amber-300 rounded-lg">Primary Unit</span></td>
-                    <td class="p-3 text-right text-amber-400 font-bold">Owner</td>
-                  </tr>
-                </tbody>
-              </table>
+          <div class="grid grid-2">
+            <div class="check-row">
+              <div style="flex:1">
+                <div style="font-weight:700; font-size:13.5px">Tenant sub-meter linking</div>
+                <div style="font-size:12px; color:var(--text-dim)">Assign meters to your portfolio for bulk token distribution.</div>
+              </div>
+              <span class="pill pill-info">Managed by support</span>
+            </div>
+            <div class="check-row">
+              <div style="flex:1">
+                <div style="font-weight:700; font-size:13.5px">Bulk buying</div>
+                <div style="font-size:12px; color:var(--text-dim)">Buy tokens in bulk and distribute across units.</div>
+              </div>
+              <span class="pill pill-good">Enabled</span>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 2: AUTOMATED FINANCIAL WORKFLOW & TOKEN SPLITTING -->
-      <section id="tab-automated" class="tab-content space-y-6">
-        <div class="bg-blue-900/80 border border-blue-800 p-8 rounded-3xl shadow-lg backdrop-blur-md space-y-6">
-          <div class="border-b border-blue-800 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-white">Automated Financial Workflow & Token Splitting</h2>
-            <p class="text-xs font-mono text-blue-200 mt-1">Bulk buy master tokens and auto-distribute proportions across sub-meters via M-Pesa Daraja.</p>
+      <!-- ── TOKEN WORKFLOW ───────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="workflow">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Automated token workflow</div>
+              <div class="card-sub">Purchase tokens for your registered meter. Bulk distribution is available once tenants are linked.</div>
+            </div>
+            <span class="pill pill-info">M-Pesa · Airtel · Bank</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
-            <!-- 1. Bulk Token Purchase & Auto-Split -->
-            <div class="bg-blue-950 border border-blue-800 p-6 rounded-2xl space-y-4">
-              <span class="font-bold text-amber-400 uppercase tracking-wide text-sm block">1. Master Bulk Token Purchase & Split</span>
-              <div>
-                <label class="block text-blue-300 mb-1">Master Meter Number</label>
-                <input type="text" value="KPLC-MASTER-9920" readonly class="w-full bg-blue-900 border border-blue-700 rounded-xl p-3 text-blue-200">
+          <div class="grid grid-2">
+            <div>
+              <div class="field">
+                <label for="bulkAmount">Purchase amount (KSh)</label>
+                <div class="bulk-preset">
+                  <button type="button" data-amt="1000">1000</button>
+                  <button type="button" data-amt="2000">2000</button>
+                  <button type="button" data-amt="5000" class="selected">5000</button>
+                  <button type="button" data-amt="10000">10000</button>
+                </div>
               </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Total Bulk Amount (KSh)</label>
-                <input type="number" id="bulkAmountInput" value="5000" class="w-full bg-blue-900 border border-blue-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400">
+              <div class="field">
+                <label for="bulkPhone">Payment phone number</label>
+                <input class="input" type="tel" id="bulkPhone" placeholder="0712 345 678">
               </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Distribution Formula</label>
-                <select class="w-full bg-blue-900 border border-blue-700 rounded-xl p-3 text-white">
-                  <option selected class="bg-blue-950">Proportional to Unit Size (Sq Ft)</option>
-                  <option class="bg-blue-950">Equal Split Across 5 Units</option>
-                  <option class="bg-blue-950">Meter Reading Consumption Ratio</option>
+              <div class="field">
+                <label for="bulkChannel">Channel</label>
+                <select class="input" id="bulkChannel">
+                  <option value="mpesa">M-Pesa</option>
+                  <option value="airtel">Airtel Money</option>
+                  <option value="bank">Bank transfer</option>
                 </select>
               </div>
-              <button onclick="triggerBulkSplit()" class="w-full py-3 bg-amber-400 text-blue-950 rounded-xl font-bold hover:bg-amber-300 transition-all shadow-md shadow-amber-400/20">
-                Execute Bulk Buy & Auto-Push Shares
-              </button>
-              <div id="bulkStatusBox" class="p-3 bg-blue-900 border border-blue-700 rounded-xl hidden text-center text-amber-300 font-bold">
-                Bulk purchase successful! 5,000 KSh split and pushed to 4 sub-meters.
-              </div>
+              <button class="btn btn-primary btn-block" id="bulkBuyBtn"><span id="bulkBuyLabel">Execute purchase</span></button>
+              <div id="bulkResult" class="msg msg-success hidden" style="margin-top:14px"></div>
             </div>
 
-            <!-- 2. Auto-Top Up & Threshold Consent -->
-            <div class="bg-blue-950 border border-blue-800 p-6 rounded-2xl space-y-4 flex flex-col justify-between">
-              <div class="space-y-4">
-                <span class="font-bold text-amber-400 uppercase tracking-wide text-sm block">2. Scheduled & Threshold Auto-Purchase</span>
-                <p class="text-blue-300">Configure saved M-Pesa consent to auto-reload units when critical kWh thresholds are breached.</p>
-                <div class="bg-blue-900 p-4 rounded-xl border border-blue-700 space-y-3">
-                  <div class="flex items-center justify-between">
-                    <span class="font-bold text-white">Auto-Reload Trigger</span>
-                    <input type="checkbox" checked class="w-5 h-5 accent-amber-400">
-                  </div>
-                  <div>
-                    <label class="block text-blue-300 mb-1">Critical Threshold (kWh)</label>
-                    <input type="number" value="5" class="w-full bg-blue-950 border border-blue-700 rounded-lg p-2 text-white">
-                  </div>
-                  <div>
-                    <label class="block text-blue-300 mb-1">Auto-Top Up Amount per Unit (KSh)</label>
-                    <input type="number" value="1000" class="w-full bg-blue-950 border border-blue-700 rounded-lg p-2 text-white">
-                  </div>
-                </div>
-              </div>
-              <button onclick="alert('Auto-purchase M-Pesa consent parameters saved successfully!')" class="w-full py-3 bg-white text-blue-950 rounded-xl font-bold hover:bg-blue-100 transition-colors">
-                Save Auto-Consent Rules
-              </button>
+            <div>
+              <div class="card-sub" style="margin-bottom:10px">Why buy via the fleet portal</div>
+              <div class="check-row"><span>✓</span> Centralised record of every token &amp; payment</div>
+              <div class="check-row" style="margin-top:10px"><span>✓</span> Receipts archived for dispute resolution</div>
+              <div class="check-row" style="margin-top:10px"><span>✓</span> Auto-push tokens to the registered meter</div>
+              <div class="check-row" style="margin-top:10px"><span>✓</span> Transparent cost tracking across units</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- TAB 3: OVERSIGHT & ANOMALY ALERTS -->
-      <section id="tab-analytics" class="tab-content space-y-6">
-        <div class="bg-blue-900/80 border border-blue-800 p-8 rounded-3xl shadow-lg backdrop-blur-md space-y-6">
-          <div class="border-b border-blue-800 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-white">Oversight, Analytics & Anomaly Detection</h2>
-            <p class="text-xs font-mono text-blue-200 mt-1">Real-time anomaly monitoring to catch water heater leaks, bypasses, or heavy machinery.</p>
+      <!-- ── OVERSIGHT & AUDIT ────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="audit">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Token ledger</div>
+              <div class="card-sub">Every token purchased on this account.</div>
+            </div>
           </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Date</th><th>Token</th><th>Amount</th><th>Units</th><th>Status</th></tr></thead>
+              <tbody id="auditTokenBody">
+                <tr><td colspan="5"><div class="skeleton" style="height:36px"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
-            <!-- Anomaly Alerts Banner -->
-            <div class="bg-rose-950/60 border border-rose-800/60 p-6 rounded-2xl space-y-3 md:col-span-2">
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-rose-200 text-sm flex items-center gap-2">
-                  <span>🚨 Active AI Anomaly Alert</span>
-                </span>
-                <span class="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">High Priority</span>
-              </div>
-              <p class="text-rose-100">
-                <b>Unit 202 (Brian Ochieng):</b> Usage jumped <span class="font-extrabold text-amber-400">300% today</span> compared to historical 7-day average. Potential water heater malfunction or unauthorized heavy appliance detected.
-              </p>
-              <div class="flex gap-3 pt-2">
-                <button onclick="alert('SMS warning dispatched to tenant in Unit 202.')" class="px-4 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-500">Send SMS Warning to Tenant</button>
-                <button onclick="alert('Sub-meter remotely throttled for inspection.')" class="px-4 py-2 bg-blue-950 border border-rose-400 text-rose-300 font-bold rounded-xl hover:bg-blue-900">Throttle Sub-Meter Power</button>
-              </div>
-            </div>
-
-            <!-- Portfolio Consumption Comparison Graph -->
-            <div class="bg-blue-950 border border-blue-800 p-6 rounded-2xl space-y-4 md:col-span-2">
-              <span class="font-bold text-amber-400 uppercase">Portfolio Weekly Consumption Comparison (kWh per Unit)</span>
-              <div class="w-full h-56 relative bg-blue-900 p-4 rounded-2xl border border-blue-800">
-                <canvas id="landlordAnalyticsChart"></canvas>
-              </div>
-            </div>
+        <div class="card">
+          <div class="card-title">Payment audit trail</div>
+          <div class="card-sub">Transaction records tied to each token purchase.</div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead><tr><th>Date</th><th>Channel</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead>
+              <tbody id="auditTxBody">
+                <tr><td colspan="5"><div class="skeleton" style="height:32px"></div></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      <!-- TAB 4: BACKUP, AUDIT & RECOVERY RECORDS -->
-      <section id="tab-backup" class="tab-content space-y-6">
-        <div class="bg-blue-900/80 border border-blue-800 p-8 rounded-3xl shadow-lg backdrop-blur-md space-y-6">
-          <div class="border-b border-blue-800 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-white">Backup & Audit Records</h2>
-            <p class="text-xs font-mono text-blue-200 mt-1">Export PDF audit statements and SMS transaction records for dispute resolution.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
-            <div class="bg-blue-950 border border-blue-800 p-6 rounded-2xl space-y-4">
-              <span class="font-bold text-amber-400 uppercase tracking-wide text-sm block">Export Audit Statement (PDF / CSV)</span>
-              <div>
-                <label class="block text-blue-300 mb-1">Select Unit</label>
-                <select class="w-full bg-blue-900 border border-blue-700 rounded-xl p-3 text-white">
-                  <option class="bg-blue-950">All Units (Consolidated Portfolio)</option>
-                  <option class="bg-blue-950">Apt 101 - Grace Akinyi</option>
-                  <option class="bg-blue-950">Apt 202 - Brian Ochieng</option>
-                  <option class="bg-blue-950">Apt 304 - Vacant</option>
-                  <option class="bg-blue-950">Apt 402 - Alex Kiprop</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Date Range</label>
-                <select class="w-full bg-blue-900 border border-blue-700 rounded-xl p-3 text-white">
-                  <option class="bg-blue-950">July 2026 (Current Month)</option>
-                  <option class="bg-blue-950">June 2026</option>
-                  <option class="bg-blue-950">Q2 2026 Complete Audit</option>
-                </select>
-              </div>
-              <button onclick="alert('PDF audit statement generated and downloaded successfully!')" class="w-full py-3 bg-amber-400 text-blue-950 rounded-xl font-bold hover:bg-amber-300 transition-colors shadow-md shadow-amber-400/20">
-                Download Certified Audit PDF
-              </button>
-            </div>
-
-            <div class="bg-blue-950 border border-blue-800 p-6 rounded-2xl space-y-4 flex flex-col justify-between">
-              <div class="space-y-4">
-                <span class="font-bold text-amber-400 uppercase tracking-wide text-sm block">SMS & Receipt Log Archive</span>
-                <p class="text-blue-300">Access tamper-proof Safaricom transaction hashes for all token distributions across your rental properties.</p>
-                <div class="bg-blue-900 p-3 rounded-xl border border-blue-700 space-y-2 text-blue-200">
-                  <div class="flex justify-between"><span>2026-07-28 • Apt 101</span><span class="text-amber-400 font-bold">1,200 KSh (Hash #9482)</span></div>
-                  <div class="flex justify-between"><span>2026-07-25 • Apt 202</span><span class="text-amber-400 font-bold">1,500 KSh (Hash #8102)</span></div>
-                  <div class="flex justify-between"><span>2026-07-20 • Apt 402</span><span class="text-amber-400 font-bold">500 KSh (Hash #3391)</span></div>
-                </div>
-              </div>
-              <button onclick="alert('SMS archive sync complete. All transaction records backed up to secure cloud vault.')" class="w-full py-3 bg-white text-blue-950 rounded-xl font-bold hover:bg-blue-100 transition-colors">
-                Sync & Backup SMS Ledger
-              </button>
+      <!-- ── SETTINGS ─────────────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="settings">
+        <div class="card">
+          <div class="card-title">Auto top-up rules</div>
+          <div class="card-sub">Recharge the registered meter automatically when it runs low.</div>
+          <div class="check-row">
+            <input type="checkbox" id="landlordAutoTopup">
+            <div>
+              <div style="font-weight:700; font-size:13.5px">Enable auto top-up</div>
+              <div style="font-size:12px; color:var(--text-dim)">Threshold-based automatic reload.</div>
             </div>
           </div>
+          <div class="grid grid-2" style="margin-top:16px">
+            <div class="field">
+              <label for="landlordThreshold">Threshold (kWh)</label>
+              <input class="input" type="number" id="landlordThreshold" value="5" min="0">
+            </div>
+            <div class="field">
+              <label for="landlordAmount">Top-up amount (KSh)</label>
+              <input class="input" type="number" id="landlordAmount" value="1000" min="50">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="landlordSaveSettings">Save rules</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Portfolio profile</div>
+          <div class="card-sub">Details on file for this fleet account.</div>
+          <div id="landlordProfile"></div>
         </div>
       </section>
+    </main>
+  </div>
 
-      <!-- TAB 5: COMPREHENSIVE LANDLORD SETTINGS -->
-      <section id="tab-settings" class="tab-content space-y-6">
-        <div class="bg-blue-900/80 border border-blue-800 p-8 rounded-3xl shadow-lg backdrop-blur-md space-y-6">
-          <div class="border-b border-blue-800 pb-4">
-            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">Landlord Configuration Hub</span>
-            <h2 class="text-2xl font-mono font-extrabold text-white">Landlord Settings Manager</h2>
-            <p class="text-xs font-mono text-blue-200 mt-1">Manage portfolio profile identity, API credentials, multi-unit preferences, and legal compliance.</p>
-          </div>
+  <footer class="footer">© 2026 PowerSmart Kenya · Landlord Portfolio Management Edition</footer>
+  <div class="toast-wrap" id="toastWrap"></div>
 
-          <!-- Settings Sub-Navigation Tabs -->
-          <div class="flex flex-wrap gap-2 border-b border-blue-800 pb-4 font-mono text-xs">
-            <button onclick="switchSettingsTab('profile')" id="set-btn-profile" class="settings-tab-btn px-3 py-2 rounded-xl font-bold bg-amber-400 text-blue-950 transition-all">Portfolio Profile</button>
-            <button onclick="switchSettingsTab('api')" id="set-btn-api" class="settings-tab-btn px-3 py-2 rounded-xl font-bold bg-blue-950 border border-blue-800 text-blue-200 hover:bg-blue-800/50 transition-all">Daraja API & M-Pesa</button>
-            <button onclick="switchSettingsTab('notifications')" id="set-btn-notifications" class="settings-tab-btn px-3 py-2 rounded-xl font-bold bg-blue-950 border border-blue-800 text-blue-200 hover:bg-blue-800/50 transition-all">Alerts & Rules</button>
-            <button onclick="switchSettingsTab('legal')" id="set-btn-legal" class="settings-tab-btn px-3 py-2 rounded-xl font-bold bg-blue-950 border border-blue-800 text-blue-200 hover:bg-blue-800/50 transition-all">Legal & Compliance</button>
-          </div>
-
-          <!-- 1. PORTFOLIO PROFILE -->
-          <div id="settings-profile" class="settings-section active space-y-4 font-mono text-xs">
-            <h3 class="font-bold text-amber-400 uppercase tracking-wide text-sm border-b border-blue-800 pb-2">1. Portfolio & Manager Profile</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-blue-300 mb-1">User Name</label>
-                <input type="text" value="Alex Kiprop (Lead Property Owner)" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400">
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Company / Property Entity</label>
-                <input type="text" value="Sunrise Heights Management Ltd" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400">
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Business Email</label>
-                <input type="email" value="management@sunriseheights.co.ke" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400">
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Primary M-Pesa Till / Paybill</label>
-                <input type="text" value="Paybill: 889920 (Account: Master)" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white focus:outline-none focus:border-amber-400">
-              </div>
-            </div>
-            <div class="flex gap-4 pt-2">
-              <button onclick="alert('Landlord portfolio profile saved successfully!')" class="flex-1 py-3 bg-amber-400 text-blue-950 rounded-xl font-bold hover:bg-amber-300 transition-colors shadow-md shadow-amber-400/20">Save Portfolio Profile</button>
-            </div>
-          </div>
-
-          <!-- 2. DARAJA API & M-PESA CREDENTIALS -->
-          <div id="settings-api" class="settings-section space-y-4 font-mono text-xs">
-            <h3 class="font-bold text-amber-400 uppercase tracking-wide text-sm border-b border-blue-800 pb-2">2. Safaricom Daraja API Credentials</h3>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-blue-300 mb-1">Consumer Key</label>
-                <input type="password" value="****************************************" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white">
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">Consumer Secret</label>
-                <input type="password" value="****************************************" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white">
-              </div>
-              <div>
-                <label class="block text-blue-300 mb-1">B2C / STK Push Callback URL</label>
-                <input type="text" value="https://api.powersmart.co.ke/v1/mpesa/callback/sunrise" class="w-full bg-blue-950 border border-blue-700 rounded-xl p-3 text-white">
-              </div>
-              <button onclick="alert('Daraja API credentials verified and connected successfully!')" class="py-3 px-6 bg-white text-blue-950 rounded-xl font-bold hover:bg-blue-100">Test API Connection</button>
-            </div>
-          </div>
-
-          <!-- 3. ALERTS & AUTOMATION RULES -->
-          <div id="settings-notifications" class="settings-section space-y-4 font-mono text-xs">
-            <h3 class="font-bold text-amber-400 uppercase tracking-wide text-sm border-b border-blue-800 pb-2">3. Anomaly Detection & Alert Rules</h3>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between bg-blue-950 p-4 rounded-xl border border-blue-800">
-                <div>
-                  <span class="font-bold text-white block">Instant SMS Anomaly Dispatch</span>
-                  <span class="text-blue-300">Automatically text tenants when consumption spikes > 200%.</span>
-                </div>
-                <input type="checkbox" checked class="w-5 h-5 accent-amber-400">
-              </div>
-              <div class="flex items-center justify-between bg-blue-950 p-4 rounded-xl border border-blue-800">
-                <div>
-                  <span class="font-bold text-white block">Low Balance Auto-Shutdown Warning</span>
-                  <span class="text-blue-300">Send emergency top-up prompt when sub-meter hits 2 kWh.</span>
-                </div>
-                <input type="checkbox" checked class="w-5 h-5 accent-amber-400">
-              </div>
-            </div>
-          </div>
-
-          <!-- 4. LEGAL & COMPLIANCE -->
-          <div id="settings-legal" class="settings-section space-y-4 font-mono text-xs">
-            <h3 class="font-bold text-amber-400 uppercase tracking-wide text-sm border-b border-blue-800 pb-2">4. Legal, Tenancy & Utility Compliance</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div class="bg-blue-950 p-4 rounded-xl border border-blue-800 space-y-2">
-                <span class="font-bold text-white block">Kenyan Energy Regulatory Authority (EPRA) Compliance</span>
-                <p class="text-blue-300">All sub-meter tariffs adhere to EPRA approved tier limits for residential landlords.</p>
-              </div>
-              <div class="bg-blue-950 p-4 rounded-xl border border-blue-800 space-y-2">
-                <span class="font-bold text-white block">Tenant Data Privacy Act</span>
-                <p class="text-blue-300">Tenant usage data is restricted strictly to utility billing and dispute mediation.</p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="w-full border-t border-blue-800 bg-blue-900/90 py-6 px-6 text-center shadow-inner">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-blue-300 gap-4">
-      <span>© 2026 • PowerSmart Kenya. Landlord Portfolio Management Edition.</span>
-      <span class="text-amber-400">Secure Multi-Unit Telemetric Interface</span>
-    </div>
-  </footer>
-
-  <!-- JAVASCRIPT LOGIC FOR LANDLORD DASHBOARD -->
+  <script src="app.js"></script>
   <script>
-    let landlordAnalyticsChart = null;
-    let portfolioMapInstance = null;
+    (function () {
+      "use strict";
+      var PS = window.PowerSmart;
+      var meter = null;
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const savedEmail = localStorage.getItem('landlord_email');
-      const welcomeEl = document.getElementById('welcomeEmail');
-      if (savedEmail && welcomeEl) {
-        welcomeEl.innerText = `User: ${savedEmail}`;
+      function el(id) { return document.getElementById(id); }
+      function toast(text, type) {
+        var t = document.createElement("div");
+        t.className = "toast " + (type || "info");
+        t.textContent = text;
+        document.getElementById("toastWrap").appendChild(t);
+        setTimeout(function () { t.remove(); }, 4200);
       }
 
-      // Initialize Landlord Analytics Graph
-      const ctx = document.getElementById('landlordAnalyticsChart').getContext('2d');
-      landlordAnalyticsChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Apt 101 (Grace)', 'Apt 202 (Brian - Anomaly)', 'Apt 304 (Vacant)', 'Apt 402 (Alex)', 'Apt 501 (Common Area)'],
-          datasets: [{
-            label: 'Weekly Consumption (kWh)',
-            data: [19.2, 48.5, 0.5, 18.5, 32.0],
-            backgroundColor: ['#fbbf24', '#f43f5e', '#3b82f6', '#fbbf24', '#fbbf24'],
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: { color: 'rgba(59, 130, 246, 0.2)' },
-              ticks: { font: { family: 'JetBrains Mono', size: 10 }, color: '#93c5fd' }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#93c5fd' }
-            }
+      function nav(tab) {
+        document.querySelectorAll(".nav-btn").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+        });
+        document.querySelectorAll(".tab-panel").forEach(function (p) {
+          p.classList.toggle("active", p.getAttribute("data-panel") === tab);
+        });
+      }
+      document.querySelectorAll(".nav-btn").forEach(function (b) {
+        b.addEventListener("click", function () { nav(b.getAttribute("data-tab")); });
+      });
+
+      async function loadAll() {
+        var session;
+        try {
+          session = await PS.requireAuth("landlord");
+          if (!session) return;
+          el("userName").textContent = session.user.name || "—";
+          el("userEmail").textContent = session.user.email || "—";
+          document.title = "Landlord Dashboard · " + (session.user.name || "PowerSmart");
+          renderProfile(session.user);
+        } catch (e) { return; }
+        await Promise.all([loadMeter(), loadTokens(), loadTransactions(), loadPrediction()]);
+      }
+
+      function renderProfile(user) {
+        var rows = [
+          ["Name", user.name], ["Email", user.email], ["Phone", user.phone],
+          ["Meter account", user.meter_account], ["Role", user.role],
+        ];
+        el("landlordProfile").innerHTML = rows.map(function (r) {
+          return '<div class="check-row"><div style="width:130px; color:var(--text-faint); font-size:12px; font-weight:600">' + r[0] + '</div><div style="font-weight:700">' + PS.escapeHtml(r[1]) + "</div></div>";
+        }).join('<div style="height:10px"></div>');
+      }
+
+      async function loadMeter() {
+        try {
+          meter = await PS.apiRequest("/meter");
+          el("pMeterNumber").textContent = meter.meter_number || "—";
+          el("pMeterBalance").textContent = PS.fmtUnits(meter.units_remaining);
+          el("landlordAutoTopup").checked = !!meter.auto_topup;
+          el("landlordThreshold").value = meter.topup_threshold || 5;
+          el("landlordAmount").value = meter.topup_amount_ksh || 1000;
+        } catch (e) {
+          el("pMeterNumber").textContent = "—";
+        }
+      }
+
+      async function loadPrediction() {
+        try {
+          var p = await PS.apiRequest("/meter/prediction");
+          var days = Number(p.days_remaining) || 0;
+          el("pDaysLeft").textContent = days > 0 ? days.toFixed(1) + " days" : "—";
+          el("pDepletion").textContent = p.depletion_date ? PS.fmtDateTime(p.depletion_date) : "no data yet";
+        } catch (e) { /* ignore */ }
+      }
+
+      async function loadTokens() {
+        try {
+          var tokens = await PS.apiRequest("/tokens");
+          var body = el("auditTokenBody");
+          if (!tokens.length) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-faint); padding:28px">No tokens purchased yet.</td></tr>';
+          } else {
+            body.innerHTML = tokens.map(function (t) {
+              var st = t.push_status === "success" ? "good" : t.push_status === "failed" ? "bad" : "neutral";
+              return "<tr>" +
+                "<td>" + PS.fmtDateTime(t.purchased_at) + "</td>" +
+                '<td><span class="mini-token">' + PS.escapeHtml(t.token_number) + "</span></td>" +
+                '<td class="num">' + PS.fmtKsh(t.amount_ksh) + "</td>" +
+                '<td class="num">' + PS.fmtUnits(t.units) + "</td>" +
+                '<td><span class="pill pill-' + st + '">' + PS.escapeHtml(t.push_status) + "</span></td></tr>";
+            }).join("");
           }
+          el("pTokens").textContent = tokens.length;
+          el("pTotalVended").textContent = PS.fmtKsh(tokens.reduce(function (s, t) { return s + (Number(t.amount_ksh) || 0); }, 0));
+        } catch (e) { /* ignore */ }
+      }
+
+      async function loadTransactions() {
+        try {
+          var txns = await PS.apiRequest("/transactions");
+          var body = el("auditTxBody");
+          if (!txns.length) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-faint); padding:28px">No payments recorded yet.</td></tr>';
+          } else {
+            body.innerHTML = txns.slice(0, 10).map(function (t) {
+              var st = t.status === "success" ? "good" : t.status === "failed" ? "bad" : "neutral";
+              return "<tr>" +
+                "<td>" + PS.fmtDateTime(t.created_at) + "</td>" +
+                "<td>" + PS.escapeHtml(t.channel || "—") + "</td>" +
+                '<td class="num">' + PS.fmtKsh(t.amount_ksh) + "</td>" +
+                '<td class="mono">' + PS.escapeHtml(t.reference || "—") + "</td>" +
+                '<td><span class="pill pill-' + st + '">' + PS.escapeHtml(t.status) + "</span></td></tr>";
+            }).join("");
+          }
+        } catch (e) { /* ignore */ }
+      }
+
+      var bulkAmount = 5000;
+      document.querySelectorAll(".bulk-preset button").forEach(function (b) {
+        b.addEventListener("click", function () {
+          bulkAmount = parseInt(b.getAttribute("data-amt"), 10);
+          document.querySelectorAll(".bulk-preset button").forEach(function (x) { x.classList.remove("selected"); });
+          b.classList.add("selected");
+        });
+      });
+
+      el("bulkBuyBtn").addEventListener("click", async function () {
+        var phone = el("bulkPhone").value.trim();
+        var channel = el("bulkChannel").value;
+        var result = el("bulkResult");
+        result.classList.add("hidden");
+        if (!phone && channel !== "bank") { toast("Enter a payment phone number.", "error"); return; }
+        var label = el("bulkBuyLabel");
+        label.textContent = "Processing…";
+        this.disabled = true;
+        try {
+          var res = await PS.apiRequest("/tokens/buy", {
+            method: "POST",
+            body: JSON.stringify({ amount_ksh: bulkAmount, payment_channel: channel, phone: phone }),
+          });
+          result.classList.remove("hidden");
+          result.innerHTML = "Token generated: <span class='mono'>" + PS.escapeHtml(res.token_number) + "</span> (" + PS.fmtKsh(res.amount_ksh) + " → " + PS.fmtUnits(res.units) + ")";
+          toast("Token purchased successfully!", "success");
+          loadTokens(); loadTransactions(); loadPrediction();
+        } catch (e) {
+          toast(e.message, "error");
+        } finally {
+          label.textContent = "Execute purchase";
+          this.disabled = false;
         }
       });
 
-      // Initialize Leaflet Portfolio Map centered on Sunrise Heights properties
-      portfolioMapInstance = L.map('portfolioMap').setView([-0.1022, 34.7617], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(portfolioMapInstance);
-
-      // Add Property Unit Markers
-      const units = [
-        { lat: -0.1022, lng: 34.7617, title: "Sunrise Heights - Block A (Apt 101, 202)" },
-        { lat: -0.1035, lng: 34.7630, title: "Sunrise Heights - Block B (Apt 304, 402)" }
-      ];
-
-      units.forEach(u => {
-        L.marker([u.lat, u.lng]).addTo(portfolioMapInstance)
-          .bindPopup(`<b>${u.title}</b><br>PowerSmart Meter Node Active`);
-      });
-    });
-
-    // Dashboard Navigation Switcher
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-amber-400', 'text-blue-950', 'shadow-md', 'shadow-amber-400/20');
-        btn.classList.add('bg-blue-950', 'text-blue-200', 'border', 'border-blue-800');
+      el("landlordSaveSettings").addEventListener("click", async function () {
+        try {
+          await PS.apiRequest("/meter/settings", {
+            method: "PUT",
+            body: JSON.stringify({
+              auto_topup: el("landlordAutoTopup").checked,
+              topup_threshold: parseFloat(el("landlordThreshold").value) || 0,
+              topup_amount_ksh: parseInt(el("landlordAmount").value, 10) || 1000,
+            }),
+          });
+          toast("Auto top-up rules saved", "success");
+        } catch (e) { toast(e.message, "error"); }
       });
 
-      document.getElementById(`tab-${tabId}`).classList.add('active');
-      const activeBtn = document.getElementById(`btn-${tabId}`);
-      activeBtn.classList.remove('bg-blue-950', 'text-blue-200', 'border', 'border-blue-800');
-      activeBtn.classList.add('bg-amber-400', 'text-blue-950', 'shadow-md', 'shadow-amber-400/20');
-
-      if (tabId === 'portfolio' && portfolioMapInstance) {
-        setTimeout(() => portfolioMapInstance.invalidateSize(), 200);
-      }
-    }
-
-    // Settings Navigation Switcher
-    function switchSettingsTab(settingsId) {
-      document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-        btn.classList.remove('bg-amber-400', 'text-blue-950');
-        btn.classList.add('bg-blue-950', 'border', 'border-blue-800', 'text-blue-200');
-      });
-
-      document.getElementById(`settings-${settingsId}`).classList.add('active');
-      const activeSetBtn = document.getElementById(`set-btn-${settingsId}`);
-      activeSetBtn.classList.remove('bg-blue-950', 'border', 'border-blue-800', 'text-blue-200');
-      activeSetBtn.classList.add('bg-amber-400', 'text-blue-950');
-    }
-
-    function triggerBulkSplit() {
-      const box = document.getElementById('bulkStatusBox');
-      box.classList.remove('hidden');
-    }
-
-    function handleLogout() {
-      localStorage.removeItem('powersmart_landlord_session');
-      window.location.replace('index.html');
-    }
+      loadAll();
+    })();
   </script>
 </body>
 </html>

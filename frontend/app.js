@@ -1,497 +1,228 @@
-// ======================================================
-// app.js
-// PowerSmart Kenya Dashboard
-// ======================================================
+/* PowerSmart Kenya — shared API client, session manager and route guards.
+ * Loaded by every portal page. All backend calls go through apiRequest(),
+ * which attaches the JWT and redirects to the login page when the session is
+ * invalid or expired.
+ */
+(function () {
+  "use strict";
 
-const TOKEN_KEY = "powersmart_token";
-const USER_KEY = "powersmart_user";
+  const API_BASE = "/api";
+  const TOKEN_KEY = "powersmart_token";
+  const USER_KEY = "powersmart_user";
+  const ROLE_KEY = "powersmart_role";
+  const LOGIN_PAGE = "index.html";
 
-const $ = (selector) => document.querySelector(selector);
-
-// ======================================================
-// APP STATE
-// ======================================================
-
-const state = {
-
-    meters: [
-        {
-            label: "Main House",
-            meter_number: "37101122093",
-            role: "Owner",
-            units_remaining: 34.8,
-            daily_avg_units: 5.6,
-            threshold: 10
-        },
-        {
-            label: "Unit A",
-            meter_number: "37101122094",
-            role: "Tenant",
-            units_remaining: 8.2,
-            daily_avg_units: 3.1,
-            threshold: 10
-        },
-        {
-            label: "Unit B",
-            meter_number: "37101122095",
-            role: "Tenant",
-            units_remaining: 3.7,
-            daily_avg_units: 2.5,
-            threshold: 7
+  /* ── Session helpers ─────────────────────────────────────────────────── */
+  function getSession() {
+    return {
+      token: localStorage.getItem(TOKEN_KEY),
+      user: (function () {
+        try {
+          return JSON.parse(localStorage.getItem(USER_KEY) || "null");
+        } catch (_) {
+          return null;
         }
-    ],
-
-    tokenHistory: [
-        {
-            amount: 1000,
-            token: "5821 9044 3178 6632",
-            status: "Success"
-        }
-    ],
-
-    communityPool: {
-        target: 10000,
-        collected: 7400,
-        members: 10
-    }
-};
-
-// ======================================================
-// AUTH PROTECTION
-// ======================================================
-
-function protectDashboard() {
-
-    const token =
-        localStorage.getItem(TOKEN_KEY);
-
-    if (!token) {
-
-        window.location.href =
-            "index.html";
-    }
-}
-
-// ======================================================
-// LOAD USER
-// ======================================================
-
-function loadUserProfile() {
-
-    const user =
-        JSON.parse(
-            localStorage.getItem(USER_KEY) ||
-            "null"
-        );
-
-    if (!user) return;
-
-    const userName =
-        $("#userName");
-
-    if (userName) {
-
-        userName.textContent =
-            user.name || "PowerSmart User";
-    }
-}
-
-// ======================================================
-// TOAST
-// ======================================================
-
-function showToast(message) {
-
-    const toast = $("#toast");
-
-    if (!toast) return;
-
-    toast.textContent = message;
-
-    toast.classList.add("show");
-
-    clearTimeout(showToast.timer);
-
-    showToast.timer = setTimeout(() => {
-
-        toast.classList.remove("show");
-
-    }, 3000);
-}
-
-// ======================================================
-// OVERVIEW
-// ======================================================
-
-function renderOverview() {
-
-    const totalUnits =
-        state.meters.reduce(
-            (sum, meter) =>
-                sum + meter.units_remaining,
-            0
-        );
-
-    const totalDaily =
-        state.meters.reduce(
-            (sum, meter) =>
-                sum + meter.daily_avg_units,
-            0
-        );
-
-    const riskMeters =
-        state.meters.filter(
-            meter =>
-                meter.units_remaining <=
-                meter.threshold
-        ).length;
-
-    const savings =
-        totalUnits * 18;
-
-    $("#totalUnits").textContent =
-        totalUnits.toFixed(1) + " kWh";
-
-    $("#runway").textContent =
-        (totalUnits / totalDaily).toFixed(1)
-        + " Days";
-
-    $("#riskMeters").textContent =
-        riskMeters;
-
-    $("#goalProgress").textContent =
-        "KSh " +
-        savings.toLocaleString();
-}
-
-// ======================================================
-// METERS
-// ======================================================
-
-function renderMeters() {
-
-    const container =
-        $("#meterGrid");
-
-    if (!container) return;
-
-    container.innerHTML =
-        state.meters.map(meter => {
-
-            const days =
-                meter.units_remaining /
-                meter.daily_avg_units;
-
-            return `
-            <article class="meter-card">
-
-                <div class="meter-header">
-
-                    <div>
-                        <strong>${meter.label}</strong>
-                        <div>${meter.meter_number}</div>
-                    </div>
-
-                    <span class="badge">
-                        ${meter.role}
-                    </span>
-
-                </div>
-
-                <div class="unit-line">
-
-                    <strong>
-                        ${meter.units_remaining.toFixed(1)} kWh
-                    </strong>
-
-                    <span>
-                        ${days.toFixed(1)} days
-                    </span>
-
-                </div>
-
-                <progress
-                    value="${meter.units_remaining}"
-                    max="40">
-                </progress>
-
-                <small>
-                    Avg ${meter.daily_avg_units}
-                    kWh/day
-                </small>
-
-            </article>
-        `;
-        }).join("");
-}
-
-// ======================================================
-// TOKENS
-// ======================================================
-
-function generateToken() {
-
-    let token = "";
-
-    for (let i = 0; i < 20; i++) {
-
-        token +=
-            Math.floor(
-                Math.random() * 10
-            );
-    }
-
-    return token.match(/.{1,4}/g).join(" ");
-}
-
-function buyToken() {
-
-    const amount =
-        Number(
-            $("#buyAmount")?.value
-        );
-
-    if (!amount || amount <= 0) {
-
-        showToast(
-            "Enter a valid amount"
-        );
-
-        return;
-    }
-
-    const token =
-        generateToken();
-
-    $("#latestToken").textContent =
-        token;
-
-    state.tokenHistory.unshift({
-        amount,
-        token,
-        status: "Success"
-    });
-
-    renderTokenHistory();
-
-    showToast(
-        "Token purchased successfully"
+      })(),
+      role: localStorage.getItem(ROLE_KEY) || "",
+    };
+  }
+
+  function saveSession(token, user, role) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(ROLE_KEY, role || (user && user.role) || "");
+  }
+
+  function clearSession() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(ROLE_KEY);
+  }
+
+  function toLoginPage() {
+    clearSession();
+    window.location.replace(LOGIN_PAGE);
+  }
+
+  /* ── HTTP client ────────────────────────────────────────────────────── */
+  async function apiRequest(path, options) {
+    options = options || {};
+    const skipAuthRedirect = !!options.skipAuthRedirect;
+    delete options.skipAuthRedirect;
+    const session = getSession();
+    const headers = Object.assign(
+      { "Content-Type": "application/json" },
+      options.headers || {}
     );
-}
-
-function renderTokenHistory() {
-
-    const container =
-        $("#tokenHistory");
-
-    if (!container) return;
-
-    container.innerHTML =
-        state.tokenHistory.map(item => `
-        <div class="list-row">
-
-            <div>
-                <strong>
-                    KSh ${item.amount}
-                </strong>
-                <br>
-                <small>
-                    ${item.token}
-                </small>
-            </div>
-
-            <span class="badge">
-                ${item.status}
-            </span>
-
-        </div>
-    `).join("");
-}
-
-// ======================================================
-// COMMUNITY
-// ======================================================
-
-function renderCommunity() {
-
-    const pool =
-        state.communityPool;
-
-    $("#poolAmount").textContent =
-        "KSh " +
-        pool.collected.toLocaleString();
-
-    const progress =
-        document.querySelector(
-            ".pool-meter progress"
-        );
-
-    if (progress) {
-
-        progress.value =
-            pool.collected;
-
-        progress.max =
-            pool.target;
+    if (session.token) {
+      headers.Authorization = "Bearer " + session.token;
     }
 
-    $("#communityList").innerHTML = `
-        <div class="list-row">
+    let response;
+    try {
+      response = await fetch(API_BASE + path, Object.assign({}, options, { headers }));
+    } catch (_) {
+      const err = new Error("Network error — please check your connection and try again.");
+      err.status = 0;
+      throw err;
+    }
 
-            <div>
-                <strong>
-                    Community Pool
-                </strong>
-                <br>
-                <small>
-                    ${pool.members} Members
-                </small>
-            </div>
+    if (response.status === 401 && !skipAuthRedirect) {
+      toLoginPage();
+      const err = new Error("Your session has expired. Please sign in again.");
+      err.status = 401;
+      throw err;
+    }
 
-            <span class="badge">
-                Active
-            </span>
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = null;
+    }
 
-        </div>
-    `;
-}
+    if (!response.ok) {
+      const message =
+        (data && (data.error || data.message)) ||
+        "Something went wrong (HTTP " + response.status + ").";
+      const err = new Error(message);
+      err.status = response.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  }
 
-// ======================================================
-// PAGE NAVIGATION
-// ======================================================
+  /* ── Route guards ───────────────────────────────────────────────────── */
+  async function verifySession() {
+    // Confirm the stored token is still valid against the server.
+    const session = getSession();
+    if (!session.token) return null;
+    try {
+      const res = await apiRequest("/auth/me");
+      const user = res && res.data ? res.data : session.user;
+      const role = (user && user.role) || session.role;
+      saveSession(session.token, user, role);
+      return { user: user, role: role, token: session.token };
+    } catch (_) {
+      return null;
+    }
+  }
 
-function initNavigation() {
+  // requireAuth enforces login + role. expectedRoles may be an array or string.
+  // Called as the very first thing on protected pages.
+  async function requireAuth(expectedRoles) {
+    const session = getSession();
+    if (!session.token) {
+      toLoginPage();
+      return null;
+    }
 
-    const links =
-        document.querySelectorAll(
-            ".nav-link"
-        );
+    let current = null;
+    try {
+      current = await verifySession();
+    } catch (_) {
+      toLoginPage();
+      return null;
+    }
 
-    const pages =
-        document.querySelectorAll(
-            ".dashboard-page"
-        );
+    if (!current) {
+      toLoginPage();
+      return null;
+    }
 
-    links.forEach(link => {
+    const allowed = Array.isArray(expectedRoles)
+      ? expectedRoles
+      : expectedRoles
+        ? [expectedRoles]
+        : [];
+    if (allowed.length > 0 && !allowed.includes(current.role)) {
+      // Authenticated but wrong portal — bounce to the right dashboard.
+      redirectToDashboard(current.role);
+      return null;
+    }
+    return current;
+  }
 
-        link.addEventListener(
-            "click",
-            (e) => {
+  function redirectToDashboard(role) {
+    if (role === "landlord") window.location.replace("landlord.html");
+    else if (role === "admin") window.location.replace("admin-dashboard.html");
+    else window.location.replace("tenant-dashboard.html");
+  }
 
-                e.preventDefault();
-
-                links.forEach(item =>
-                    item.classList.remove(
-                        "active"
-                    )
-                );
-
-                pages.forEach(page =>
-                    page.classList.add(
-                        "hidden"
-                    )
-                );
-
-                link.classList.add(
-                    "active"
-                );
-
-                const pageId =
-                    link.dataset.page;
-
-                document
-                    .getElementById(pageId)
-                    .classList.remove(
-                        "hidden"
-                    );
-            }
-        );
+  // bounceIfAuthenticated redirects signed-in users away from the login page.
+  function bounceIfAuthenticated() {
+    const session = getSession();
+    if (!session.token) return;
+    // Async validation: if token is invalid, we silently ignore and show login.
+    verifySession().then(function (current) {
+      if (current) redirectToDashboard(current.role);
     });
-}
+  }
 
-// ======================================================
-// LOGOUT
-// ======================================================
+  function logout() {
+    clearSession();
+    window.location.replace(LOGIN_PAGE);
+  }
 
-function setupLogout() {
+  /* ── Formatting helpers (shared by dashboards) ──────────────────────── */
+  function fmtKsh(n) {
+    return "KSh " + (Number(n) || 0).toLocaleString("en-KE");
+  }
 
-    const logoutBtn =
-        $("#logoutBtn");
+  function fmtUnits(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString("en-KE", { maximumFractionDigits: 1 }) + " kWh";
+  }
 
-    if (!logoutBtn) return;
+  function fmtDateTime(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-KE", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
 
-    logoutBtn.addEventListener(
-        "click",
-        () => {
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-KE", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
-            localStorage.removeItem(
-                TOKEN_KEY
-            );
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 
-            localStorage.removeItem(
-                USER_KEY
-            );
-
-            window.location.href =
-                "index.html";
-        }
-    );
-}
-
-// ======================================================
-// EVENTS
-// ======================================================
-
-function bindEvents() {
-
-    $("#buyTokenBtn")
-        ?.addEventListener(
-            "click",
-            buyToken
-        );
-
-    $("#syncNow")
-        ?.addEventListener(
-            "click",
-            () => {
-
-                renderOverview();
-                renderMeters();
-                renderCommunity();
-
-                showToast(
-                    "Dashboard synced"
-                );
-            }
-        );
-}
-
-// ======================================================
-// INIT
-// ======================================================
-
-function init() {
-
-    protectDashboard();
-
-    loadUserProfile();
-
-    renderOverview();
-
-    renderMeters();
-
-    renderTokenHistory();
-
-    renderCommunity();
-
-    initNavigation();
-
-    setupLogout();
-
-    bindEvents();
-}
-
-document.addEventListener(
-    "DOMContentLoaded",
-    init
-);
+  window.PowerSmart = {
+    API_BASE: API_BASE,
+    apiRequest: apiRequest,
+    getSession: getSession,
+    saveSession: saveSession,
+    clearSession: clearSession,
+    verifySession: verifySession,
+    requireAuth: requireAuth,
+    redirectToDashboard: redirectToDashboard,
+    bounceIfAuthenticated: bounceIfAuthenticated,
+    logout: logout,
+    fmtKsh: fmtKsh,
+    fmtUnits: fmtUnits,
+    fmtDateTime: fmtDateTime,
+    fmtDate: fmtDate,
+    escapeHtml: escapeHtml,
+  };
+})();

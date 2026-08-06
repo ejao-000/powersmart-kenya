@@ -51,9 +51,38 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		utils.RespondBadRequest(w, "name, email, phone, password and meter_account are all required")
 		return
 	}
-	if len(req.Password) < 8 {
-		utils.RespondBadRequest(w, "password must be at least 8 characters")
+
+	// Input hygiene & format validation
+	name, err := utils.ValidateName(req.Name)
+	if err != nil {
+		utils.RespondBadRequest(w, err.Error())
 		return
+	}
+	req.Name = name
+
+	if !utils.ValidEmail(req.Email) {
+		utils.RespondBadRequest(w, "a valid email address is required")
+		return
+	}
+	req.Email = utils.NormaliseEmail(req.Email)
+
+	if !utils.ValidKenyanPhone(req.Phone) {
+		utils.RespondBadRequest(w, "a valid Kenyan phone number is required (e.g. 0712345678 or +254712345678)")
+		return
+	}
+
+	if err := utils.ValidatePassword(req.Password); err != nil {
+		utils.RespondBadRequest(w, err.Error())
+		return
+	}
+
+	// Role validation — only tenant and landlord are self-registrable
+	if req.Role != "" && req.Role != string(model.RoleTenant) && req.Role != string(model.RoleLandlord) {
+		utils.RespondBadRequest(w, "role must be 'tenant' or 'landlord'")
+		return
+	}
+	if req.Role == "" {
+		req.Role = string(model.RoleTenant)
 	}
 
 	resp, err := h.authSvc.Register(&req)
@@ -87,6 +116,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		utils.RespondBadRequest(w, "email and password are required")
 		return
 	}
+	req.Email = utils.NormaliseEmail(req.Email)
 
 	resp, err := h.authSvc.Login(&req)
 	if err != nil {
@@ -97,6 +127,39 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		utils.RespondInternalError(w)
+		return
+	}
+
+	utils.RespondJSON(w, http.StatusOK, resp)
+}
+
+// AdminLogin godoc
+// POST /api/auth/admin-login
+//
+// Dedicated sign-in for administrators only. Returns 403 if the account is not
+// an admin, so regular portal credentials cannot open the admin console.
+func (h *AuthHandler) AdminLogin(w http.ResponseWriter, r *http.Request) {
+	var req model.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondBadRequest(w, "request body is not valid JSON")
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		utils.RespondBadRequest(w, "admin email and password are required")
+		return
+	}
+	req.Email = utils.NormaliseEmail(req.Email)
+
+	resp, err := h.authSvc.AdminLogin(&req)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrInvalidCredentials):
+			utils.RespondUnauthorized(w, "invalid email or password")
+		case errors.Is(err, service.ErrNotAdmin):
+			utils.RespondForbidden(w, "this account does not have admin privileges")
+		default:
+			utils.RespondInternalError(w)
+		}
 		return
 	}
 

@@ -3,649 +3,572 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tenant Dashboard | PowerSmart Kenya</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js for interactive appliance cost graph -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Leaflet CSS & JS for Live Outage Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  
+  <title>Tenant Dashboard · PowerSmart Kenya</title>
+  <meta name="description" content="Your real-time prepaid meter dashboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-  
-  <!-- SECURITY GUARD: Protects dashboard from unauthenticated access -->
-  <script>
-    if (localStorage.getItem('powersmart_session') !== 'active_tenant_token') {
-      window.location.replace('index.html');
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/portal.css">
   <style>
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    .settings-section { display: none; }
-    .settings-section.active { display: block; }
-    #outageMap { height: 320px; width: 100%; border-radius: 1rem; z-index: 10; }
+    .mini-token { font-family: "JetBrains Mono", monospace; letter-spacing: 0.04em; }
+    .metric-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; }
+    .metric { background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: var(--r-sm); padding: 14px; }
+    .metric .m-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); font-weight: 600; }
+    .metric .m-value { font-size: 18px; font-weight: 800; margin-top: 4px; }
+    .amount-preset { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    .amount-preset button {
+      padding: 12px 6px; border-radius: var(--r-sm); cursor: pointer; font: inherit; font-weight: 700; font-size: 13px;
+      background: var(--bg-soft); color: var(--text); border: 1.5px solid var(--border-soft); transition: all var(--t-fast);
+    }
+    .amount-preset button.selected { border-color: var(--accent); background: rgba(245, 158, 11, 0.12); color: var(--accent-strong); }
+    .copy-btn { cursor: pointer; background: none; border: 0; color: var(--accent-strong); font-size: 12px; font-weight: 700; margin-left: 8px; }
+    .token-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .token-row .token-code { font-family: "JetBrains Mono", monospace; word-break: break-all; }
   </style>
 </head>
-<body class="bg-sky-50 text-sky-950 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-yellow-400 selection:text-sky-950">
+<body class="page-shell">
 
-  <!-- TOP BAR -->
-  <header class="w-full border-b border-sky-200 bg-white/80 backdrop-blur-md py-4 px-6 shadow-sm sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <div class="h-7 w-7 rounded-lg bg-sky-100 border border-sky-300 flex items-center justify-center text-yellow-600 text-xs">⚡</div>
-        <span class="font-mono font-bold text-sm text-sky-950">PowerSmart Portal</span>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">⚡</div>
+      <div>
+        <span class="brand-name">PowerSmart</span>
+        <span class="brand-sub">Tenant Portal</span>
       </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px">
+      <div class="hidden-mobile" style="text-align:right">
+        <div id="userName" class="mono" style="font-size:12.5px; font-weight:700">—</div>
+        <div id="userEmail" style="font-size:11px; color:var(--text-faint)">—</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="PowerSmart.logout()">Sign out</button>
     </div>
   </header>
 
-  <!-- MAIN DASHBOARD CONTAINER WITH LEFT SIDEBAR LAYOUT -->
-  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-    
-    <!-- LEFT SIDEBAR NAVIGATION BUTTONS -->
-    <aside class="md:col-span-1 bg-white/80 border border-sky-200 p-4 rounded-3xl shadow-sm space-y-4 sticky top-24 flex flex-col justify-between">
-      <div class="space-y-2">
-        <div class="px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-sky-800">Navigation Menu</div>
-        <button onclick="switchTab('meter')" id="btn-meter" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-sky-100/60 text-sky-800 hover:bg-sky-200 hover:text-sky-950 transition-all flex items-center gap-3">
-          <span>⚡</span> Meter & Tokens
-        </button>
-        <button onclick="switchTab('mpesa')" id="btn-mpesa" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-sky-100/60 text-sky-800 hover:bg-sky-200 hover:text-sky-950 transition-all flex items-center gap-3">
-          <span>📱</span> M-Pesa 
-        </button>
-        <button onclick="switchTab('budget')" id="btn-budget" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-sky-100/60 text-sky-800 hover:bg-sky-200 hover:text-sky-950 transition-all flex items-center gap-3">
-          <span>📊</span> Smart Budgeting
-        </button>
-        <button onclick="switchTab('peer')" id="btn-peer" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-sky-100/60 text-sky-800 hover:bg-sky-200 hover:text-sky-950 transition-all flex items-center gap-3">
-          <span>🤝</span> Peer Support & Safety
-        </button>
-        <button onclick="switchTab('outages')" id="btn-outages" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-yellow-400 text-sky-950 shadow-md shadow-yellow-400/20 transition-all flex items-center gap-3">
-          <span>🗺️</span> Outages & Tariffs
-        </button>
-        <button onclick="switchTab('settings')" id="btn-settings" class="tab-btn w-full text-left px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-sky-100/60 text-sky-800 hover:bg-sky-200 hover:text-sky-950 transition-all flex items-center gap-3 border-t border-sky-200 mt-2 pt-4">
-          <span>⚙️</span> Settings
-        </button>
+  <!-- BODY -->
+  <div class="dashboard-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-label">Navigation</div>
+        <button class="nav-btn active" data-tab="overview"><span class="ico">⚡</span> Meter &amp; Tokens</button>
+        <button class="nav-btn" data-tab="topup"><span class="ico">💳</span> Top-up</button>
+        <button class="nav-btn" data-tab="history"><span class="ico">🧾</span> History</button>
+        <button class="nav-btn" data-tab="budget"><span class="ico">📊</span> Budget &amp; Alerts</button>
+        <button class="nav-btn" data-tab="settings"><span class="ico">⚙️</span> Settings</button>
       </div>
-
-      <!-- SIMPLE LOGOUT BUTTON AT THE BOTTOM OF THE LEFT SIDEBAR -->
-      <div class="pt-4 border-t border-sky-200">
-        <button onclick="handleLogout()" class="w-full px-4 py-3 rounded-2xl font-mono text-xs font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-all flex items-center gap-3">
-          <span>🚪</span> Sign Out
-        </button>
+      <div class="sidebar-footer">
+        <button class="nav-btn" onclick="PowerSmart.logout()"><span class="ico">🚪</span> Sign out</button>
       </div>
     </aside>
 
-    <!-- RIGHT CONTENT AREA -->
-    <div class="md:col-span-3 space-y-6">
-      
-      <!-- HEADER INTRO BAR -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80 border border-sky-200 p-6 rounded-3xl shadow-sm">
+    <!-- CONTENT -->
+    <main class="content">
+
+      <div class="page-head">
         <div>
-          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-700">Consumer Telemetry & Automation</span>
-          <h1 class="text-2xl font-mono font-extrabold text-sky-950 mt-1">Tenant Dashboard</h1>
+          <div class="eyebrow">Consumer Telemetry &amp; Automation</div>
+          <h1>Tenant Dashboard</h1>
         </div>
-        <div class="flex items-center gap-3 bg-sky-100/60 border border-sky-200 p-3 rounded-2xl">
-          <div class="h-3 w-3 rounded-full bg-yellow-500 animate-pulse"></div>
-          <div>
-            <div class="text-[10px] font-mono text-sky-700 uppercase">Smart Meter ID</div>
-            <div class="text-xs font-mono font-bold text-sky-950">KPLC-TR-948201</div>
-          </div>
-        </div>
+        <div class="pill pill-good"><span class="dot dot-live"></span> Live · Synced</div>
       </div>
 
-      <!-- TAB 1: METER & TOKEN ACCESS INTERFACE -->
-      <section id="tab-meter" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-sky-200 pb-4">
+      <!-- ── OVERVIEW ─────────────────────────────────────────────── -->
+      <section class="tab-panel active" data-panel="overview">
+        <div class="card">
+          <div class="card-header">
             <div>
-              <h2 class="text-2xl font-mono font-extrabold text-sky-950">Meter & Token Access</h2>
-              <p class="text-xs font-mono text-sky-700 mt-1">Strictly restricted to your assigned meter number KPLC-TR-948201.</p>
+              <div class="card-title">Meter &amp; Token Access</div>
+              <div class="card-sub">Your live balance, forecast and recent tokens.</div>
             </div>
-            <button onclick="pushTokenBluetooth()" class="px-5 py-3 bg-yellow-400 hover:bg-yellow-300 text-sky-950 text-xs font-mono font-bold rounded-xl transition-all shadow-md shadow-yellow-400/20">
-              📡 Auto-Push Token (Bluetooth / Wi-Fi)
-            </button>
+            <span id="meterBadge" class="pill pill-neutral mono">meter —</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl flex flex-col justify-between">
-              <div>
-                <span class="text-xs font-mono text-sky-700 uppercase">Active Token Balance</span>
-                <div class="text-3xl font-mono font-extrabold text-sky-900 mt-2">24.5 kWh</div>
-                <span class="text-[10px] font-mono text-sky-600 mt-1 block">~3 Days Remaining</span>
+          <div class="grid" style="grid-template-columns: 260px 1fr; align-items:start">
+            <div style="text-align:center">
+              <div class="gauge">
+                <svg width="200" height="200" viewBox="0 0 200 200">
+                  <circle class="gauge-track" cx="100" cy="100" r="88"></circle>
+                  <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="88" stroke-dasharray="552.92" stroke-dashoffset="552.92"></circle>
+                </svg>
+                <div class="gauge-center">
+                  <div>
+                    <div class="gauge-value" id="gaugeValue">—</div>
+                    <div class="gauge-label">kWh Remaining</div>
+                  </div>
+                </div>
               </div>
-              <div class="mt-4 pt-4 border-t border-sky-200 text-xs font-mono bg-yellow-50 p-3 rounded-xl border border-yellow-200 text-yellow-800">
-                ⏳ <span class="font-bold">Token Depletion Prediction:</span> Estimated to run out on <span class="font-bold">August 3, 2026 at 14:00 EAT</span>.
-              </div>
+              <div id="balancePill" class="pill pill-warn" style="margin-top:14px">—</div>
             </div>
 
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl md:col-span-2 space-y-3">
-              <span class="text-xs font-mono font-bold uppercase text-sky-950">Personal Token History & Ledger</span>
-              <div class="space-y-2 font-mono text-xs">
-                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-sky-200">
-                  <span class="text-sky-800">4829-9102-3841-5502-1984 • 500 KSh (18.2 kWh)</span>
-                  <span class="text-sky-900 font-bold">Synced via M-Pesa</span>
+            <div>
+              <div class="grid grid-2">
+                <div class="stat">
+                  <div class="stat-ico">📉</div>
+                  <div class="stat-label">Daily avg. usage</div>
+                  <div class="stat-value info" id="statDailyAvg">—</div>
+                  <div class="stat-hint">over available history</div>
                 </div>
-                <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-sky-200">
-                  <span class="text-sky-800">1092-3849-5561-2039-4481 • 200 KSh (7.3 kWh)</span>
-                  <span class="text-sky-900 font-bold">Synced via Community Pool</span>
+                <div class="stat">
+                  <div class="stat-ico">⏳</div>
+                  <div class="stat-label">Estimated days left</div>
+                  <div class="stat-value" id="statDaysLeft">—</div>
+                  <div class="stat-hint" id="statDepletion">—</div>
                 </div>
               </div>
+              <div id="predictionBox" class="msg msg-info" style="margin-top:16px">Loading forecast…</div>
             </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Quick actions</div>
+              <div class="card-sub">Top up instantly or push your latest token.</div>
+            </div>
+          </div>
+          <div class="grid grid-2">
+            <button class="btn btn-primary" onclick="PS_nav('topup')">💳 Buy tokens now</button>
+            <button class="btn btn-secondary" id="refreshBtn">🔄 Refresh meter</button>
           </div>
         </div>
       </section>
 
-      <!-- TAB 2: M-PESA DARAJA INTEGRATION & TOKEN MANAGEMENT -->
-      <section id="tab-mpesa" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="border-b border-sky-200 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-sky-950">M-Pesa & Token Management</h2>
-            <p class="text-xs font-mono text-sky-700 mt-1">Direct Safaricom API integration with automated balance tracking and receipt generation.</p>
+      <!-- ── TOP-UP ───────────────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="topup">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Instant token purchase</div>
+              <div class="card-sub">Tokens are generated for your registered meter and stored to your history.</div>
+            </div>
+            <span class="pill pill-info">M-Pesa · Airtel · Bank</span>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- 1. M-Pesa Integration Interface -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 font-mono text-xs">
-              <span class="font-bold text-sky-950 uppercase tracking-wide text-sm block">1. M-Pesa Express</span>
-              <div>
-                <label class="block text-sky-800 mb-1">M-Pesa Registered Phone Number (+254)</label>
-                <input type="text" id="mpesaPhone" value="+254712345678" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
+          <div class="grid grid-2">
+            <div>
+              <div class="field">
+                <label for="topupPhone">Payment phone number</label>
+                <input class="input" type="tel" id="topupPhone" placeholder="0712 345 678">
               </div>
-              <div>
-                <label class="block text-sky-800 mb-1">Select Preset or Custom Amount (KSh)</label>
-                <div class="grid grid-cols-3 gap-2 mb-2">
-                  <button onclick="setMpesaAmount(100)" class="py-2 bg-white border border-sky-200 rounded-lg hover:border-sky-500 font-bold text-sky-900">100 KSh</button>
-                  <button onclick="setMpesaAmount(500)" class="py-2 bg-white border border-sky-200 rounded-lg hover:border-sky-500 font-bold text-sky-900">500 KSh</button>
-                  <button onclick="setMpesaAmount(1000)" class="py-2 bg-white border border-sky-200 rounded-lg hover:border-sky-500 font-bold text-sky-900">1000 KSh</button>
+              <div class="field">
+                <label>Amount</label>
+                <div class="amount-preset">
+                  <button type="button" data-amt="100">100</button>
+                  <button type="button" data-amt="200">200</button>
+                  <button type="button" data-amt="500" class="selected">500</button>
+                  <button type="button" data-amt="1000">1000</button>
                 </div>
-                <input type="number" id="mpesaCustomAmount" placeholder="Custom amount in KSh" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
               </div>
-              <button onclick="triggerSTKPush()" class="w-full py-3 bg-yellow-400 text-sky-950 rounded-xl font-bold hover:bg-yellow-300 transition-all shadow-md shadow-yellow-400/20">
-                Buy Token 
+              <div class="field">
+                <label for="topupChannel">Payment channel</label>
+                <select class="input" id="topupChannel">
+                  <option value="mpesa">M-Pesa</option>
+                  <option value="airtel">Airtel Money</option>
+                  <option value="bank">Bank transfer</option>
+                </select>
+              </div>
+              <button class="btn btn-primary btn-block" id="buyTokenBtn">
+                <span id="buyTokenLabel">Buy token</span>
               </button>
-              <div id="stkStatusBox" class="p-4 bg-white border border-sky-200 rounded-xl hidden text-center space-y-2">
-                <span id="stkStatusText" class="font-bold text-yellow-700">Waiting for PIN on phone...</span>
-                <div id="retryContainer" class="hidden pt-2">
-                  <button onclick="triggerSTKPush()" class="px-4 py-1.5 bg-sky-100 border border-sky-300 text-sky-800 rounded-lg font-bold">Retry STK Push</button>
-                </div>
-              </div>
+              <div id="buyResult" class="msg msg-success hidden" style="margin-top:14px"></div>
             </div>
 
-            <!-- 2. Token Management & Auto-Top Up Dashboard -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 font-mono text-xs flex flex-col justify-between">
-              <div class="space-y-4">
-                <span class="font-bold text-sky-950 uppercase tracking-wide text-sm block">2. Token Management Dashboard</span>
-                <div class="bg-white p-4 rounded-xl border border-sky-200 flex justify-between items-center">
-                  <div>
-                    <span class="text-sky-700 uppercase block">Current Token Balance</span>
-                    <span class="text-2xl font-extrabold text-sky-900">24.5 kWh</span>
-                  </div>
-                  <span class="text-sky-700">Meter #KPLC-TR-948201</span>
-                </div>
-                <div class="space-y-2">
-                  <span class="font-bold text-sky-950 block">Recent M-Pesa Transactions</span>
-                  <div class="bg-white p-2.5 rounded-xl border border-sky-200 flex justify-between">
-                    <span class="text-sky-700">2026-07-28 • 500 KSh</span>
-                    <span class="text-sky-900 font-bold">4829-9102-3841-5502-1984</span>
-                  </div>
-                  <div class="bg-white p-2.5 rounded-xl border border-sky-200 flex justify-between">
-                    <span class="text-sky-700">2026-07-15 • 200 KSh</span>
-                    <span class="text-sky-900 font-bold">1092-3849-5561-2039-4481</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Auto-Top Up Setting & Daraja API Notes -->
-              <div class="bg-white p-4 rounded-xl border border-sky-200 space-y-3 mt-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <span class="font-bold text-sky-950 block">Auto-Top Up (Daraja Trigger)</span>
-                    <span class="text-sky-700">Auto-buy tokens when balance drops below threshold.</span>
-                  </div>
-                  <input type="checkbox" id="autoTopUpToggle" checked class="w-5 h-5 accent-yellow-500">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                  <input type="number" id="autoThreshold" value="5" placeholder="Threshold kWh" class="bg-sky-50 border border-sky-200 text-sky-950 rounded-lg p-2">
-                  <input type="number" id="autoTopAmount" value="500" placeholder="Amount KSh" class="bg-sky-50 border border-sky-200 text-sky-950 rounded-lg p-2">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 3: SMART BUDGETING & ECONOMY MODE INTERFACE -->
-      <section id="tab-budget" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="border-b border-sky-200 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-sky-950">Smart Budgeting & Economy Mode</h2>
-            <p class="text-xs font-mono text-sky-700 mt-1">Simulate appliance consumption and configure economy goals.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Appliance Estimator & Graph -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 md:col-span-2">
-              <span class="text-xs font-mono font-bold uppercase text-sky-950">Appliance-Level Cost Estimator & Consumption Graph</span>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div class="space-y-3 font-mono text-xs">
-                  <div>
-                    <label class="block text-sky-800 mb-1">Select Appliance</label>
-                    <select id="applianceSelect" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-                      <option value="150">Fridge (150W Constant)</option>
-                      <option value="2000">Heavy Iron Box (2000W)</option>
-                      <option value="100">Smart TV & Setup Box (100W)</option>
-                      <option value="1200">Electric Kettle (1200W)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-sky-800 mb-1">Daily Usage Hours: <span id="hoursVal">4</span> hrs</label>
-                    <input type="range" id="usageHours" min="1" max="24" value="4" oninput="document.getElementById('hoursVal').innerText=this.value" class="w-full accent-yellow-500 cursor-pointer">
-                  </div>
-                  <button onclick="calculateApplianceCost()" class="w-full py-3 bg-sky-200 text-sky-950 rounded-xl font-bold hover:bg-sky-300 transition-colors">Calculate & Update Graph</button>
-                  <div id="applianceResult" class="p-3 bg-white border border-sky-200 text-sky-900 rounded-xl text-center hidden"></div>
-                </div>
-
-                <!-- Canvas Graph Container -->
-                <div class="bg-white p-4 rounded-2xl border border-sky-200 flex flex-col justify-center items-center">
-                  <span class="text-[10px] font-mono font-bold uppercase text-sky-700 mb-2">Weekly Projected Cost Comparison (KSh)</span>
-                  <div class="w-full h-48 relative">
-                    <canvas id="applianceCostChart"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Economy Goals & Notifications -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 md:col-span-2">
-              <span class="text-xs font-mono font-bold uppercase text-sky-950">Economy Goals & Notifications</span>
-              
-              <!-- Live Active Saved Details Card -->
-              <div id="savedPreferencesCard" class="p-4 bg-white border border-sky-200 rounded-xl font-mono text-xs space-y-1">
-                <div class="font-bold text-sky-900 flex items-center gap-2">
-                  <span>✅ Active Saved Preferences</span>
-                </div>
-                <div class="text-sky-700">
-                  <div>• Weekly Target Goal: <span id="displayTargetGoal" class="font-bold text-sky-950">Save 200 KSh this week</span></div>
-                  <div>• Low-Power Threshold: <span id="displayThresholdVal" class="font-bold text-sky-950">5</span> kWh</div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-                <div>
-                  <label class="block text-sky-800 mb-1">Weekly Target Goal</label>
-                  <input type="text" id="targetGoalInput" value="Save 200 KSh this week" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                  <label class="block text-sky-800 mb-1">Low-Power Threshold (kWh)</label>
-                  <input type="number" id="thresholdVal" value="5" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-                </div>
-                <div class="flex items-end">
-                  <button onclick="saveEconomyPreferences()" class="w-full py-3 bg-yellow-400 text-sky-950 rounded-xl font-bold hover:bg-yellow-300 transition-colors">Save Preferences</button>
-                </div>
-              </div>
-              <div class="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-xl font-mono text-xs">
-                💡 <span class="font-bold">Actionable Tip:</span> Ironing clothes in bulk once a week rather than daily saves up to 85 KSh weekly!
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: PEER SUPPORT & SAFETY NETS INTERFACE -->
-      <section id="tab-peer" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="border-b border-sky-200 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-sky-950">Peer Support & Safety Nets</h2>
-            <p class="text-xs font-mono text-sky-700 mt-1">Emergency P2P token transfers and community bulk buying pools.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Emergency Token Transfer -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4">
-              <span class="text-xs font-mono font-bold uppercase text-sky-950">Emergency P2P Token Transfer</span>
-              <div class="space-y-3 font-mono text-xs">
-                <div>
-                  <label class="block text-sky-800 mb-1">Recipient Meter / Phone Number</label>
-                  <input type="text" placeholder="KPLC-TR-009211 or 2547..." class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-                </div>
-                <div>
-                  <label class="block text-sky-800 mb-1">Transfer Amount (KSh)</label>
-                  <input type="number" placeholder="50" class="w-full bg-white border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-                </div>
-                <button onclick="alert('Offline secure audio token code generated: *483*88# - Token transferred successfully!')" class="w-full py-3 bg-sky-200 text-sky-950 rounded-xl font-bold hover:bg-sky-300 transition-colors">Send Emergency P2P Transfer</button>
-              </div>
-            </div>
-
-            <!-- Community Buying Groups -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 flex flex-col justify-between font-mono text-xs">
-              <div>
-                <span class="font-bold text-sky-950 uppercase">Community Bulk Buying Pool</span>
-                <p class="text-sky-700 mt-1">Pool funds with neighbors in Sunrise Heights to bypass heavy transaction fees.</p>
-              </div>
-              
-              <!-- Membership Status Indicator -->
-              <div id="poolStatusBanner" class="p-3 bg-white border border-sky-200 rounded-xl text-sky-900 font-bold flex items-center justify-between">
-                <span>Status: Not Joined</span>
-                <span id="poolIndicatorBadge" class="h-2.5 w-2.5 rounded-full bg-yellow-500"></span>
-              </div>
-
-              <div class="bg-white p-4 rounded-xl border border-sky-200 space-y-2">
-                <div class="flex justify-between"><span class="text-sky-700">Active Pool: Block B & C Bulk</span><span id="memberCountText" class="text-sky-900 font-bold">14 / 20 Members</span></div>
-                <div class="w-full bg-sky-100 h-2.5 rounded-full overflow-hidden"><div id="memberProgressBar" class="bg-yellow-500 h-full w-[70%] transition-all"></div></div>
-              </div>
-
-              <button id="joinPoolBtn" onclick="joinCommunityPool()" class="w-full py-3 bg-yellow-400 text-sky-950 font-bold rounded-xl hover:bg-yellow-300 transition-colors shadow-md shadow-yellow-400/20">
-                Join Community Buying Pool
-              </button>
-            </div>
-
-            <!-- Community Members List & Power Token Usage Graph -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 md:col-span-2 font-mono text-xs">
-              <div class="flex justify-between items-center border-b border-sky-200 pb-2">
-                <span class="font-bold text-sky-950 uppercase">Sunrise Heights Block B & C Pool Members</span>
-                <span class="text-sky-700">Live Telemetry Synchronized</span>
-              </div>
-
-              <!-- Members Table / List -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-xl border border-sky-200 space-y-2">
-                  <span class="font-bold text-sky-950 block">Active Pool Participants (14)</span>
-                  <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                    <div class="flex justify-between p-2 bg-sky-50 rounded-lg text-sky-900"><span>Alex Kiprop (Apt 402) - You</span><span class="text-sky-700 font-bold">Active</span></div>
-                    <div class="flex justify-between p-2 bg-sky-50 rounded-lg text-sky-900"><span>Brenda Mutua (Apt 301)</span><span class="text-sky-700 font-bold">Active</span></div>
-                    <div class="flex justify-between p-2 bg-sky-50 rounded-lg text-sky-900"><span>Charles Otieno (Apt 105)</span><span class="text-sky-700 font-bold">Active</span></div>
-                    <div class="flex justify-between p-2 bg-sky-50 rounded-lg text-sky-900"><span>Diana Wanjiru (Apt 204)</span><span class="text-sky-700 font-bold">Active</span></div>
-                    <div class="flex justify-between p-2 bg-sky-50 rounded-lg text-sky-900"><span>Eric Juma (Apt 502)</span><span class="text-sky-700 font-bold">Active</span></div>
-                  </div>
-                </div>
-
-                <!-- Members Token Usage Comparison Graph -->
-                <div class="bg-white p-4 rounded-2xl border border-sky-200 flex flex-col justify-between">
-                  <span class="font-bold text-sky-700 uppercase text-[10px] mb-2 block">Weekly Pool Token Consumption (kWh / Member)</span>
-                  <div class="w-full h-36 relative">
-                    <canvas id="communityTokenChart"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 5: OUTAGES & TARIFFS INTERFACE -->
-      <section id="tab-outages" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="border-b border-sky-200 pb-4">
-            <h2 class="text-2xl font-mono font-extrabold text-sky-950">Outages & Tariff Information</h2>
-            <p class="text-xs font-mono text-sky-700 mt-1">Live neighborhood outage tracking and billing simulations.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Neighborhood Outage Map & Crowd-source -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 md:col-span-2">
-              <div class="flex justify-between items-center">
-                <span class="text-xs font-mono font-bold uppercase text-sky-950">Sunrise Heights Live Neighborhood Outage Map</span>
-                <span class="text-[10px] font-mono text-yellow-700 font-bold">● Live Telemetry Synced</span>
-              </div>
-              
-              <!-- Leaflet Map Container -->
-              <div id="outageMap"></div>
-              
-              <div class="p-4 bg-white rounded-xl border border-sky-200 font-mono text-xs space-y-2">
-                <div class="flex justify-between items-center"><span class="font-bold text-yellow-800">● Unscheduled Cut (KPLC Main Line - Block A & B)</span><span class="text-sky-700">Est. restoration: 45 mins</span></div>
-                <p class="text-sky-700">Crowd-sourced ETA logged by 12 neighbors in Block A & B.</p>
-              </div>
-              <button onclick="alert('Crowd-sourced restoration log submitted successfully!')" class="w-full py-3 bg-sky-200 text-sky-950 rounded-xl font-mono text-xs font-bold hover:bg-sky-300 transition-colors">Log Restoration ETA Update</button>
-            </div>
-
-            <!-- Tariff Change Alerts & What-If -->
-            <div class="bg-sky-50 border border-sky-200 p-6 rounded-2xl space-y-4 md:col-span-2">
-              <span class="text-xs font-mono font-bold uppercase text-sky-950">Tariff Change Alerts & What-If Simulation</span>
-              <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl font-mono text-xs text-yellow-800">
-                📢 <span class="font-bold">Upcoming Tariff Revision:</span> Tier-1 rate shifts from 26 KSh/kWh to 28.50 KSh/kWh next month. Projected monthly impact: +120 KSh.
-              </div>
-              <button onclick="alert('What-if simulator loaded: Optimization rules applied to offset tariff adjustment.')" class="w-full py-3 bg-yellow-400 text-sky-950 font-bold rounded-xl text-xs hover:bg-yellow-300 transition-colors">Run What-If Simulation</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 6: COMPREHENSIVE SETTINGS INTERFACE -->
-      <section id="tab-settings" class="tab-content space-y-6">
-        <div class="bg-white/80 border border-sky-200 p-8 rounded-3xl shadow-sm space-y-6">
-          <div class="border-b border-sky-200 pb-4">
-            <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-sky-700">Configuration Hub</span>
-            <h2 class="text-2xl font-mono font-extrabold text-sky-950">Settings Manager</h2>
-            <p class="text-xs font-mono text-sky-700 mt-1">Manage profile identity, security, preferences, and compliance documentation.</p>
-          </div>
-
-          <!-- Settings Sub-Navigation Tabs -->
-          <div class="flex flex-wrap gap-2 border-b border-sky-200 pb-4 font-mono text-xs">
-            <button onclick="switchSettings('profile')" id="set-btn-profile" class="px-4 py-2 rounded-xl bg-yellow-400 text-sky-950 font-bold transition-all">Profile</button>
-            <button onclick="switchSettings('notifications')" id="set-btn-notifications" class="px-4 py-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-950 font-bold transition-all">Notifications</button>
-            <button onclick="switchSettings('security')" id="set-btn-security" class="px-4 py-2 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 hover:text-sky-950 font-bold transition-all">Security</button>
-          </div>
-
-          <!-- Settings Content Sections -->
-          <div id="settings-profile" class="settings-section active space-y-4 font-mono text-xs">
             <div>
-              <label class="block text-sky-800 mb-1">Tenant Name</label>
-              <input type="text" value="Alex Kiprop" class="w-full bg-sky-50 border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
+              <div class="card-sub" style="margin-bottom:10px">How it works</div>
+              <div class="check-row"><span>1.</span> Enter your M-Pesa / Airtel phone number</div>
+              <div class="check-row" style="margin-top:10px"><span>2.</span> Choose an amount (min KSh 50)</div>
+              <div class="check-row" style="margin-top:10px"><span>3.</span> We generate &amp; push the token to your meter</div>
+              <div class="check-row" style="margin-top:10px"><span>4.</span> Token is saved to your history automatically</div>
             </div>
-            <div>
-              <label class="block text-sky-800 mb-1">Apartment Unit</label>
-              <input type="text" value="Sunrise Heights - Apt 402" class="w-full bg-sky-50 border border-sky-200 rounded-xl p-3 text-sky-950 focus:outline-none focus:border-sky-500">
-            </div>
-            <button onclick="alert('Profile details updated successfully!')" class="py-3 px-6 bg-yellow-400 text-sky-950 font-bold rounded-xl hover:bg-yellow-300">Save Changes</button>
-          </div>
-
-          <div id="settings-notifications" class="settings-section space-y-4 font-mono text-xs">
-            <div class="flex items-center justify-between p-3 bg-sky-50 rounded-xl border border-sky-200 text-sky-900">
-              <span>Low Balance SMS Alerts</span>
-              <input type="checkbox" checked class="w-5 h-5 accent-yellow-500">
-            </div>
-            <div class="flex items-center justify-between p-3 bg-sky-50 rounded-xl border border-sky-200 text-sky-900">
-              <span>Outage Warnings & Restoration ETAs</span>
-              <input type="checkbox" checked class="w-5 h-5 accent-yellow-500">
-            </div>
-            <button onclick="alert('Notification preferences saved!')" class="py-3 px-6 bg-yellow-400 text-sky-950 font-bold rounded-xl hover:bg-yellow-300">Save Preferences</button>
-          </div>
-
-          <div id="settings-security" class="settings-section space-y-4 font-mono text-xs">
-            <div>
-              <label class="block text-sky-800 mb-1">Current Session Token</label>
-              <input type="text" readonly value="active_tenant_token" class="w-full bg-sky-50 border border-sky-200 rounded-xl p-3 text-sky-700">
-            </div>
-            <button onclick="handleLogout()" class="py-3 px-6 bg-red-100 border border-red-200 text-red-700 font-bold rounded-xl hover:bg-red-200">Revoke Session & Logout</button>
           </div>
         </div>
       </section>
 
-    </div>
-  </main>
+      <!-- ── HISTORY ─────────────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="history">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Token &amp; payment history</div>
+              <div class="card-sub">Every token generated on your account.</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="tbl">
+              <thead>
+                <tr><th>Date</th><th>Token</th><th>Amount</th><th>Units</th><th>Status</th><th></th></tr>
+              </thead>
+              <tbody id="tokenHistoryBody">
+                <tr><td colspan="6"><div class="skeleton" style="height:36px"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:18px">
+            <div class="card-sub" style="margin-bottom:8px">Recent payments</div>
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th>Date</th><th>Channel</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead>
+                <tbody id="transactionHistoryBody">
+                  <tr><td colspan="5"><div class="skeleton" style="height:32px"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <!-- JAVASCRIPT LOGIC & TAB CONTROLLERS -->
+      <!-- ── BUDGET & ALERTS ─────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="budget">
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="card-title">Appliance cost estimator</div>
+            <div class="card-sub">Roughly estimate daily cost for common appliances.</div>
+            <div class="field">
+              <label for="applianceSel">Appliance</label>
+              <select class="input" id="applianceSel">
+                <option value="150">Fridge (150W)</option>
+                <option value="2000">Heavy iron box (2000W)</option>
+                <option value="100">Smart TV &amp; set-top box (100W)</option>
+                <option value="1200">Electric kettle (1200W)</option>
+                <option value="50">LED lighting (50W)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Daily usage: <span id="hoursVal" class="mono">4</span> hrs</label>
+              <input type="range" id="usageHours" min="1" max="24" value="4" style="width:100%" oninput="document.getElementById('hoursVal').textContent=this.value">
+            </div>
+            <button class="btn btn-secondary btn-block" onclick="estimateAppliance()">Estimate cost</button>
+            <div id="applianceResult" class="msg msg-info hidden" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Low-balance alert</div>
+            <div class="card-sub">Get notified before you run out of power.</div>
+            <div class="field">
+              <label for="alertThreshold">Threshold (kWh)</label>
+              <input class="input" type="number" id="alertThreshold" value="5" min="1" max="500">
+            </div>
+            <div class="field">
+              <label for="alertChannel">Channel</label>
+              <select class="input" id="alertChannel">
+                <option value="push">In-app push</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-block" id="createAlertBtn">Create alert</button>
+            <div id="alertList" style="margin-top:16px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── SETTINGS ────────────────────────────────────────────── -->
+      <section class="tab-panel" data-panel="settings">
+        <div class="card">
+          <div class="card-title">Auto top-up</div>
+          <div class="card-sub">Automatically buy tokens when your balance drops below the threshold.</div>
+          <div class="check-row">
+            <input type="checkbox" id="autoTopupToggle">
+            <div>
+              <div style="font-weight:700; font-size:13.5px">Enable auto top-up</div>
+              <div style="font-size:12px; color:var(--text-dim)">Requires a saved payment phone number.</div>
+            </div>
+          </div>
+          <div class="grid grid-2" style="margin-top:16px">
+            <div class="field">
+              <label for="topupThreshold">Threshold (kWh)</label>
+              <input class="input" type="number" id="topupThreshold" value="5" min="0">
+            </div>
+            <div class="field">
+              <label for="topupAmount">Top-up amount (KSh)</label>
+              <input class="input" type="number" id="topupAmount" value="200" min="50">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="saveSettingsBtn">Save settings</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Your profile</div>
+          <div class="card-sub">Registered details on your account.</div>
+          <div id="profileBox"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">© 2026 PowerSmart Kenya · Secure Client Interface</footer>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="app.js"></script>
   <script>
-    // Tab Switcher Logic
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-yellow-400', 'text-sky-950', 'shadow-md', 'shadow-yellow-400/20');
-        btn.classList.add('bg-sky-100/60', 'text-sky-800');
-      });
-      
-      document.getElementById('tab-' + tabId).classList.add('active');
-      const activeBtn = document.getElementById('btn-' + tabId);
-      activeBtn.classList.remove('bg-sky-100/60', 'text-sky-800');
-      activeBtn.classList.add('bg-yellow-400', 'text-sky-950', 'shadow-md', 'shadow-yellow-400/20');
+    (function () {
+      "use strict";
+      var PS = window.PowerSmart;
+      var state = { meter: null, prediction: null };
 
-      if (tabId === 'outages' && window.map) {
-        setTimeout(() => { window.map.invalidateSize(); }, 200);
+      var CIRC = 552.92; // 2πr for r=88
+
+      function toast(text, type) {
+        var t = document.createElement("div");
+        t.className = "toast " + (type || "info");
+        t.textContent = text;
+        document.getElementById("toastWrap").appendChild(t);
+        setTimeout(function () { t.remove(); }, 4200);
       }
-    }
 
-    // Settings Sub-tab Switcher
-    function switchSettings(sectionId) {
-      document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
-      ['profile', 'notifications', 'security'].forEach(s => {
-        const btn = document.getElementById('set-btn-' + s);
-        if(btn) {
-          btn.classList.remove('bg-yellow-400', 'text-sky-950');
-          btn.classList.add('bg-sky-50', 'text-sky-700');
-        }
-      });
+      function el(id) { return document.getElementById(id); }
 
-      document.getElementById('settings-' + sectionId).classList.add('active');
-      const activeBtn = document.getElementById('set-btn-' + sectionId);
-      activeBtn.classList.remove('bg-sky-50', 'text-sky-700');
-      activeBtn.classList.add('bg-yellow-400', 'text-sky-950');
-    }
-
-    // Logout Handler
-    function handleLogout() {
-      localStorage.removeItem('powersmart_session');
-      window.location.replace('index.html');
-    }
-
-    // M-Pesa Preset Amount Setter
-    function setMpesaAmount(amount) {
-      document.getElementById('mpesaCustomAmount').value = amount;
-    }
-
-    // STK Push Trigger Simulation
-    function triggerSTKPush() {
-      const phone = document.getElementById('mpesaPhone').value;
-      const amount = document.getElementById('mpesaCustomAmount').value || 500;
-      const box = document.getElementById('stkStatusBox');
-      const text = document.getElementById('stkStatusText');
-      const retry = document.getElementById('retryContainer');
-
-      box.classList.remove('hidden');
-      text.innerText = `Sending STK Push of ${amount} KSh to ${phone}...`;
-      retry.classList.add('hidden');
-
-      setTimeout(() => {
-        text.innerText = "STK Push sent! Enter M-Pesa PIN on your phone.";
-      }, 2000);
-
-      setTimeout(() => {
-        text.innerText = "✅ Payment confirmed! Token code: 4829-9102-3841-5502-1984 synced.";
-      }, 6000);
-    }
-
-    // Community Pool Join Toggle
-    let joinedPool = false;
-    function joinCommunityPool() {
-      joinedPool = !joinedPool;
-      const banner = document.getElementById('poolStatusBanner');
-      const badge = document.getElementById('poolIndicatorBadge');
-      const btn = document.getElementById('joinPoolBtn');
-      const memberCount = document.getElementById('memberCountText');
-      const progressBar = document.getElementById('memberProgressBar');
-
-      if (joinedPool) {
-        banner.innerHTML = "Status: Active Member (Block B & C Bulk Pool)";
-        badge.classList.remove('bg-yellow-500');
-        badge.classList.add('bg-green-500');
-        btn.innerText = "Leave Pool";
-        btn.classList.remove('bg-yellow-400', 'hover:bg-yellow-300');
-        btn.classList.add('bg-red-100', 'border', 'border-red-200', 'text-red-700', 'hover:bg-red-200');
-        memberCount.innerText = "15 / 20 Members";
-        progressBar.style.width = "75%";
-      } else {
-        banner.innerHTML = "Status: Not Joined";
-        badge.classList.remove('bg-green-500');
-        badge.classList.add('bg-yellow-500');
-        btn.innerText = "Join Community Buying Pool";
-        btn.classList.remove('bg-red-100', 'border', 'border-red-200', 'text-red-700', 'hover:bg-red-200');
-        btn.classList.add('bg-yellow-400', 'hover:bg-yellow-300');
-        memberCount.innerText = "14 / 20 Members";
-        progressBar.style.width = "70%";
+      function nav(tab) {
+        document.querySelectorAll(".nav-btn").forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-tab") === tab);
+        });
+        document.querySelectorAll(".tab-panel").forEach(function (p) {
+          p.classList.toggle("active", p.getAttribute("data-panel") === tab);
+        });
       }
-    }
+      window.PS_nav = nav;
+      document.querySelectorAll(".nav-btn").forEach(function (b) {
+        b.addEventListener("click", function () { nav(b.getAttribute("data-tab")); });
+      });
 
-    // Save Economy Preferences
-    function saveEconomyPreferences() {
-      const goal = document.getElementById('targetGoalInput').value;
-      const threshold = document.getElementById('thresholdVal').value;
+      // ── Data loading ──────────────────────────────────────────────
+      async function loadAll() {
+        try {
+          var session = await PS.requireAuth("tenant");
+          if (!session) return;
+          el("userName").textContent = session.user.name || "—";
+          el("userEmail").textContent = session.user.email || "—";
+          document.title = "Tenant Dashboard · " + (session.user.name || "PowerSmart");
+          renderProfile(session.user);
+        } catch (e) { return; }
 
-      document.getElementById('displayTargetGoal').innerText = goal;
-      document.getElementById('displayThresholdVal').innerText = threshold;
-      alert("Economy preferences successfully saved!");
-    }
+        await Promise.all([loadMeter(), loadPrediction(), loadTokens(), loadTransactions(), loadAlerts()]);
+        loadSettings();
+      }
 
-    // Chart.js & Leaflet Initialization on Load
-    window.addEventListener('DOMContentLoaded', () => {
-      // Initialize Appliance Cost Comparison Chart
-      const ctxAppliance = document.getElementById('applianceCostChart').getContext('2d');
-      new Chart(ctxAppliance, {
-        type: 'bar',
-        data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{
-            label: 'Cost (KSh)',
-            data: [45, 60, 50, 40, 55, 90, 80],
-            backgroundColor: 'rgba(14, 165, 233, 0.4)',
-            borderColor: 'rgba(14, 165, 233, 1)',
-            borderWidth: 1,
-            borderRadius: 6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false }, ticks: { color: '#0369a1', font: { family: 'JetBrains Mono', size: 10 } } },
-            y: { grid: { color: 'rgba(14, 165, 233, 0.1)' }, ticks: { color: '#0369a1', font: { family: 'JetBrains Mono', size: 10 } } }
+      function renderProfile(user) {
+        var rows = [
+          ["Name", user.name],
+          ["Email", user.email],
+          ["Phone", user.phone],
+          ["Meter account", user.meter_account],
+          ["Role", user.role],
+        ];
+        el("profileBox").innerHTML = rows.map(function (r) {
+          return '<div class="check-row"><div style="width:130px; color:var(--text-faint); font-size:12px; font-weight:600">' + r[0] + '</div><div style="font-weight:700">' + PS.escapeHtml(r[1]) + "</div></div>";
+        }).join('<div style="height:10px"></div>');
+      }
+
+      async function loadMeter() {
+        try {
+          var m = await PS.apiRequest("/meter");
+          state.meter = m;
+          var units = Number(m.units_remaining) || 0;
+          var pct = Math.min(units / 100, 1);
+          el("gaugeValue").textContent = units.toLocaleString("en-KE", { maximumFractionDigits: 1 });
+          el("gaugeFill").style.strokeDashoffset = String(CIRC * (1 - pct));
+          el("meterBadge").textContent = "Meter " + (m.meter_number || "—");
+          el("balancePill").className = "pill " + (units <= 5 ? "pill-bad" : units <= 15 ? "pill-warn" : "pill-good");
+          el("balancePill").textContent = units <= 5 ? "⚠ Low balance" : units <= 15 ? "Getting low" : "● Healthy balance";
+        } catch (e) {
+          el("gaugeValue").textContent = "—";
+          toast("Could not load meter: " + e.message, "error");
+        }
+      }
+
+      async function loadPrediction() {
+        try {
+          var p = await PS.apiRequest("/meter/prediction");
+          state.prediction = p;
+          el("statDailyAvg").textContent = (Number(p.daily_avg_units) || 0).toFixed(1) + " kWh";
+          var days = Number(p.days_remaining) || 0;
+          el("statDaysLeft").textContent = days > 0 ? days.toFixed(1) + " days" : "—";
+          el("statDepletion").textContent = p.depletion_date ? PS.fmtDateTime(p.depletion_date) : "no data yet";
+          var box = el("predictionBox");
+          box.className = "msg " + (p.alert_level === "critical" ? "msg-error" : p.alert_level === "warning" ? "msg-warn" : "msg-info");
+          box.textContent = p.depletion_date
+            ? "Estimated run-out: " + PS.fmtDateTime(p.depletion_date) + " · Confidence: " + (p.confidence_level || "low")
+            : "Add a few telemetry readings to unlock forecasts.";
+        } catch (e) {
+          el("predictionBox").textContent = "Forecast unavailable.";
+        }
+      }
+
+      async function loadTokens() {
+        try {
+          var tokens = await PS.apiRequest("/tokens");
+          var body = el("tokenHistoryBody");
+          if (!tokens.length) {
+            body.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-faint); padding:28px">No tokens yet — buy your first token from the Top-up tab.</td></tr>';
+            return;
           }
+          body.innerHTML = tokens.map(function (t) {
+            var status = t.push_status === "success" ? '<span class="pill pill-good">pushed</span>'
+              : t.push_status === "failed" ? '<span class="pill pill-bad">failed</span>'
+              : '<span class="pill pill-neutral">' + PS.escapeHtml(t.push_status) + "</span>";
+            return "<tr>" +
+              "<td>" + PS.fmtDateTime(t.purchased_at) + "</td>" +
+              '<td><span class="mini-token">' + PS.escapeHtml(t.token_number) + "</span></td>" +
+              '<td class="num">' + PS.fmtKsh(t.amount_ksh) + "</td>" +
+              '<td class="num">' + PS.fmtUnits(t.units) + "</td>" +
+              "<td>" + status + "</td>" +
+              '<td><button class="btn btn-ghost btn-sm" data-token="' + PS.escapeHtml(t.token_number) + '">Copy</button></td>' +
+              "</tr>";
+          }).join("");
+          body.querySelectorAll("[data-token]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              navigator.clipboard && navigator.clipboard.writeText(btn.getAttribute("data-token"));
+              toast("Token copied to clipboard", "success");
+            });
+          });
+        } catch (e) { /* ignore */ }
+      }
+
+      async function loadTransactions() {
+        try {
+          var txns = await PS.apiRequest("/transactions");
+          var body = el("transactionHistoryBody");
+          if (!txns.length) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-faint); padding:28px">No payments recorded yet.</td></tr>';
+            return;
+          }
+          body.innerHTML = txns.slice(0, 10).map(function (t) {
+            var st = t.status === "success" ? "good" : t.status === "failed" ? "bad" : "neutral";
+            return "<tr>" +
+              "<td>" + PS.fmtDateTime(t.created_at) + "</td>" +
+              "<td>" + PS.escapeHtml(t.channel || "—") + "</td>" +
+              '<td class="num">' + PS.fmtKsh(t.amount_ksh) + "</td>" +
+              '<td class="mono">' + PS.escapeHtml(t.reference || "—") + "</td>" +
+              '<td><span class="pill pill-' + st + '">' + PS.escapeHtml(t.status) + "</span></td>" +
+              "</tr>";
+          }).join("");
+        } catch (e) { /* ignore */ }
+      }
+
+      async function loadAlerts() {
+        try {
+          var alerts = await PS.apiRequest("/alerts");
+          var list = el("alertList");
+          if (!alerts.length) {
+            list.innerHTML = '<div class="msg msg-info">No alerts configured.</div>';
+            return;
+          }
+          list.innerHTML = alerts.map(function (a) {
+            return '<div class="check-row"><div style="flex:1"><div style="font-weight:700; font-size:13px">' + PS.escapeHtml(a.type) + "</div>" +
+              '<div style="font-size:12px; color:var(--text-dim)">below ' + a.threshold + " kWh via " + PS.escapeHtml(a.channel) + "</div></div>" +
+              '<span class="pill ' + (a.enabled ? "pill-good" : "pill-neutral") + '">' + (a.enabled ? "on" : "off") + "</span></div>";
+          }).join("");
+        } catch (e) { /* ignore */ }
+      }
+
+      async function loadSettings() {
+        if (!state.meter) return;
+        el("autoTopupToggle").checked = !!state.meter.auto_topup;
+        el("topupThreshold").value = state.meter.topup_threshold || 5;
+        el("topupAmount").value = state.meter.topup_amount_ksh || 200;
+      }
+
+      // ── Top-up ────────────────────────────────────────────────────
+      var topupAmount = 500;
+      document.querySelectorAll(".amount-preset button").forEach(function (b) {
+        b.addEventListener("click", function () {
+          topupAmount = parseInt(b.getAttribute("data-amt"), 10);
+          document.querySelectorAll(".amount-preset button").forEach(function (x) { x.classList.remove("selected"); });
+          b.classList.add("selected");
+        });
+      });
+
+      el("buyTokenBtn").addEventListener("click", async function () {
+        var btn = this;
+        var label = el("buyTokenLabel");
+        var phone = el("topupPhone").value.trim();
+        var channel = el("topupChannel").value;
+        var result = el("buyResult");
+        result.classList.add("hidden");
+        if (!phone && channel !== "bank") {
+          toast("Please enter your payment phone number.", "error");
+          return;
+        }
+        label.textContent = "Processing…";
+        btn.disabled = true;
+        try {
+          var res = await PS.apiRequest("/tokens/buy", {
+            method: "POST",
+            body: JSON.stringify({ amount_ksh: topupAmount, payment_channel: channel, phone: phone }),
+          });
+          result.classList.remove("hidden");
+          result.className = "msg msg-success";
+          result.innerHTML = "Token generated: <span class='mono'>" + PS.escapeHtml(res.token_number) + "</span> (" + PS.fmtKsh(res.amount_ksh) + " → " + PS.fmtUnits(res.units) + ")";
+          toast("Token purchased successfully!", "success");
+          loadTokens();
+          loadTransactions();
+        } catch (e) {
+          toast(e.message, "error");
+        } finally {
+          label.textContent = "Buy token";
+          btn.disabled = false;
         }
       });
 
-      // Initialize Community Token Consumption Chart
-      const ctxCommunity = document.getElementById('communityTokenChart').getContext('2d');
-      new Chart(ctxCommunity, {
-        type: 'line',
-        data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-          datasets: [{
-            label: 'Avg kWh',
-            data: [35, 42, 38, 31],
-            borderColor: '#ca8a04',
-            backgroundColor: 'rgba(202, 138, 4, 0.1)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false }, ticks: { color: '#0369a1', font: { family: 'JetBrains Mono', size: 9 } } },
-            y: { grid: { color: 'rgba(14, 165, 233, 0.1)' }, ticks: { color: '#0369a1', font: { family: 'JetBrains Mono', size: 9 } } }
-          }
+      // ── Settings save ─────────────────────────────────────────────
+      el("saveSettingsBtn").addEventListener("click", async function () {
+        try {
+          await PS.apiRequest("/meter/settings", {
+            method: "PUT",
+            body: JSON.stringify({
+              auto_topup: el("autoTopupToggle").checked,
+              topup_threshold: parseFloat(el("topupThreshold").value) || 0,
+              topup_amount_ksh: parseInt(el("topupAmount").value, 10) || 200,
+            }),
+          });
+          toast("Settings saved", "success");
+        } catch (e) {
+          toast(e.message, "error");
         }
       });
 
-      // Initialize Leaflet Map
-      const map = L.map('outageMap').setView([-0.0917, 34.7680], 15); // Kisumu coordinate reference
-      window.map = map;
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+      // ── Alerts create ─────────────────────────────────────────────
+      el("createAlertBtn").addEventListener("click", async function () {
+        try {
+          await PS.apiRequest("/alerts", {
+            method: "POST",
+            body: JSON.stringify({
+              type: "low_units",
+              threshold: parseFloat(el("alertThreshold").value) || 5,
+              channel: el("alertChannel").value,
+            }),
+          });
+          toast("Alert created", "success");
+          loadAlerts();
+        } catch (e) {
+          toast(e.message, "error");
+        }
+      });
 
-      // Add Outage Marker
-      L.circleMarker([-0.0917, 34.7680], {
-        color: '#ef4444',
-        fillColor: '#ef4444',
-        fillOpacity: 0.5,
-        radius: 20
-      }).addTo(map).bindPopup("<b>Sunrise Heights Block A & B</b><br>Unscheduled Power Cut");
-    });
+      // ── Refresh ───────────────────────────────────────────────────
+      el("refreshBtn").addEventListener("click", async function () {
+        this.disabled = true;
+        await Promise.all([loadMeter(), loadPrediction(), loadTokens(), loadTransactions()]);
+        toast("Meter refreshed", "success");
+        this.disabled = false;
+      });
+
+      // Appliance estimator
+      window.estimateAppliance = function () {
+        var watts = parseInt(el("applianceSel").value, 10);
+        var hours = parseInt(el("usageHours").value, 10);
+        var kwh = (watts * hours) / 1000;
+        var cost = kwh * 26.0; // approx tier-1 tariff
+        el("applianceResult").classList.remove("hidden");
+        el("applianceResult").textContent = "~" + kwh.toFixed(1) + " kWh/day · approx. KSh " + cost.toFixed(0) + "/day at current tariff.";
+      };
+
+      loadAll();
+    })();
   </script>
 </body>
 </html>

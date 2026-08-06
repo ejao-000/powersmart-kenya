@@ -17,9 +17,9 @@ func NewMeterRepo(db *sql.DB) *MeterRepo {
 
 func (r *MeterRepo) Create(m *model.Meter) error {
 	_, err := r.db.Exec(`
-		INSERT INTO meters (id, user_id, units_remaining, daily_avg_units, auto_topup, topup_threshold, topup_amount, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		m.ID, m.UserID, m.UnitsRemaining, m.DailyAvgUnits,
+		INSERT INTO meters (id, user_id, meter_number, units_remaining, daily_avg_units, auto_topup, topup_threshold, topup_amount, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		m.ID, m.UserID, m.MeterNumber, m.UnitsRemaining, m.DailyAvgUnits,
 		m.AutoTopup, m.TopupThreshold, m.TopupAmountKsh, m.UpdatedAt,
 	)
 	return err
@@ -28,10 +28,10 @@ func (r *MeterRepo) Create(m *model.Meter) error {
 func (r *MeterRepo) GetByUserID(userID string) (*model.Meter, error) {
 	m := &model.Meter{}
 	err := r.db.QueryRow(`
-		SELECT id, user_id, units_remaining, daily_avg_units, last_reading_at,
+		SELECT id, user_id, meter_number, units_remaining, daily_avg_units, last_reading_at,
 		       auto_topup, topup_threshold, topup_amount, updated_at
 		FROM meters WHERE user_id = ?`, userID).
-		Scan(&m.ID, &m.UserID, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
+		Scan(&m.ID, &m.UserID, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
 			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound

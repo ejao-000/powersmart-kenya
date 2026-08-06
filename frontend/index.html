@@ -3,263 +3,370 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Access | PowerSmart Kenya</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Sign in · PowerSmart Kenya</title>
+  <meta name="description" content="PowerSmart Kenya — smart prepaid electricity management. Sign in or create an account.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/portal.css">
   <style>
-    .hidden-view { display: none !important; }
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      background: var(--bg);
+    }
+    /* Left brand panel */
+    .brand-panel {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 40px 44px;
+      background:
+        radial-gradient(60% 50% at 80% 0%, rgba(245, 158, 11, 0.16), transparent 60%),
+        radial-gradient(60% 50% at 0% 100%, rgba(56, 189, 248, 0.10), transparent 60%),
+        linear-gradient(180deg, #0d1626, #0a1120);
+      border-right: 1px solid var(--border-soft);
+    }
+    .brand-panel .glow-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(80% 80% at 50% 30%, #000 30%, transparent 75%);
+      -webkit-mask-image: radial-gradient(80% 80% at 50% 30%, #000 30%, transparent 75%);
+      pointer-events: none;
+    }
+    .brand-panel .copy { position: relative; z-index: 1; margin: auto 0; }
+    .brand-panel h1 { font-size: 34px; line-height: 1.18; letter-spacing: -0.03em; color: #fff; }
+    .brand-panel h1 em { font-style: normal; color: var(--accent-strong); }
+    .brand-panel p { color: var(--text-dim); font-size: 15px; max-width: 420px; margin-top: 16px; }
+    .feature-list { margin-top: 28px; display: grid; gap: 12px; }
+    .feature-item { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--text-dim); }
+    .feature-item .tick {
+      width: 22px; height: 22px; border-radius: 7px; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 12px;
+      background: var(--positive-soft); color: var(--positive); border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .brand-foot { position: relative; z-index: 1; font-size: 12px; color: var(--text-faint); display: flex; justify-content: space-between; }
+    .brand-foot a { color: var(--text-dim); }
+
+    /* Right form panel */
+    .form-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 28px;
+    }
+    .auth-card { width: 100%; max-width: 430px; }
+    .auth-card .card { padding: 34px; }
+    .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; background: var(--bg-soft); border: 1px solid var(--border-soft); border-radius: 14px; margin-bottom: 26px; }
+    .auth-tabs button {
+      padding: 10px; border: 0; border-radius: 10px; background: transparent;
+      color: var(--text-dim); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: all var(--t-fast) var(--ease);
+    }
+    .auth-tabs button.active { background: var(--accent); color: var(--accent-ink); }
+    .auth-view { display: none; }
+    .auth-view.active { display: block; animation: fadeUp 0.3s var(--ease); }
+    .form-title { font-size: 22px; margin-bottom: 4px; }
+    .form-sub { color: var(--text-dim); font-size: 13.5px; margin-bottom: 24px; }
+    .role-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .role-card {
+      padding: 12px; border-radius: var(--r-sm); cursor: pointer;
+      background: var(--bg-soft); border: 1.5px solid var(--border-soft); text-align: left;
+      transition: border-color var(--t-fast), background var(--t-fast);
+    }
+    .role-card .rc-ico { font-size: 18px; }
+    .role-card .rc-name { font-weight: 700; font-size: 13px; margin-top: 6px; }
+    .role-card .rc-desc { font-size: 11px; color: var(--text-faint); }
+    .role-card.selected { border-color: var(--accent); background: rgba(245, 158, 11, 0.08); }
+    .auth-foot { text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-dim); }
+    .auth-foot button { background: none; border: 0; color: var(--accent-strong); font-weight: 700; cursor: pointer; padding: 0; }
+    .auth-foot button:hover { text-decoration: underline; }
+    .password-hint { font-size: 11px; color: var(--text-faint); margin-top: 6px; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-faint); font-size: 12px; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+    .mute { color: var(--text-faint); }
+    @media (max-width: 900px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      .brand-panel { display: none; }
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+<body class="auth-shell">
 
-  <!-- TOP BAR WITH BACK TO LANDING LINK -->
-  <header class="w-full border-b border-slate-200 bg-white/90 backdrop-blur-md py-4 px-6 shadow-sm">
-    <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <a href="landing.html" class="flex items-center gap-2 text-xs font-mono text-slate-600 hover:text-emerald-600 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
-        <span>Back</span>
-      </a>
-      <div class="flex items-center gap-2">
-        <div class="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-600 text-xs">⚡</div>
-        <span class="font-mono font-bold text-sm text-slate-900">PowerSmart Portal</span>
+  <!-- LEFT BRAND PANEL -->
+  <aside class="brand-panel">
+    <div class="glow-grid"></div>
+    <div class="brand">
+      <div class="brand-mark">⚡</div>
+      <div>
+        <span class="brand-name" style="color:#fff">PowerSmart</span>
+        <span class="brand-sub">Kenya Utility Engine</span>
       </div>
     </div>
-  </header>
 
-  <!-- MAIN AUTH CONTAINER -->
-  <main class="flex-grow flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md bg-white border border-slate-200 p-8 rounded-3xl shadow-xl auth-card">
+    <div class="copy">
+      <div class="pill pill-warn" style="margin-bottom:18px">
+        <span class="dot dot-live" style="background:var(--positive)"></span> Secure Client Portal
+      </div>
+      <h1>Power, planned.<br><em>Never in the dark again.</em></h1>
+      <p>Monitor your prepaid meter in real time, buy tokens in seconds and forecast your usage with confidence.</p>
+      <div class="feature-list">
+        <div class="feature-item"><span class="tick">✓</span> Real-time meter telemetry &amp; depletion forecasts</div>
+        <div class="feature-item"><span class="tick">✓</span> Instant M-Pesa &amp; Airtel token vending</div>
+        <div class="feature-item"><span class="tick">✓</span> Landlord multi-meter fleet management</div>
+        <div class="feature-item"><span class="tick">✓</span> Bank-grade security &amp; privacy protection</div>
+      </div>
+    </div>
 
-      <!-- MESSAGE AREA -->
-      <div id="authMessage" class="auth-message mb-4 text-xs font-mono text-center"></div>
+    <div class="brand-foot">
+      <span>© 2026 PowerSmart Kenya</span>
+      <a href="landing.html">Explore website →</a>
+    </div>
+  </aside>
 
-      <!-- =====================================================
-            1. REGISTER VIEW (DEFAULT INITIAL VIEW)
-      ===================================================== -->
-      <div id="registerContainer" class="space-y-4">
-        <div>
-          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">New Registration</span>
-          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Create Account</h2>
+  <!-- RIGHT FORM PANEL -->
+  <main class="form-panel">
+    <div class="auth-card">
+      <div class="card">
+        <!-- Tabs -->
+        <div class="auth-tabs">
+          <button id="tabLogin" type="button" class="active">Sign in</button>
+          <button id="tabRegister" type="button">Create account</button>
         </div>
 
-        <form id="registerForm" class="space-y-4" onsubmit="handleRegister(event)">
-          <!-- Select Account Type Dropdown -->
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="accountRole">Select Account Type</label>
-            <select id="accountRole" onchange="handleRoleChange()" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500 cursor-pointer">
-              <option value="tenant">  </option>
-              <option value="tenant">Tenant / Consumer</option>
-              <option value="landlord">Landlord / Fleet Manager</option>
-            </select>
-          </div>
+        <div id="authMessage"></div>
 
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerName">Full Name</label>
-            <input type="text" id="registerName" placeholder="Emma Jane" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
+        <!-- LOGIN VIEW -->
+        <section id="loginView" class="auth-view active">
+          <h1 class="form-title">Welcome back</h1>
+          <p class="form-sub">Sign in to your portal.</p>
 
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerEmail">Email Address</label>
-            <input type="email" id="registerEmail" placeholder="you@example.com" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
+          <form id="loginForm" novalidate>
+            <div class="field">
+              <label for="loginEmail">Email address</label>
+              <input class="input" type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="field" style="margin-bottom:8px">
+              <label for="loginPassword">Password</label>
+              <input class="input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" required>
+            </div>
+            <p class="password-hint" style="margin-bottom:18px">Protected by encrypted sessions &amp; rate-limited access.</p>
+            <button class="btn btn-primary btn-block" id="loginSubmitBtn" type="submit">
+              <span id="loginBtnLabel">Sign in securely</span>
+            </button>
+          </form>
+        </section>
 
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerPhone">Phone Number</label>
-            <input type="tel" id="registerPhone" placeholder="+254700000000" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
+        <!-- REGISTER VIEW -->
+        <section id="registerView" class="auth-view">
+          <h1 class="form-title">Create your account</h1>
+          <p class="form-sub">Verify your meter and get started in under a minute.</p>
 
-          <!-- DYNAMIC ROLE-SPECIFIC FIELDS CONTAINER -->
-          <div id="signupDynamicFields" class="space-y-4"></div>
+          <form id="registerForm" novalidate>
+            <div class="role-switch" role="radiogroup" aria-label="Account type">
+              <div class="role-card selected" data-role="tenant" role="radio" aria-checked="true" tabindex="0">
+                <div class="rc-ico">🏠</div>
+                <div class="rc-name">Tenant / Consumer</div>
+                <div class="rc-desc">Track &amp; buy tokens</div>
+              </div>
+              <div class="role-card" data-role="landlord" role="radio" aria-checked="false" tabindex="0">
+                <div class="rc-ico">🏢</div>
+                <div class="rc-name">Landlord</div>
+                <div class="rc-desc">Manage many meters</div>
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="registerPassword">Password</label>
-            <input type="password" id="registerPassword" placeholder="Create Secure Password" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
+            <div class="field">
+              <label for="regName">Full name</label>
+              <input class="input" type="text" id="regName" placeholder="Emma Jane" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="regEmail">Email address</label>
+              <input class="input" type="email" id="regEmail" placeholder="you@example.com" autocomplete="email" required>
+            </div>
+            <div class="grid grid-2" style="gap:12px">
+              <div class="field">
+                <label for="regPhone">Phone</label>
+                <input class="input" type="tel" id="regPhone" placeholder="0712 345 678" autocomplete="tel" required>
+              </div>
+              <div class="field">
+                <label for="regMeter">Meter account no.</label>
+                <input class="input" type="text" id="regMeter" placeholder="8–12 digit KP account" inputmode="numeric" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="regPassword">Password</label>
+              <input class="input" type="password" id="regPassword" placeholder="8+ chars, A-Z, 0-9" autocomplete="new-password" required>
+            </div>
 
-          <button type="submit" id="registerSubmitBtn" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">Create Account</button>
-        </form>
+            <button class="btn btn-primary btn-block" id="registerSubmitBtn" type="submit">
+              Create my account
+            </button>
+          </form>
+        </section>
 
-        <!-- Single Unified Sign In Link -->
-        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-center gap-2">
-          <span class="text-xs font-mono text-slate-500">Already have an account?</span>
-          <button type="button" onclick="switchView('unifiedLogin')" class="text-xs font-mono font-bold text-emerald-600 hover:text-emerald-700 underline">Sign In</button>
+        <div class="auth-foot">
+          <span id="switchHint">New to PowerSmart?</span>
+          <button type="button" id="switchBtn">Create an account</button>
         </div>
       </div>
 
-      <!-- =====================================================
-            2. UNIFIED LOGIN VIEW (HIDDEN BY DEFAULT)
-      ===================================================== -->
-      <div id="unifiedLoginContainer" class="hidden-view space-y-4">
-        <div>
-          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-600">Portal Access</span>
-          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Sign In</h2>
-        </div>
-
-        <form id="unifiedLoginForm" class="space-y-4" onsubmit="handleUnifiedLogin(event)">
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginRole">Account Type</label>
-            <select id="loginRole" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500 cursor-pointer">
-              <option value="tenant">  </option>
-              <option value="tenant">Tenant / Consumer</option>
-              <option value="landlord">Landlord / Fleet Manager</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginEmail">Email </label>
-            <input type="text" id="loginEmail" placeholder="you@example.com" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="loginPassword">Password</label>
-            <input type="password" id="loginPassword" placeholder="••••••••" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
-
-          <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-600 text-white font-mono font-bold text-xs hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">Sign In</button>
-        </form>
-
-        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-between">
-          <button type="button" onclick="switchView('register')" class="text-xs font-mono text-slate-500 hover:text-emerald-600">← Back </button>
-        </div>
-      </div>
-
-      <!-- =====================================================
-            3. ADMIN LOGIN VIEW (HIDDEN BY DEFAULT - NO PUBLIC LINK)
-      ===================================================== -->
-      <div id="adminContainer" class="hidden-view space-y-4">
-        <div>
-          <span class="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-600">Restricted Access</span>
-          <h2 class="text-2xl font-mono font-extrabold text-slate-900 mt-1">Admin Portal Login</h2>
-        </div>
-
-        <form id="adminForm" class="space-y-4" onsubmit="handleAdminLogin(event)">
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="adminEmail">Admin ID / Email</label>
-            <input type="text" id="adminEmail" placeholder="admin@powersmart.ke" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-rose-500">
-          </div>
-
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="adminPassword">Master Security Key</label>
-            <input type="password" id="adminPassword" placeholder="••••••••••••" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-rose-500">
-          </div>
-
-          <button type="submit" id="adminSubmitBtn" class="w-full py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-mono font-bold text-xs transition-all shadow-lg shadow-slate-900/20">Access Admin Dashboard</button>
-        </form>
-
-        <div class="pt-4 text-center border-t border-slate-100 flex items-center justify-center gap-2">
-          <span class="text-xs font-mono text-slate-500">Looking for standard portal?</span>
-          <button type="button" onclick="switchView('register')" class="text-xs font-mono font-bold text-emerald-600 hover:text-emerald-700 underline">User Sign Up</button>
-        </div>
-      </div>
-
+      <p class="mute" style="text-align:center; margin-top:20px; font-size:12px">
+        © 2026 PowerSmart Kenya · <span class="mono">System secure · TLS · Encrypted</span>
+      </p>
+      <p style="text-align:center; margin-top:6px; font-size:11px">
+        <a href="admin-login.html" style="color:var(--text-faint)">Administrator sign-in</a>
+      </p>
     </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="w-full border-t border-slate-200 bg-white py-6 px-6 text-center shadow-inner">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-slate-500 gap-4">
-      <span>© 2026 • PowerSmart Kenya. All rights reserved.</span>
-      <span class="text-slate-400">Secure Client Interface</span>
-    </div>
-  </footer>
+  <div class="toast-wrap" id="toastWrap"></div>
 
-  <!-- VIEW SWITCHING & AUTH SCRIPT -->
+  <script src="app.js"></script>
   <script>
-    function switchView(viewType) {
-      const registerContainer = document.getElementById('registerContainer');
-      const unifiedLoginContainer = document.getElementById('unifiedLoginContainer');
-      const adminContainer = document.getElementById('adminContainer');
-      const authMessage = document.getElementById('authMessage');
-      
-      if (authMessage) authMessage.innerText = '';
+    (function () {
+      "use strict";
+      var PS = window.PowerSmart;
 
-      if (registerContainer) registerContainer.classList.add('hidden-view');
-      if (unifiedLoginContainer) unifiedLoginContainer.classList.add('hidden-view');
-      if (adminContainer) adminContainer.classList.add('hidden-view');
+      var view = "login";
+      var regRole = "tenant";
+      var loginTab = document.getElementById("tabLogin");
+      var registerTab = document.getElementById("tabRegister");
+      var loginView = document.getElementById("loginView");
+      var registerView = document.getElementById("registerView");
+      var switchBtn = document.getElementById("switchBtn");
+      var switchHint = document.getElementById("switchHint");
+      var msg = document.getElementById("authMessage");
+      var loginBtnLabel = document.getElementById("loginBtnLabel");
+      var loginSubmitBtn = document.getElementById("loginSubmitBtn");
+      var registerSubmitBtn = document.getElementById("registerSubmitBtn");
 
-      if (viewType === 'unifiedLogin') {
-        unifiedLoginContainer.classList.remove('hidden-view');
-      } else if (viewType === 'admin') {
-        adminContainer.classList.remove('hidden-view');
-      } else {
-        registerContainer.classList.remove('hidden-view');
+      function toast(text, type) {
+        var wrap = document.getElementById("toastWrap");
+        var t = document.createElement("div");
+        t.className = "toast " + (type || "info");
+        t.textContent = text;
+        wrap.appendChild(t);
+        setTimeout(function () { t.remove(); }, 4200);
       }
-    }
 
-    function handleRoleChange() {
-      const roleSelect = document.getElementById('accountRole');
-      const registerSubmitBtn = document.getElementById('registerSubmitBtn');
-      const dynamicFieldsContainer = document.getElementById('signupDynamicFields');
-
-      if (!roleSelect || !dynamicFieldsContainer) return;
-
-      if (roleSelect.value === 'tenant') {
-        if (registerSubmitBtn) registerSubmitBtn.innerText = "Create Account";
-        dynamicFieldsContainer.innerHTML = `
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="meterNumber">Smart Meter Number</label>
-            <input type="text" id="meterNumber" placeholder="KPLC-TR-948201" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
-
-        `;
-      } else {
-        if (registerSubmitBtn) registerSubmitBtn.innerText = "Create Account";
-        dynamicFieldsContainer.innerHTML = `
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="propertyName">Property Name / Building</label>
-            <input type="text" id="propertyName" placeholder="Sunrise Heights Estate" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
-          <div>
-            <label class="block text-xs font-mono text-slate-500 mb-1 uppercase" for="totalUnits">Total Managed Units</label>
-            <input type="number" id="totalUnits" placeholder="24" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-xs font-mono text-slate-900 focus:outline-none focus:border-emerald-500">
-          </div>
-        `;
+      function showMessage(text, type) {
+        msg.innerHTML = "";
+        if (!text) return;
+        var d = document.createElement("div");
+        d.className = "msg " + (type === "error" ? "msg-error" : type === "success" ? "msg-success" : "msg-info");
+        d.textContent = text;
+        msg.appendChild(d);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
-    }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      handleRoleChange();
-    });
-
-    function handleRegister(e) {
-      e.preventDefault();
-      const role = document.getElementById('accountRole').value;
-      const emailInput = document.getElementById('registerEmail').value;
-      
-      if (role === 'tenant') {
-        localStorage.setItem('powersmart_session', 'active_tenant_token');
-        localStorage.setItem('tenant_email', emailInput);
-        window.location.replace('tenant-dashboard.html');
-      } else {
-        localStorage.setItem('powersmart_landlord_session', 'active_landlord_token');
-        localStorage.setItem('landlord_email', emailInput);
-        window.location.replace('landlord.html');
+      function setView(v) {
+        view = v;
+        var login = v === "login";
+        loginTab.classList.toggle("active", login);
+        registerTab.classList.toggle("active", !login);
+        loginView.classList.toggle("active", login);
+        registerView.classList.toggle("active", !login);
+        switchHint.textContent = login ? "New to PowerSmart?" : "Already have an account?";
+        switchBtn.textContent = login ? "Create an account" : "Sign in";
+        showMessage("");
       }
-    }
 
-    function handleUnifiedLogin(e) {
-      e.preventDefault();
-      const role = document.getElementById('loginRole').value;
-      const emailInput = document.getElementById('loginEmail').value;
+      loginTab.addEventListener("click", function () { setView("login"); });
+      registerTab.addEventListener("click", function () { setView("register"); });
+      switchBtn.addEventListener("click", function () { setView(view === "login" ? "register" : "login"); });
 
-      if (role === 'tenant') {
-        localStorage.setItem('powersmart_session', 'active_tenant_token');
-        localStorage.setItem('tenant_email', emailInput);
-        window.location.replace('tenant-dashboard.html');
-      } else {
-        localStorage.setItem('powersmart_landlord_session', 'active_landlord_token');
-        localStorage.setItem('landlord_email', emailInput);
-        window.location.replace('landlord.html');
-      }
-    }
+      // Role selector
+      document.querySelectorAll(".role-card").forEach(function (card) {
+        function select() {
+          document.querySelectorAll(".role-card").forEach(function (c) {
+            c.classList.remove("selected");
+            c.setAttribute("aria-checked", "false");
+          });
+          card.classList.add("selected");
+          card.setAttribute("aria-checked", "true");
+          regRole = card.getAttribute("data-role");
+        }
+        card.addEventListener("click", select);
+        card.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(); }
+        });
+      });
 
-    function handleAdminLogin(e) {
-      e.preventDefault();
-      localStorage.setItem('powersmart_admin', 'active');
-      window.location.replace('admin-dashboard.html');
-    }
+      // ── LOGIN ────────────────────────────────────────────────────────────
+      document.getElementById("loginForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var email = document.getElementById("loginEmail").value.trim();
+        var password = document.getElementById("loginPassword").value;
+        if (!email || !password) {
+          showMessage("Please enter your email and password.", "error");
+          return;
+        }
+        loginBtnLabel.textContent = "Signing in…";
+        loginSubmitBtn.disabled = true;
+        try {
+          var res = await PS.apiRequest("/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email: email, password: password }),
+            skipAuthRedirect: true,
+          });
+          PS.saveSession(res.token, res.user, res.user.role);
+          toast("Welcome back, " + (res.user.name || "") + "!", "success");
+          setTimeout(function () { PS.redirectToDashboard(res.user.role); }, 350);
+        } catch (err) {
+          showMessage(err.message, "error");
+          loginBtnLabel.textContent = "Sign in securely";
+          loginSubmitBtn.disabled = false;
+        }
+      });
+
+      // ── REGISTER ─────────────────────────────────────────────────────────
+      document.getElementById("registerForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var name = document.getElementById("regName").value.trim();
+        var email = document.getElementById("regEmail").value.trim();
+        var phone = document.getElementById("regPhone").value.trim();
+        var meter = document.getElementById("regMeter").value.trim();
+        var password = document.getElementById("regPassword").value;
+
+        if (!name || !email || !phone || !meter || !password) {
+          showMessage("Please fill in every field to create your account.", "error");
+          return;
+        }
+        registerSubmitBtn.textContent = "Creating account…";
+        registerSubmitBtn.disabled = true;
+        try {
+          var res = await PS.apiRequest("/auth/register", {
+            method: "POST",
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              phone: phone,
+              meter_account: meter,
+              password: password,
+              role: regRole,
+            }),
+          });
+          PS.saveSession(res.token, res.user, res.user.role);
+          toast("Account created — you're signed in!", "success");
+          setTimeout(function () { PS.redirectToDashboard(res.user.role); }, 450);
+        } catch (err) {
+          showMessage(err.message, "error");
+          registerSubmitBtn.textContent = "Create my account";
+          registerSubmitBtn.disabled = false;
+        }
+      });
+
+      // If already signed in with a valid token, skip to the dashboard.
+      PS.bounceIfAuthenticated();
+    })();
   </script>
 </body>
 </html>

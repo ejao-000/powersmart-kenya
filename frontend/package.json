@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "author": "ejao-000",
-  "type": "MODUL",
+  "type": "module",
   "main": "app.js",
   "scripts": {
     "dev": "vite",

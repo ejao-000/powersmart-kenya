@@ -36,6 +36,9 @@ func (h *TokenHandler) ListHistory(w http.ResponseWriter, r *http.Request) {
 		utils.RespondError(w, http.StatusInternalServerError, "Failed to fetch token history")
 		return
 	}
+	if tokens == nil {
+		tokens = []*model.Token{} // return [] not null
+	}
 	utils.RespondJSON(w, http.StatusOK, tokens)
 }
 

@@ -1,1 +1,19 @@
+# Dependencies
 frontend/node_modules
+
+# Build artifacts
+frontend/dist
+backend/bin
+
+# Database files (contain user data & password hashes)
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment / secrets — never commit real keys
+.env
+.env.local
+.env.production
+
+# Logs
+*.log

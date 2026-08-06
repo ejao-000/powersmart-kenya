@@ -17,6 +17,7 @@ var (
 	ErrInvalidMeterAccount = errors.New("meter account not found in Kenya Power system")
 	ErrAccountTaken        = errors.New("this meter account is already registered")
 	ErrInvalidCredentials  = errors.New("invalid email or password")
+	ErrNotAdmin            = errors.New("this account is not authorised for admin access")
 )
 
 type AuthService struct {
@@ -49,6 +50,11 @@ func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse,
 	}
 
 	// 4. Create user
+	role := model.UserRole(req.Role)
+	if role != model.RoleTenant && role != model.RoleLandlord {
+		role = model.RoleTenant
+	}
+
 	user := &model.User{
 		ID:           uuid.NewString(),
 		Name:         req.Name,
@@ -57,7 +63,7 @@ func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse,
 		Password:     string(hash),
 		MeterAccount: req.MeterAccount,
 		MeterNumber:  meterNumber,
-		Role:         model.RoleTenant, // Default role for new registrations
+		Role:         role,
 		CreatedAt:    time.Now(),
 	}
 	if err := s.userRepo.Create(user); err != nil {
@@ -68,6 +74,7 @@ func (s *AuthService) Register(req *model.RegisterRequest) (*model.AuthResponse,
 	meter := &model.Meter{
 		ID:             uuid.NewString(),
 		UserID:         user.ID,
+		MeterNumber:    meterNumber,
 		UnitsRemaining: 0,
 		DailyAvgUnits:  0,
 		AutoTopup:      false,
@@ -93,6 +100,31 @@ func (s *AuthService) Login(req *model.LoginRequest) (*model.AuthResponse, error
 	user, err := s.userRepo.GetByEmail(req.Email)
 	if err != nil {
 		return nil, ErrInvalidCredentials
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	token, err := utils.GenerateJWT(user.ID, user.Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AuthResponse{Token: token, User: *user}, nil
+}
+
+// AdminLogin is the dedicated admin-role sign-in. Unlike Login it refuses
+// tenant/landlord accounts so a regular user's credentials can never be used
+// to obtain an admin session.
+func (s *AuthService) AdminLogin(req *model.LoginRequest) (*model.AuthResponse, error) {
+	user, err := s.userRepo.GetByEmail(req.Email)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	if user.Role != model.RoleAdmin {
+		return nil, ErrNotAdmin
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
