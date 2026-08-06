@@ -1,0 +1,952 @@
+# PowerSmart Kenya
+
+**Smart prepaid electricity management & vending for Kenyan households, tenants and landlords.**
+
+PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real time, buy electricity tokens instantly (M-Pesa / Airtel / bank), forecast when they will run out of power, and lets landlords manage multi-meter fleets — all through a single, secure web portal.
+
+---
+
+## Table of contents
+
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Project structure](#project-structure)
+- [Getting started](#getting-started)
+- [Configuration](#configuration)
+- [Default pages](#default-pages)
+- [API overview](#api-overview)
+- [Database](#database)
+- [Security](#security)
+- [Testing](#testing)
+- [License](#license)
+
+## Features
+
+- **Real-time meter dashboard** — live kWh balance, daily average usage, depletion forecast.
+- **Instant token vending** — buy tokens via M-Pesa, Airtel Money or bank transfer; tokens are generated and recorded instantly.
+- **Token & payment history** — every token and transaction is stored in the database.
+- **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
+- **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
+- **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
+- **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
+- **Security-first** — bcrypt password hashing, signed expiring JWTs, rate-limited auth, security headers, input validation, webhook secrets and RBAC.
+
+## Tech stack
+
+| Layer    | Technology |
+|----------|-----------|
+| Backend  | Go (`net/http`), SQLite (`modernc.org/sqlite`), JWT (`golang-jwt`), bcrypt |
+| Frontend | Plain HTML + CSS + JavaScript (self-hosted, no CDN framework dependency) |
+| Optional | React + Vite prototype under `frontend/src/` (dev only, not required to run) |
+
+## Project structure
+
+```
+powersmart-kenya/
+├── backend/
+│   ├── main.go                  # Server entry point + route wiring
+│   ├── .env.example             # Copy to .env and fill in values
+│   ├── config/
+│   │   ├── database.go          # SQLite connection + table migrations
+│   │   ├── env.go               # Environment helpers
+│   │   └── seed.go              # Admin account seeding (env-driven)
+│   ├── handlers/                # HTTP handlers per resource
+│   ├── middleware/              # Auth, CORS, rate-limit, security headers, webhooks
+│   ├── model/                   # Data structures
+│   ├── repositories/            # Database access layer
+│   ├── service/                 # Business logic
+│   └── utils/                   # JWT, validation, responses, KP validator
+└── frontend/
+    ├── landing.html             # Public marketing page
+    ├── index.html               # Customer login / register
+    ├── admin-login.html         # Administrator login (separate)
+    ├── tenant-dashboard.html    # Tenant portal
+    ├── landlord.html            # Landlord fleet portal
+    ├── admin-dashboard.html     # Admin console
+    ├── app.js                   # Shared API client + session guards
+    ├── css/                     # Design system (portal.css, landing.css)
+    └── src/                     # Optional React prototype (dev only)
+```
+
+## Getting started
+
+### Prerequisites
+
+- **Go 1.25+** — <https://go.dev/dl/> (required; `modernc.org/sqlite` is pure Go, no C compiler needed)
+
+### 1. Install & build the backend
+
+```bash
+cd backend
+go build -o powersmart .
+```
+
+### 2. Configure the environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set at least:
+
+```env
+APP_ENV=development
+PORT=8080
+JWT_SECRET=replace-with-a-long-random-string-at-least-32-chars
+```
+
+> Generate a strong secret with: `openssl rand -hex 32`
+
+### 3. (Optional) Create the administrator account
+
+Admins are **never** created through public registration. Set these in `.env` and the server seeds the account on startup:
+
+```env
+ADMIN_NAME=Super Administrator
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=a-strong-and-unique-password
+```
+
+### 4. Run the server
+
+```bash
+go run .            # or: ./powersmart
+```
+
+The server:
+
+- Starts on `http://localhost:8080` (change with `PORT`)
+- Creates the SQLite database automatically (`powersmart.db` in the backend folder)
+- Serves the frontend from the `../frontend` directory (or `FRONTEND_DIR`)
+
+### 5. Open the portal
+
+| Page | URL |
+|------|-----|
+| Marketing page | `http://localhost:8080/landing.html` |
+| Customer login / register | `http://localhost:8080/` |
+| Admin login | `http://localhost:8080/admin-login.html` |
+
+**Quick demo flow**
+
+1. Open `http://localhost:8080/` → **Create account** → fill the form (role: Tenant or Landlord, meter account = 8–12 digits).
+2. You are signed in automatically and redirected to the matching dashboard.
+3. Go to the **Top-up** tab, pick an amount and channel, buy a token.
+4. Open `http://localhost:8080/admin-login.html`, sign in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` you configured — explore users, meters, tokens and transactions.
+
+## Configuration
+
+All configuration is via environment variables (see `backend/.env.example`).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_ENV` | `development` | `production` enables HSTS and enforces a strong `JWT_SECRET` |
+| `PORT` | `8080` | HTTP port |
+| `JWT_SECRET` | *(auto random in dev)* | JWT signing key; **required ≥ 32 chars in production** |
+| `DB_DRIVER` | `sqlite` | Database driver |
+| `DB_DSN` | `./powersmart.db` | Database path/DSN |
+| `CORS_ALLOWED_ORIGINS` | *(empty = allow all in dev)* | Comma-separated allowed browser origins |
+| `FRONTEND_DIR` | auto-detected | Directory containing the frontend HTML files |
+| `KP_API_URL` | *(empty = format check)* | Kenya Power account lookup API |
+| `ADMIN_NAME` | `System Administrator` | Admin account name (seed) |
+| `ADMIN_EMAIL` | — | Admin account email (seed) |
+| `ADMIN_PASSWORD` | — | Admin account password (seed) |
+| `MPESA_*` | — | M-Pesa Daraja credentials & callback URL |
+| `AIRTEL_*` | — | Airtel Money API key & callback URL |
+| `BANK_ACCOUNT_NUMBER` | — | Virtual bank account details |
+| `MPESA_CALLBACK_SECRET` | — | Shared secret for M-Pesa callbacks |
+| `AIRTEL_CALLBACK_SECRET` | — | Shared secret for Airtel callbacks |
+
+## API overview
+
+Public endpoints:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/register` | Create a tenant/landlord account |
+| POST | `/api/auth/login` | Sign in (any role) |
+| POST | `/api/auth/admin-login` | Admin-only sign in (rejects other roles) |
+| GET | `/api/health` | Health check |
+
+Protected endpoints (JWT `Authorization: Bearer <token>`):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/auth/me` | Current user profile |
+| POST | `/api/auth/logout` | Session discard (stateless) |
+| GET | `/api/meter` | Live meter status |
+| POST | `/api/meter/telemetry` | Record a meter reading |
+| GET | `/api/meter/prediction` | Depletion forecast |
+| PUT | `/api/meter/settings` | Auto top-up settings |
+| GET | `/api/tokens` | Token history |
+| POST | `/api/tokens/buy` | Purchase a token |
+| POST | `/api/tokens/{id}/push-bluetooth` | Push token to meter |
+| DELETE | `/api/tokens/{id}` | Remove a token from history |
+| GET | `/api/transactions` | Payment history |
+| GET/POST/PUT/DELETE | `/api/alerts...` | Alert rules |
+| POST | `/api/payments/{channel}/initiate` | Initiate M-Pesa / Airtel / bank payment |
+
+Admin-only endpoints (role `admin` required):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/stats` | Global operational counts |
+| GET | `/api/admin/users` | All registered accounts |
+| GET | `/api/admin/meters` | All meters with owners |
+| GET | `/api/admin/tokens` | Recent 50 tokens platform-wide |
+| GET | `/api/admin/transactions` | Recent 50 payments platform-wide |
+
+Public callbacks (payment providers):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/payments/mpesa/callback` | Safaricom M-Pesa callback |
+| POST | `/api/payments/airtel/callback` | Airtel Money callback |
+
+## Database
+
+SQLite tables are created automatically on first run:
+
+- `users` — accounts (id, name, email, phone, password hash, meter_account, meter_number, role, created_at)
+- `meters` — meter state (units_remaining, daily_avg_units, auto_topup, thresholds)
+- `usage_history` — point-in-time readings for forecasts
+- `tokens` — purchased token records
+- `transactions` — payment records
+- `alerts` — alert rules
+
+## Security
+
+- **Passwords** — bcrypt-hashed, never stored or serialised in plain text.
+- **Sessions** — signed HS256 JWTs with issuer/audience/expiry; validated on every protected call.
+- **JWT secret enforcement** — the server refuses to start in production without a strong `JWT_SECRET`.
+- **Rate limiting** — general API limiting plus a stricter limiter on all auth endpoints to slow brute-force attacks.
+- **Security headers** — CSP, `X-Frame-Options: DENY`, `nosniff`, Referrer-Policy, Permissions-Policy, HSTS (prod).
+- **Input validation** — email format, Kenyan phone format, password strength, name/role checks.
+- **Role-based access control** — admin endpoints reject tenant/landlord tokens; the admin login refuses non-admin accounts.
+- **Webhook secrets** — optional shared-secret checks on the payment callbacks.
+- **Path traversal guard** — static file serving rejects `..` paths.
+
+## Testing
+
+The backend ships with no automated test suite; smoke-test the API directly:
+
+```bash
+# Health
+curl http://localhost:8080/api/health
+
+# Register a tenant
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Emma Jane","email":"emma@example.com","phone":"0712345678","password":"StrongPass1","meter_account":"1234567890"}'
+
+# Login
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"emma@example.com","password":"StrongPass1"}'
+```
+
+Verify code health:
+
+```bash
+cd backend
+go vet ./...
+go build ./...
+```
+
+## License
+
+MIT — see the LICENSE file (add one as needed).
+
++ Thought: 1.8s
+Now the comprehensive documentation file:
+# Wrote PROJECT_DOCUMENTATION.md
+# PowerSmart Kenya — Full Project Documentation
+
+> Smart prepaid electricity management & vending platform for Kenya.
+> Version 1.0.0 · © 2026 PowerSmart Kenya
+
+This document is the complete reference for the PowerSmart Kenya project. It covers the
+system architecture, every component, the full API reference, a step-by-step installation
+and run guide, configuration reference, security model, deployment notes and troubleshooting.
+
+---
+
+## Table of contents
+
+1. [Project overview](#1-project-overview)
+2. [System architecture](#2-system-architecture)
+3. [Data model](#3-data-model)
+4. [Directory structure](#4-directory-structure)
+5. [Installation guide](#5-installation-guide)
+6. [Configuration reference](#6-configuration-reference)
+7. [Running the project](#7-running-the-project)
+8. [First-run walkthrough](#8-first-run-walkthrough)
+9. [API reference](#9-api-reference)
+10. [Security model](#10-security-model)
+11. [Deployment notes](#11-deployment-notes)
+12. [Troubleshooting](#12-troubleshooting)
+13. [Extending the project](#13-extending-the-project)
+
+---
+
+## 1. Project overview
+
+PowerSmart Kenya is a web platform that modernises how Kenyans buy and manage prepaid
+electricity. It provides:
+
+- **Tenants** with a real-time dashboard showing their Kenya Power prepaid meter balance,
+  daily usage, a depletion forecast (when power will run out), instant token purchase
+  (M-Pesa / Airtel / bank) and full token & payment history.
+- **Landlords** with a fleet-management portal for purchasing tokens, tracking balances and
+  keeping an auditable ledger across properties.
+- **Administrators** with a dedicated, role-restricted console showing global stats, all
+  users, all meters, the token ledger and the payment audit trail.
+
+The product is a classic **client–server** application:
+
+- A **Go** backend exposing a JSON **REST API**, backed by a **SQLite** database.
+- A **self-hosted HTML/CSS/JS frontend** served by the backend itself (no separate web server
+  or CDN framework required).
+
+### Key design decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Go `net/http` (stdlib) | Minimal dependencies, fast startup, easy deployment (single binary) |
+| SQLite (pure Go driver) | Zero external database to install; ideal for this scale |
+| Self-hosted frontend | Single binary + folder deploys everywhere; no Node runtime needed in production |
+| Server-enforced auth | Dashboards can never be bypassed by editing the browser — every API call requires a valid JWT |
+| Role-based access | Tenant / Landlord / Admin are first-class roles with separate portals |
+| Admins seeded by env vars | Admins can never be created through public registration |
+
+---
+
+## 2. System architecture
+
+```
+                        ┌──────────────────────────────────────────────┐
+   Browser              │              Go HTTP Server (:8080)           │
+ ┌──────────────┐       │                                              │
+ │ HTML pages   │──────▶│  middleware (CORS → Security → Rate limit)   │
+ │ (frontend/)  │       │        │                                     │
+ │ app.js       │  JWT  │        ▼                                     │
+ └──────────────┘◀──────│  /api/* handlers                             │
+                        │        │                                     │
+                        │        ▼                                     │
+                        │  services (business logic)                   │
+                        │        │                                     │
+                        │        ▼                                     │
+                        │  repositories (SQL)                          │
+                        │        │                                     │
+                        │        ▼                                     │
+                        │  SQLite (powersmart.db)                      │
+                        └──────────────────────────────────────────────┘
+```
+
+### Request lifecycle
+
+1. The browser loads a page from the Go server's static file handler.
+2. `app.js` attaches the JWT (`Authorization: Bearer <token>`) to every API request.
+3. The request passes through middleware: **CORS** → **security headers** → **auth check** (for
+   protected routes) → **rate limiter**.
+4. The handler decodes the body, calls the relevant **service**, which uses a **repository** to
+   read/write **SQLite**.
+5. A JSON response is returned in a consistent envelope.
+
+### Response envelope
+
+Successful `data` responses use:
+
+```json
+{ "success": true, "data": { ... } }
+```
+
+Error responses always use:
+
+```json
+{ "error": "human readable message" }
+```
+
+---
+
+## 3. Data model
+
+Tables are created automatically on first start (`config/database.go`).
+
+### users
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| name | TEXT | Full name |
+| email | TEXT | Unique, stored lowercase |
+| phone | TEXT | Kenyan mobile number |
+| password | TEXT | bcrypt hash (never returned in JSON) |
+| meter_account | TEXT | Kenya Power account number (unique) |
+| meter_number | TEXT | Physical meter serial (unique) |
+| role | TEXT | `tenant` \| `landlord` \| `admin` |
+| created_at | DATETIME | |
+
+### meters
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| user_id | TEXT | FK → users.id |
+| landlord_id | TEXT | FK → users.id (nullable) |
+| meter_number | TEXT | Meter serial |
+| units_remaining | REAL | kWh balance |
+| daily_avg_units | REAL | Rolling daily average |
+| last_reading_at | DATETIME | |
+| auto_topup | INTEGER | 0/1 |
+| topup_threshold | REAL | Auto top-up trigger |
+| topup_amount | INTEGER | Auto top-up amount (KSh) |
+| updated_at | DATETIME | |
+
+### usage_history
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| meter_id | TEXT | FK → meters.id |
+| units_remaining | REAL | Snapshot reading |
+| recorded_at | DATETIME | |
+
+### tokens
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| user_id | TEXT | FK → users.id |
+| meter_id | TEXT | FK → meters.id |
+| token_number | TEXT | 20-digit KP token |
+| units | REAL | kWh credited |
+| amount_ksh | INTEGER | Amount paid |
+| payment_ref | TEXT | Internal reference |
+| pushed_at | DATETIME | Bluetooth push time |
+| push_status | TEXT | pending / success / failed / manual |
+| purchased_at | DATETIME | |
+| deleted | INTEGER | Soft-delete flag |
+
+### transactions
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| user_id | TEXT | FK → users.id |
+| token_id | TEXT | FK → tokens.id (nullable) |
+| channel | TEXT | mpesa / airtel / bank |
+| phone | TEXT | |
+| amount_ksh | INTEGER | |
+| reference | TEXT | Internal reference |
+| provider_ref | TEXT | M-Pesa/Airtel reference |
+| status | TEXT | pending / success / failed / cancelled |
+| created_at / updated_at | DATETIME | |
+
+### alerts
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | UUID (PK) |
+| user_id | TEXT | FK → users.id |
+| type | TEXT | low_units / days_left |
+| threshold | REAL | |
+| channel | TEXT | push / sms / email |
+| enabled | INTEGER | 0/1 |
+| last_fired_at | DATETIME | |
+| created_at | DATETIME | |
+
+---
+
+## 4. Directory structure
+
+```
+powersmart-kenya/
+├── .gitignore
+├── README.md
+├── PROJECT_DOCUMENTATION.md
+├── backend/
+│   ├── main.go                        # Entry point; route + middleware wiring
+│   ├── .env.example                   # Environment template
+│   ├── config/
+│   │   ├── database.go                # SQLite connection + migrations
+│   │   ├── env.go                     # LoadEnv / Getenv helpers
+│   │   └── seed.go                    # Admin account seeding from env vars
+│   ├── handlers/
+│   │   ├── auth_handlers.go           # register, login, admin-login, me, logout
+│   │   ├── admin_handlers.go          # admin stats/users/meters/tokens/transactions
+│   │   ├── alert_handlers.go          # alert CRUD
+│   │   ├── meter_handlers.go          # meter status, telemetry, prediction, settings
+│   │   ├── payment_handlers.go        # M-Pesa/Airtel/bank initiate + callbacks
+│   │   ├── token_handlers.go          # token buy/list/push/delete
+│   │   ├── transaction_handlers.go    # payment history
+│   │   └── static.go                  # static file serving helper
+│   ├── middleware/
+│   │   ├── auth.go                    # JWT validation + RequireRole (RBAC)
+│   │   ├── cors.go                    # CORS headers/pre-flight
+│   │   ├── rate_limit.go              # per-IP rate limiters (+ stricter auth limiter)
+│   │   ├── security.go                # CSP, X-Frame-Options, nosniff, etc.
+│   │   └── webhook.go                 # shared-secret auth for payment callbacks
+│   ├── model/
+│   │   ├── user.go  meter.go  token.go  transactions.go  alert.go
+│   ├── repositories/
+│   │   ├── user_repo.go  meter_repo.go  token_repo.go  transaction_repo.go
+│   ├── service/
+│   │   ├── auth_service.go            # register/login/admin-login (bcrypt)
+│   │   ├── meter_service.go           # meter state, telemetry, settings
+│   │   ├── prediction_service.go      # depletion forecast
+│   │   ├── token_service.go           # token purchase lifecycle
+│   │   ├── payment_service.go         # M-Pesa/Airtel/bank integrations
+│   │   └── bluetooth_service.go       # token push state machine
+│   └── utils/
+│       ├── jwt.go                     # token generation/validation
+│       ├── validation.go              # email/phone/password validation
+│       ├── kp_validator.go            # Kenya Power account validation
+│       └── response.go                # JSON response helpers
+└── frontend/
+    ├── landing.html                   # Public marketing page
+    ├── index.html                     # Customer login / register
+    ├── admin-login.html               # Administrator login (separate)
+    ├── tenant-dashboard.html          # Tenant portal
+    ├── landlord.html                  # Landlord fleet portal
+    ├── admin-dashboard.html           # Admin console
+    ├── app.js                         # Shared API client + session/route guards
+    ├── css/
+    │   ├── portal.css                 # Design system for dashboards & auth
+    │   └── landing.css                # Styles for the marketing page
+    └── src/                           # Optional React prototype (dev only)
+        ├── App.tsx, main.tsx
+        ├── screens/Dashboard.tsx
+        ├── components/...
+        └── services/localDb.ts
+```
+
+---
+
+## 5. Installation guide
+
+### Prerequisites
+
+| Requirement | Version | How to check |
+|-------------|---------|--------------|
+| Go | 1.25 or later | `go version` |
+| Git (optional) | any | `git --version` |
+
+> The SQLite driver used by this project is pure Go — **no C compiler or external SQLite
+> installation is required.**
+
+### Step 1 — Get the code
+
+```bash
+git clone <your-repository-url> powersmart-kenya
+cd powersmart-kenya
+```
+
+### Step 2 — Configure the backend
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+### Step 3 — Set required environment values
+
+Open `.env` and set at minimum:
+
+```env
+APP_ENV=development
+PORT=8080
+JWT_SECRET=<at-least-32-random-characters>
+```
+
+Generate a secret:
+
+```bash
+openssl rand -hex 32
+```
+
+### Step 4 — (Recommended) Configure an admin account
+
+Add to `.env` (the account is created automatically on first start):
+
+```env
+ADMIN_NAME=Super Administrator
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=<a-strong-unique-password>
+```
+
+### Step 5 — Build
+
+```bash
+cd backend
+go build -o powersmart .
+```
+
+This produces a single executable, `powersmart`, in the `backend/` folder.
+
+### Step 6 — Run
+
+```bash
+./powersmart
+# or during development:
+go run .
+```
+
+### Step 7 — Verify
+
+Open `http://localhost:8080/api/health` in a browser — it should return:
+
+```json
+{"status":"success","message":"Backend is running"}
+```
+
+---
+
+## 6. Configuration reference
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `APP_ENV` | `development` | `production` enables HSTS and requires a strong `JWT_SECRET` |
+| `PORT` | `8080` | HTTP listen port |
+| `JWT_SECRET` | random (dev) | HS256 signing key |
+| `DB_DRIVER` | `sqlite` | Database driver |
+| `DB_DSN` | `./powersmart.db` | Database file path / DSN |
+| `CORS_ALLOWED_ORIGINS` | * (dev) | Comma-separated allowed origins; set in production |
+| `FRONTEND_DIR` | auto-detected | Directory that contains the frontend HTML |
+| `KP_API_URL` | empty | Kenya Power account-lookup API (empty = format-only validation) |
+| `ADMIN_NAME` | `System Administrator` | Seeded admin display name |
+| `ADMIN_EMAIL` | empty | Seeded admin email (required to seed) |
+| `ADMIN_PASSWORD` | empty | Seeded admin password (required to seed) |
+| `MPESA_CONSUMER_KEY` | empty | Daraja consumer key |
+| `MPESA_CONSUMER_SECRET` | empty | Daraja consumer secret |
+| `MPESA_SHORTCODE` | empty | M-Pesa paybill/till |
+| `MPESA_PASSKEY` | empty | Daraja passkey |
+| `MPESA_CALLBACK_URL` | empty | Public callback URL |
+| `MPESA_CALLBACK_SECRET` | empty | Shared secret expected in `X-Webhook-Secret` header |
+| `AIRTEL_API_KEY` | empty | Airtel Money API key |
+| `AIRTEL_CALLBACK_URL` | empty | Airtel callback URL |
+| `AIRTEL_CALLBACK_SECRET` | empty | Shared secret for Airtel callbacks |
+| `BANK_ACCOUNT_NUMBER` | empty | Virtual account number |
+| `BANK_NAME` | empty | Bank name |
+
+---
+
+## 7. Running the project
+
+### Development
+
+```bash
+cd backend
+go run .
+```
+
+### Production-style
+
+```bash
+cd backend
+go build -o powersmart .
+APP_ENV=production PORT=8080 JWT_SECRET=<secret> ./powersmart
+```
+
+> In production, also set `CORS_ALLOWED_ORIGINS` to your domain(s) and run behind a reverse
+> proxy (nginx/Caddy) that terminates TLS.
+
+### Running the optional React prototype (developers only)
+
+The React app under `frontend/src/` is a separate prototype and is **not** served by the Go
+backend. To develop it in isolation:
+
+```bash
+cd frontend
+npm install
+npm run dev          # starts Vite on http://localhost:3000
+```
+
+---
+
+## 8. First-run walkthrough
+
+### Register a tenant
+
+1. Open `http://localhost:8080/`.
+2. Click **Create account**.
+3. Choose **Tenant / Consumer**, fill in your name, email, phone, an 8–12 digit meter account
+   number and a strong password.
+4. Submit — you are signed in automatically and land on **Tenant Dashboard**.
+
+### Buy a token
+
+1. On the tenant dashboard open the **Top-up** tab.
+2. Enter a phone number, pick an amount (100 / 200 / 500 / 1000) and a channel.
+3. Click **Buy token** — the token is generated, recorded to history and shown on screen.
+
+> With no live payment credentials configured, tokens are still generated instantly using the
+> built-in development token provider, so the full flow works out of the box.
+
+### Sign in as a landlord
+
+1. On the portal choose **Create account** → **Landlord**.
+2. After registration you land on the **Landlord Dashboard** (fleet token workflow + audit ledger).
+
+### Sign in as an administrator
+
+1. Make sure `ADMIN_EMAIL` / `ADMIN_PASSWORD` are set in `.env` **before** the server first
+   starts (the account is seeded at startup).
+2. Open `http://localhost:8080/admin-login.html`.
+3. Sign in — you are redirected to the **Admin Console** showing global stats, users, meters,
+   tokens and transactions.
+
+---
+
+## 9. API reference
+
+Base URL: `http://localhost:8080/api`
+
+### 9.1 Health
+
+**`GET /health`**
+
+```bash
+curl http://localhost:8080/api/health
+```
+
+Response:
+
+```json
+{"status":"success","message":"Backend is running"}
+```
+
+### 9.2 Authentication
+
+**`POST /auth/register`** — create a tenant/landlord account.
+
+Request:
+
+```json
+{
+  "name": "Emma Jane",
+  "email": "emma@example.com",
+  "phone": "0712345678",
+  "password": "StrongPass1",
+  "meter_account": "1234567890",
+  "role": "tenant"
+}
+```
+
+`role` is optional; allowed values: `tenant` (default), `landlord`.
+
+Response `201 Created`:
+
+```json
+{
+  "token": "<jwt>",
+  "user": {
+    "id": "...",
+    "name": "Emma Jane",
+    "email": "emma@example.com",
+    "phone": "0712345678",
+    "meter_account": "1234567890",
+    "meter_number": "KPM1234567890",
+    "role": "tenant",
+    "created_at": "..."
+  }
+}
+```
+
+**`POST /auth/login`** — sign in with any account.
+
+Request: `{ "email": "...", "password": "..." }` → same response shape as register.
+
+**`POST /auth/admin-login`** — admin-only sign in.
+
+Same request shape as login. Returns `403` if the account is not an admin.
+
+**`GET /auth/me`** *(protected)* — current profile.
+
+```bash
+curl http://localhost:8080/api/auth/me -H "Authorization: Bearer <token>"
+```
+
+**`POST /auth/logout`** *(protected)* — stateless session discard.
+
+### 9.3 Meter
+
+All protected.
+
+| Method | Path | Body / Notes |
+|--------|------|--------------|
+| GET | `/meter` | Current meter state |
+| POST | `/meter/telemetry` | `{ "units_remaining": 24.5 }` |
+| GET | `/meter/prediction` | Depletion forecast |
+| PUT | `/meter/settings` | `{ "auto_topup": true, "topup_threshold": 5, "topup_amount_ksh": 500 }` |
+
+Example prediction response:
+
+```json
+{
+  "units_remaining": 24.5,
+  "daily_avg_units": 3.4,
+  "days_remaining": 7.2,
+  "depletion_date": "2026-08-13T18:30:00Z",
+  "confidence_level": "low",
+  "alert_level": "ok",
+  "recommended_topup_ksh": 0
+}
+```
+
+### 9.4 Tokens
+
+All protected.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/tokens` | Token history (newest first) |
+| POST | `/tokens/buy` | `{ "amount_ksh": 500, "payment_channel": "mpesa", "phone": "0712345678" }` |
+| POST | `/tokens/{id}/push-bluetooth?action=confirm\|fail` | Push status updates |
+| DELETE | `/tokens/{id}` | Soft-delete from history |
+
+### 9.5 Transactions
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/transactions` | Payment history for the current user |
+
+### 9.6 Alerts
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/alerts` | List alert rules |
+| POST | `/alerts` | `{ "type": "low_units", "threshold": 10, "channel": "email" }` |
+| PUT | `/alerts/{id}` | Partial update: `{ "enabled": false }` |
+| DELETE | `/alerts/{id}` | Delete a rule |
+
+### 9.7 Payments
+
+| Method | Path | Notes |
+|--------|------|-------|
+| POST | `/payments/mpesa/initiate` | STK push initiation |
+| POST | `/payments/airtel/initiate` | Airtel prompt initiation |
+| POST | `/payments/bank/initiate` | Virtual bank details |
+| POST | `/payments/mpesa/callback` | Public — Safaricom callback (optional `X-Webhook-Secret`) |
+| POST | `/payments/airtel/callback` | Public — Airtel callback (optional `X-Webhook-Secret`) |
+
+### 9.8 Admin (role `admin` only)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/admin/stats` | Global counts |
+| GET | `/admin/users` | All accounts |
+| GET | `/admin/meters` | All meters + owners |
+| GET | `/admin/tokens` | Recent 50 tokens |
+| GET | `/admin/transactions` | Recent 50 payments |
+
+Calling any admin endpoint with a tenant/landlord token returns `403 Forbidden`.
+
+---
+
+## 10. Security model
+
+1. **Password storage** — bcrypt hashing; hashes are never serialised to clients.
+2. **JWT sessions** — HS256-signed tokens carrying `user_id` + `role`, with issuer, audience,
+   `nbf`, and a 24-hour expiry. Every protected route validates the signature, issuer and
+   audience.
+3. **Secret enforcement** — if `APP_ENV=production` and `JWT_SECRET` is missing or shorter than
+   32 characters, the server **refuses to start**. In development a random ephemeral secret is
+   generated.
+4. **Rate limiting** — all requests are limited per IP; authentication endpoints get a stricter,
+   separate limiter to slow brute force.
+5. **Security headers** — `Content-Security-Policy`, `X-Frame-Options: DENY`,
+   `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`,
+   `Cross-Origin-Opener-Policy`, and HSTS in production.
+6. **Input validation** — real email format (lowercased), Kenyan mobile number format, password
+   strength (length + uppercase + digit), name length, role whitelist.
+7. **RBAC** — `RequireRole` middleware gates admin routes; the admin login endpoint refuses
+   non-admin accounts, so regular credentials can never open the console.
+8. **Webhook secrets** — payment callbacks can require a shared secret header, configured per
+   provider, preventing forged callbacks.
+9. **Path traversal guard** — the static file server rejects `..` paths.
+10. **Repository hygiene** — the SQLite database (which holds user data and password hashes) is
+    git-ignored; secrets live only in `.env`.
+
+---
+
+## 11. Deployment notes
+
+Recommended production stack:
+
+```
+Internet
+   │
+   ▼
+Reverse proxy (nginx / Caddy) with TLS   ← terminates HTTPS
+   │
+   ▼
+Go server (powersmart binary) :8080
+   │
+   ▼
+SQLite file (backed up regularly)
+```
+
+Checklist for production:
+
+- Set `APP_ENV=production`.
+- Set a strong, fixed `JWT_SECRET` (≥ 32 chars). Changing it invalidates all sessions.
+- Set `CORS_ALLOWED_ORIGINS` to your actual domain(s).
+- Configure `MPESA_*` / `AIRTEL_*` for live payments and set the webhook secrets.
+- Back up `powersmart.db` regularly (simple `cp` while the server is stopped, or use a
+  filesystem-level backup).
+- Serve the frontend from the same origin (the server already does this) to keep CORS simple.
+- Optionally run as a systemd service or inside a container.
+
+### Example systemd unit
+
+```ini
+[Unit]
+Description=PowerSmart Kenya
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/powersmart/backend
+EnvironmentFile=/opt/powersmart/backend/.env
+ExecStart=/opt/powersmart/backend/powersmart
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+---
+
+## 12. Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| `FATAL: JWT_SECRET must be set...` | `APP_ENV=production` without a strong secret | Set `JWT_SECRET` (≥ 32 chars) |
+| `Frontend available at http://localhost:8080` but blank page | Wrong working directory | Start the server from `backend/` so `../frontend` resolves |
+| Login returns `invalid email or password` | Wrong credentials, or account not registered | Register first, or reset via DB |
+| Admin login returns `403` | Account is not role `admin` | Seed via `ADMIN_EMAIL`/`ADMIN_PASSWORD` before first start |
+| Register returns `meter account not found` | Meter account fails validation | Use an 8–12 digit account number |
+| `Origin not allowed` on API calls | `CORS_ALLOWED_ORIGINS` excludes your origin | Add your origin or clear the var in development |
+| M-Pesa/Airtel purchase fails | Live credentials not configured | Use the bank channel or configure `MPESA_*`/`AIRTEL_*` |
+| Predictions show no data | No telemetry readings yet | POST a reading to `/api/meter/telemetry` |
+
+---
+
+## 13. Extending the project
+
+Common extension points:
+
+- **Real KP vending API** — replace `mockKPProvider` in `service/token_service.go` with a real
+  provider (constructor `NewTokenServiceWithProvider`).
+- **Live M-Pesa / Airtel** — set the provider env vars; the integration code already exists in
+  `service/payment_service.go`.
+- **New admin metrics** — add queries in `handlers/admin_handlers.go`.
+- **Landlord fleet linking** — extend `meters.landlord_id` and add endpoints to assign meters to
+  a landlord's portfolio.
+- **Automated tests** — add `_test.go` files alongside `service/` and `handlers/` and run with
+  `go test ./...`.
+- **Emails / SMS** — wire `alert_handlers.go` `channel` values to an SMTP or SMS provider.
+
+---
+
+*End of document.*
