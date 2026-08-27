@@ -201,12 +201,13 @@ func main() {
 func getFrontendDirectory() string {
 	// Check common locations for frontend files
 	possiblePaths := []string{
+		"./frontend/dist",      // For built frontend (Vite/React build output)
+		"./dist",               // Common build output directory
 		"./frontend",           // Default: frontend folder in current directory
 		"./static",             // Alternative: static folder
 		"../frontend",          // One level up (for cmd/server structure)
+		"../frontend/dist",     // Built output one level up
 		"./public",             // Alternative: public folder
-		"./frontend/dist",      // For built frontend (Vite/React build output)
-		"./dist",               // Common build output directory
 	}
 
 	// Check if FRONTEND_DIR environment variable is set
