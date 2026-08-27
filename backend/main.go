@@ -203,10 +203,10 @@ func getFrontendDirectory() string {
 	possiblePaths := []string{
 		"./frontend/dist",      // For built frontend (Vite/React build output)
 		"./dist",               // Common build output directory
+		"../frontend/dist",     // Built output one level up (run from backend/)
+		"../frontend",          // One level up (for cmd/server structure)
 		"./frontend",           // Default: frontend folder in current directory
 		"./static",             // Alternative: static folder
-		"../frontend",          // One level up (for cmd/server structure)
-		"../frontend/dist",     // Built output one level up
 		"./public",             // Alternative: public folder
 	}
 

@@ -98,8 +98,10 @@
     // e.g. a static host or SPA fallback served index.html instead. Fail loudly.
     if (data === null) {
       const err = new Error(
-        "Unexpected server response. Check that the backend API is reachable " +
-        "(see the POWERSMART_API setting in app.js)."
+        "Unexpected server response from " + (API_BASE + path) + ". " +
+        "This usually means the frontend is deployed without its Go backend. " +
+        "Set window.POWERSMART_API in config.js to your backend URL, or deploy " +
+        "the Go server (which serves both the frontend and /api)."
       );
       err.status = response.status;
       throw err;

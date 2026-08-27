@@ -1,0 +1,36 @@
+# PowerSmart Kenya — single-service deploy on Render.
+#
+# The Go server serves BOTH the built frontend and the /api endpoints on one
+# origin, so the frontend needs no separate backend URL (config.js stays empty).
+#
+# Setup:
+#   1. Create a new Render Web Service from this repo.
+#   2. Set root directory:   backend
+#   3. Build command:        ./build.sh
+#   4. Start command:        ./powersmart
+#   5. Set these env vars (see readme):
+#        APP_ENV=production
+#        JWT_SECRET=<strong secret, >= 32 chars>
+#        CORS_ALLOWED_ORIGINS=<your onrender.com URL>
+#        ADMIN_EMAIL / ADMIN_PASSWORD (to seed the admin account)
+#
+# Alternatively use this file as a blueprint ("New +  → Blueprint" in Render)
+# and it will create the service automatically.
+
+services:
+  - type: web
+    name: powersmart-kenya
+    runtime: go
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: ./powersmart
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
