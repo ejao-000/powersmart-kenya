@@ -14,17 +14,6 @@ backend/bin
 .env
 .env.local
 .env.production
-.env.*.local
 
 # Logs
 *.log
-
-# Firebase
-.firebase/
-firebase-debug.log
-*.runtimeconfig.json
-
-# Go binary and databases
-backend/powersmart.exe
-backend/powersmart.db
-*.exe
