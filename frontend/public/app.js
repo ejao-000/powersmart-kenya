@@ -6,7 +6,10 @@
 (function () {
   "use strict";
 
-  const API_BASE = "/api";
+  // API base URL. Override at runtime by setting on each page BEFORE app.js loads:
+  //   window.POWERSMART_API = "https://your-backend.onrender.com/api";
+  // Falls back to a same-origin "/api" when not set (single-server deploys).
+  const API_BASE = (window.POWERSMART_API || "/api").replace(/\/+$/, "");
   const TOKEN_KEY = "powersmart_token";
   const USER_KEY = "powersmart_user";
   const ROLE_KEY = "powersmart_role";
@@ -88,6 +91,17 @@
       const err = new Error(message);
       err.status = response.status;
       err.data = data;
+      throw err;
+    }
+
+    // A 2xx response that is not JSON means the request did not hit the API —
+    // e.g. a static host or SPA fallback served index.html instead. Fail loudly.
+    if (data === null) {
+      const err = new Error(
+        "Unexpected server response. Check that the backend API is reachable " +
+        "(see the POWERSMART_API setting in app.js)."
+      );
+      err.status = response.status;
       throw err;
     }
     return data;
