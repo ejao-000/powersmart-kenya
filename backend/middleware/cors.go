@@ -5,12 +5,27 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 )
 
 // allowedOrigins is the set of origins that may call the API.
 // Populate CORS_ALLOWED_ORIGINS in .env as a comma-separated list.
 // Defaults to "*" in development when the env var is absent.
-var allowedOrigins = parseAllowedOrigins()
+//
+// It is loaded lazily on first request (not at package init) so that
+// config.LoadEnv() has already run and any CORS_ALLOWED_ORIGINS from .env
+// is honored.
+var (
+	allowedOrigins    map[string]bool
+	allowedOriginsOne sync.Once
+)
+
+func loadAllowedOrigins() map[string]bool {
+	allowedOriginsOne.Do(func() {
+		allowedOrigins = parseAllowedOrigins()
+	})
+	return allowedOrigins
+}
 
 func parseAllowedOrigins() map[string]bool {
 	raw := os.Getenv("CORS_ALLOWED_ORIGINS")
@@ -29,10 +44,11 @@ func parseAllowedOrigins() map[string]bool {
 
 // isAllowed returns true when the request origin is permitted.
 func isAllowed(origin string) bool {
-	if len(allowedOrigins) == 0 {
+	origins := loadAllowedOrigins()
+	if len(origins) == 0 {
 		return true // wildcard / development mode
 	}
-	return allowedOrigins[origin]
+	return origins[origin]
 }
 
 // CORS adds cross-origin resource sharing headers to every response and handles
@@ -56,7 +72,7 @@ func CORS(next http.Handler) http.Handler {
 				http.Error(w, "origin not allowed", http.StatusForbidden)
 				return
 			}
-		} else if len(allowedOrigins) == 0 {
+		} else if len(loadAllowedOrigins()) == 0 {
 			// Non-browser / same-origin requests in dev: allow all
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 		}
