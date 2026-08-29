@@ -19,7 +19,7 @@ func (r *TokenRepo) Create(t *model.Token) error {
 	_, err := r.db.Exec(`
 		INSERT INTO tokens
 			(id, user_id, meter_id, token_number, units, amount_ksh, payment_ref, push_status, purchased_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		t.ID, t.UserID, t.MeterID, t.TokenNumber, t.Units,
 		t.AmountKsh, t.PaymentRef, t.PushStatus, t.PurchasedAt,
 	)
@@ -32,7 +32,7 @@ func (r *TokenRepo) ListByUser(userID string) ([]*model.Token, error) {
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
 		       payment_ref, pushed_at, push_status, purchased_at
 		FROM tokens
-		WHERE user_id = ? AND deleted = 0
+		WHERE user_id = $1 AND deleted = 0
 		ORDER BY purchased_at DESC`, userID)
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (r *TokenRepo) GetByID(id string) (*model.Token, error) {
 	err := r.db.QueryRow(`
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
 		       payment_ref, pushed_at, push_status, purchased_at
-		FROM tokens WHERE id = ? AND deleted = 0`, id).
+		FROM tokens WHERE id = $1 AND deleted = 0`, id).
 		Scan(&t.ID, &t.UserID, &t.MeterID, &t.TokenNumber, &t.Units,
 			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PurchasedAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -71,7 +71,7 @@ func (r *TokenRepo) GetByID(id string) (*model.Token, error) {
 // SoftDelete marks a token as deleted (user history clear) without removing the DB row.
 func (r *TokenRepo) SoftDelete(id, userID string) error {
 	res, err := r.db.Exec(
-		`UPDATE tokens SET deleted = 1 WHERE id = ? AND user_id = ?`, id, userID)
+		`UPDATE tokens SET deleted = 1 WHERE id = $1 AND user_id = $2`, id, userID)
 	if err != nil {
 		return err
 	}
@@ -85,7 +85,7 @@ func (r *TokenRepo) SoftDelete(id, userID string) error {
 // UpdatePushStatus records the outcome of a Bluetooth push attempt.
 func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, pushedAt interface{}) error {
 	_, err := r.db.Exec(
-		`UPDATE tokens SET push_status = ?, pushed_at = ? WHERE id = ?`,
+		`UPDATE tokens SET push_status = $1, pushed_at = $2 WHERE id = $3`,
 		status, pushedAt, id)
 	return err
 }

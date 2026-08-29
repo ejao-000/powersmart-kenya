@@ -18,7 +18,7 @@ func NewMeterRepo(db *sql.DB) *MeterRepo {
 func (r *MeterRepo) Create(m *model.Meter) error {
 	_, err := r.db.Exec(`
 		INSERT INTO meters (id, user_id, meter_number, units_remaining, daily_avg_units, auto_topup, topup_threshold, topup_amount, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		m.ID, m.UserID, m.MeterNumber, m.UnitsRemaining, m.DailyAvgUnits,
 		m.AutoTopup, m.TopupThreshold, m.TopupAmountKsh, m.UpdatedAt,
 	)
@@ -30,7 +30,7 @@ func (r *MeterRepo) GetByUserID(userID string) (*model.Meter, error) {
 	err := r.db.QueryRow(`
 		SELECT id, user_id, meter_number, units_remaining, daily_avg_units, last_reading_at,
 		       auto_topup, topup_threshold, topup_amount, updated_at
-		FROM meters WHERE user_id = ?`, userID).
+		FROM meters WHERE user_id = $1`, userID).
 		Scan(&m.ID, &m.UserID, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
 			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -41,29 +41,29 @@ func (r *MeterRepo) GetByUserID(userID string) (*model.Meter, error) {
 
 func (r *MeterRepo) UpdateReading(meterID string, units float64) error {
 	_, err := r.db.Exec(`
-		UPDATE meters SET units_remaining = ?, last_reading_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-		WHERE id = ?`, units, meterID)
+		UPDATE meters SET units_remaining = $1, last_reading_at = now(), updated_at = now()
+		WHERE id = $2`, units, meterID)
 	return err
 }
 
 func (r *MeterRepo) UpdateDailyAvg(meterID string, avgUnits float64) error {
 	_, err := r.db.Exec(
-		`UPDATE meters SET daily_avg_units = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+		`UPDATE meters SET daily_avg_units = $1, updated_at = now() WHERE id = $2`,
 		avgUnits, meterID)
 	return err
 }
 
 func (r *MeterRepo) UpdateSettings(meterID string, s *model.MeterSettings) error {
 	_, err := r.db.Exec(`
-		UPDATE meters SET auto_topup = ?, topup_threshold = ?, topup_amount = ?, updated_at = CURRENT_TIMESTAMP
-		WHERE id = ?`, s.AutoTopup, s.TopupThreshold, s.TopupAmountKsh, meterID)
+		UPDATE meters SET auto_topup = $1, topup_threshold = $2, topup_amount = $3, updated_at = now()
+		WHERE id = $4`, s.AutoTopup, s.TopupThreshold, s.TopupAmountKsh, meterID)
 	return err
 }
 
 // InsertUsageHistory saves a point-in-time reading for trend analysis.
 func (r *MeterRepo) InsertUsageHistory(h *model.UsageHistory) error {
 	_, err := r.db.Exec(
-		`INSERT INTO usage_history (id, meter_id, units_remaining, recorded_at) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO usage_history (id, meter_id, units_remaining, recorded_at) VALUES ($1, $2, $3, $4)`,
 		h.ID, h.MeterID, h.UnitsRemaining, h.RecordedAt)
 	return err
 }
@@ -72,8 +72,8 @@ func (r *MeterRepo) InsertUsageHistory(h *model.UsageHistory) error {
 func (r *MeterRepo) GetRecentHistory(meterID string, limit int) ([]*model.UsageHistory, error) {
 	rows, err := r.db.Query(`
 		SELECT id, meter_id, units_remaining, recorded_at
-		FROM usage_history WHERE meter_id = ?
-		ORDER BY recorded_at DESC LIMIT ?`, meterID, limit)
+		FROM usage_history WHERE meter_id = $1
+		ORDER BY recorded_at DESC LIMIT $2`, meterID, limit)
 	if err != nil {
 		return nil, err
 	}

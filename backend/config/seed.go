@@ -34,7 +34,7 @@ func SeedAdminIfConfigured(db *sql.DB) {
 	}
 
 	var exists int
-	if err := db.QueryRow(`SELECT COUNT(*) FROM users WHERE email = ?`, email).Scan(&exists); err != nil {
+	if err := db.QueryRow(`SELECT COUNT(*) FROM users WHERE email = $1`, email).Scan(&exists); err != nil {
 		log.Printf("[seed] Could not check for existing admin: %v", err)
 		return
 	}
@@ -53,9 +53,9 @@ func SeedAdminIfConfigured(db *sql.DB) {
 	tag := strings.ToUpper(id[:8])
 	_, err = db.Exec(`
 		INSERT INTO users (id, name, email, phone, password, meter_account, meter_number, role, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, 'admin', ?)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		id, name, email, "0000000000", string(hash),
-		"ADMIN-"+tag, "ADMIN-"+tag, time.Now(),
+		"ADMIN-"+tag, "ADMIN-"+tag, "admin", time.Now(),
 	)
 	if err != nil {
 		log.Printf("[seed] Failed to create admin account: %v", err)

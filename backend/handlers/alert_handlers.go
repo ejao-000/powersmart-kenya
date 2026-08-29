@@ -221,7 +221,7 @@ func newAlertRepo(db *sql.DB) *alertRepo { return &alertRepo{db: db} }
 func (r *alertRepo) create(a *model.Alert) error {
 	_, err := r.db.Exec(`
 		INSERT INTO alerts (id, user_id, type, threshold, channel, enabled, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		a.ID, a.UserID, a.Type, a.Threshold, a.Channel, a.Enabled, a.CreatedAt)
 	return err
 }
@@ -229,7 +229,7 @@ func (r *alertRepo) create(a *model.Alert) error {
 func (r *alertRepo) listByUser(userID string) ([]*model.Alert, error) {
 	rows, err := r.db.Query(`
 		SELECT id, user_id, type, threshold, channel, enabled, last_fired_at, created_at
-		FROM alerts WHERE user_id = ? ORDER BY created_at DESC`, userID)
+		FROM alerts WHERE user_id = $1 ORDER BY created_at DESC`, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +253,7 @@ func (r *alertRepo) getByID(id string) (*model.Alert, error) {
 	a := &model.Alert{}
 	err := r.db.QueryRow(`
 		SELECT id, user_id, type, threshold, channel, enabled, last_fired_at, created_at
-		FROM alerts WHERE id = ?`, id).
+		FROM alerts WHERE id = $1`, id).
 		Scan(&a.ID, &a.UserID, &a.Type, &a.Threshold, &a.Channel,
 			&a.Enabled, &a.LastFiredAt, &a.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -264,12 +264,12 @@ func (r *alertRepo) getByID(id string) (*model.Alert, error) {
 
 func (r *alertRepo) update(a *model.Alert) error {
 	_, err := r.db.Exec(`
-		UPDATE alerts SET threshold = ?, channel = ?, enabled = ? WHERE id = ?`,
+		UPDATE alerts SET threshold = $1, channel = $2, enabled = $3 WHERE id = $4`,
 		a.Threshold, a.Channel, a.Enabled, a.ID)
 	return err
 }
 
 func (r *alertRepo) delete(id string) error {
-	_, err := r.db.Exec(`DELETE FROM alerts WHERE id = ?`, id)
+	_, err := r.db.Exec(`DELETE FROM alerts WHERE id = $1`, id)
 	return err
 }

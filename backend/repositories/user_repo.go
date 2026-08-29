@@ -21,7 +21,7 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 func (r *UserRepo) Create(u *model.User) error {
 	_, err := r.db.Exec(`
 		INSERT INTO users (id, name, email, phone, password, meter_account, meter_number, role, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		u.ID, u.Name, u.Email, u.Phone, u.Password,
 		u.MeterAccount, u.MeterNumber, u.Role, u.CreatedAt,
 	)
@@ -32,7 +32,7 @@ func (r *UserRepo) GetByEmail(email string) (*model.User, error) {
 	u := &model.User{}
 	err := r.db.QueryRow(`
 		SELECT id, name, email, phone, password, meter_account, meter_number, role, created_at
-		FROM users WHERE email = ?`, email).
+		FROM users WHERE email = $1`, email).
 		Scan(&u.ID, &u.Name, &u.Email, &u.Phone, &u.Password,
 			&u.MeterAccount, &u.MeterNumber, &u.Role, &u.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -45,7 +45,7 @@ func (r *UserRepo) GetByID(id string) (*model.User, error) {
 	u := &model.User{}
 	err := r.db.QueryRow(`
 		SELECT id, name, email, phone, password, meter_account, meter_number, role, created_at
-		FROM users WHERE id = ?`, id).
+		FROM users WHERE id = $1`, id).
 		Scan(&u.ID, &u.Name, &u.Email, &u.Phone, &u.Password,
 			&u.MeterAccount, &u.MeterNumber, &u.Role, &u.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -58,7 +58,7 @@ func (r *UserRepo) GetByMeterAccount(account string) (*model.User, error) {
 	u := &model.User{}
 	err := r.db.QueryRow(`
 		SELECT id, name, email, phone, password, meter_account, meter_number, role, created_at
-		FROM users WHERE meter_account = ?`, account).
+		FROM users WHERE meter_account = $1`, account).
 		Scan(&u.ID, &u.Name, &u.Email, &u.Phone, &u.Password,
 			&u.MeterAccount, &u.MeterNumber, &u.Role, &u.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
