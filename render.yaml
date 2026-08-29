@@ -1,25 +1,28 @@
-# PowerSmart Kenya — single-service deploy on Render.
+# PowerSmart Kenya — two-service deploy on Render.
 #
-# The Go server serves BOTH the built frontend and the /api endpoints on one
-# origin, so the frontend needs no separate backend URL (config.js stays empty).
+# The app is split into a pure-API Go backend and a separate static frontend:
+#
+#   powersmart-frontend  (static HTML/CSS/JS, built by Vite)  →  browser
+#              │  window.POWERSMART_API (baked in via VITE_API_URL)
+#              ▼
+#   powersmart-api       (Go server, /api/* + PostgreSQL)     ←  API
 #
 # Setup:
-#   1. Create a new Render Web Service from this repo.
-#   2. Set root directory:   backend
-#   3. Build command:        ./build.sh
-#   4. Start command:        ./powersmart
-#   5. Set these env vars (see readme):
-#        APP_ENV=production
-#        JWT_SECRET=<strong secret, >= 32 chars>
-#        CORS_ALLOWED_ORIGINS=<your onrender.com URL>
-#        ADMIN_EMAIL / ADMIN_PASSWORD (to seed the admin account)
-#
-# Alternatively use this file as a blueprint ("New +  → Blueprint" in Render)
-# and it will create the service automatically.
+#   1. Create a PostgreSQL database on Render and set DATABASE_URL on the API
+#      service (it overrides DB_DSN). Tables are created automatically on start.
+#   2. Both services below are created automatically by importing this file as
+#      a Render Blueprint ("New + → Blueprint").
+#   3. After first deploy, set these on powersmart-api:
+#        JWT_SECRET            (>= 32 chars) — changing it logs everyone out
+#        ADMIN_EMAIL           (to seed the admin account)
+#        ADMIN_PASSWORD
+#   4. Set CORS_ALLOWED_ORIGINS on powersmart-api to your frontend URL(s).
+#      (The Vite dev proxy makes CORS unnecessary in local development.)
 
 services:
+  # ── API backend (Go + PostgreSQL) ──────────────────────────────────────
   - type: web
-    name: powersmart-kenya
+    name: powersmart-api
     runtime: go
     rootDir: backend
     buildCommand: ./build.sh
@@ -28,9 +31,35 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
         sync: false
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
+
+  # ── Frontend (static site served by Vite preview) ─────────────────────
+  - type: web
+    name: powersmart-frontend
+    runtime: node
+    rootDir: frontend
+    # "sh build.sh" (not "./build.sh") so the script does not need an exec bit
+    # set in git (build.sh is tracked from a Windows checkout).
+    buildCommand: sh build.sh
+    startCommand: npm run preview -- --host 0.0.0.0 --port 10001
+    envVars:
+      # Point the static site at the API service. Render replaces
+      # ${POWERSMART_API_URL} with the powersmart-api service URL.
+      - key: VITE_API_URL
+        value: ${POWERSMART_API_URL}/api
+      - key: POWERSMART_API_URL
+        fromService:
+          type: web
+          name: powersmart-api
+          property: host
