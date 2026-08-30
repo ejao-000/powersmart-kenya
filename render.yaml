@@ -8,16 +8,29 @@
 #   powersmart-api       (Go server, /api/* + PostgreSQL)     ←  API
 #
 # Setup:
-#   1. Create a PostgreSQL database on Render and set DATABASE_URL on the API
-#      service (it overrides DB_DSN). Tables are created automatically on start.
-#   2. Both services below are created automatically by importing this file as
-#      a Render Blueprint ("New + → Blueprint").
-#   3. After first deploy, set these on powersmart-api:
+#   1. Import this file as a Render Blueprint ("New + → Blueprint"). Render
+#      creates the PostgreSQL database below AND both web services automatically.
+#      DATABASE_URL is injected from the database, so no manual DB wiring needed.
+#   2. After first deploy, set these on powersmart-api:
 #        JWT_SECRET            (>= 32 chars) — changing it logs everyone out
 #        ADMIN_EMAIL           (to seed the admin account)
 #        ADMIN_PASSWORD
-#   4. Set CORS_ALLOWED_ORIGINS on powersmart-api to your frontend URL(s).
+#   3. Set CORS_ALLOWED_ORIGINS on powersmart-api to your frontend URL(s).
 #      (The Vite dev proxy makes CORS unnecessary in local development.)
+#
+# NOTE: if you created a Web Service manually instead of importing this
+# blueprint, use root dir "backend", build "./build.sh", start "./powersmart"
+# and set DATABASE_URL to a hosted PostgreSQL connection string (Render
+# Postgres, Neon, Supabase, etc.) — never "localhost", which fails on Render.
+
+# PostgreSQL provisioned and managed by Render. The API service's DATABASE_URL
+# is injected from it automatically (the free plan requires ipAllowList: []).
+databases:
+  - name: powersmart-db
+    databaseName: powersmart
+    user: powersmart
+    plan: free
+    ipAllowList: []
 
 services:
   # ── API backend (Go + PostgreSQL) ──────────────────────────────────────
@@ -31,10 +44,11 @@ services:
     envVars:
       - key: APP_ENV
         value: production
-      - key: PORT
-        value: 10000
+      # DATABASE_URL comes straight from the Render Postgres instance.
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: powersmart-db
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: CORS_ALLOWED_ORIGINS
