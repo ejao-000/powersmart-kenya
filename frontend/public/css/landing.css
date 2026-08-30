@@ -53,7 +53,7 @@ body {
 .l-hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
 .l-badge {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px;
-  background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; font-size: 12px; font-weight: 700;
+  background: transparent; border: none; color: var(--l-ink); font-size: 12px; font-weight: 700;
 }
 .l-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; animation: pulseDot 2s infinite; }
 @keyframes pulseDot { 0%,100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(22, 163, 74, 0); } }
