@@ -21,7 +21,8 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { PortalLayout, PortalPage } from '../layouts/PortalLayout';
+import { PortalLayout, PortalPage, AppNotification } from '../layouts/PortalLayout';
+import { ManagementPage } from './ManagementPage';
 import { meter, meters, tokens, Meter, Prediction, fmtUnits, getSession } from '../services/api';
 
 interface TenantPortalProps {
@@ -152,8 +153,30 @@ export const TenantPortal: React.FC<TenantPortalProps> = ({ onLogout }) => {
     'w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 focus:border-[#1E3A5F]/40 text-sm';
   const card = 'bg-white rounded-2xl border border-slate-200 shadow-sm';
 
+  const notifications: AppNotification[] = [];
+  if (prediction && typeof prediction.days_remaining === 'number' && prediction.days_remaining <= 5) {
+    notifications.push({
+      id: 'runout',
+      title: `Power runs out in ~${prediction.days_remaining.toFixed(1)} days`,
+      time: 'Now',
+      tone: 'amber',
+    });
+  }
+  if (remaining <= 15) {
+    notifications.push({ id: 'low', title: 'Balance critically low — top up soon', time: 'Now', tone: 'red' });
+  }
+
   return (
-    <PortalLayout userName={userName} roleLabel="Tenant" active={page} onNavigate={setPage} onLogout={onLogout}>
+    <PortalLayout
+      userName={userName}
+      roleLabel="Tenant"
+      active={page}
+      onNavigate={setPage}
+      onLogout={onLogout}
+      notifications={notifications}
+    >
+      {page === 'health' ? (
+        <>
       {/* Page header */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
@@ -293,6 +316,10 @@ export const TenantPortal: React.FC<TenantPortalProps> = ({ onLogout }) => {
           </div>
         </div>
       </div>
+        </>
+      ) : (
+        <ManagementPage page={page as 'meters' | 'transactions' | 'outages' | 'tariffs'} role="tenant" />
+      )}
 
       {/* Buy modal */}
       {buyOpen && (

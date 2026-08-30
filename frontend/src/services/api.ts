@@ -114,6 +114,44 @@ export interface Outage {
   created_at: string;
 }
 
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  meter_account: string;
+  created_at: string;
+}
+
+export interface AdminMeter {
+  id: string;
+  meter_number: string;
+  units_remaining: number;
+  auto_topup: boolean;
+  owner_name: string;
+  owner_email: string;
+  updated_at: string | null;
+}
+
+export interface AdminTransaction {
+  id: string;
+  channel: string;
+  amount_ksh: number;
+  reference: string;
+  status: string;
+  owner_email: string;
+  created_at: string;
+}
+
+// ── Admin (role-restricted) ─────────────────────────────────────────────────
+
+export const adminApi = {
+  users: () => request<AdminUser[]>('/admin/users'),
+  meters: () => request<AdminMeter[]>('/admin/meters'),
+  transactions: () => request<AdminTransaction[]>('/admin/transactions'),
+};
+
 function apiBase(): string {
   const viteUrl = (import.meta.env.VITE_API_URL as string | undefined) || '';
   const winUrl = (window as any).POWERSMART_API || '';

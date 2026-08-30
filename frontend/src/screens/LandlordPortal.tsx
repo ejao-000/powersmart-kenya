@@ -20,7 +20,8 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { PortalLayout, PortalPage } from '../layouts/PortalLayout';
+import { PortalLayout, PortalPage, AppNotification } from '../layouts/PortalLayout';
+import { ManagementPage } from './ManagementPage';
 import { meters, tokens, Meter, fmtUnits, getSession } from '../services/api';
 
 interface LandlordPortalProps {
@@ -146,8 +147,36 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     'w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]/30 focus:border-[#1E3A5F]/40 text-sm';
   const card = 'bg-white rounded-2xl border border-slate-200 shadow-sm';
 
+  const notifications: AppNotification[] = [
+    ...meterList
+      .filter((m) => balanceKsh(m) <= 150)
+      .map((m) => ({
+        id: 'crit-' + m.id,
+        title: `${m.name || 'Unit ' + m.meter_number} balance is critical`,
+        time: 'Now',
+        tone: 'red' as const,
+      })),
+    ...meterList
+      .filter((m) => balanceKsh(m) > 150 && balanceKsh(m) <= 400)
+      .map((m) => ({
+        id: 'low-' + m.id,
+        title: `${m.name || 'Unit ' + m.meter_number} balance is getting low`,
+        time: 'Now',
+        tone: 'amber' as const,
+      })),
+  ];
+
   return (
-    <PortalLayout userName={userName} roleLabel="Landlord" active={page} onNavigate={setPage} onLogout={onLogout}>
+    <PortalLayout
+      userName={userName}
+      roleLabel="Landlord"
+      active={page}
+      onNavigate={setPage}
+      onLogout={onLogout}
+      notifications={notifications}
+    >
+      {page === 'health' ? (
+        <>
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Portfolio Dashboard</h1>
@@ -354,6 +383,10 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
             </div>
           </div>
         </div>
+      )}
+      </>
+      ) : (
+        <ManagementPage page={page as 'meters' | 'transactions' | 'outages' | 'tariffs'} role="landlord" />
       )}
     </PortalLayout>
   );

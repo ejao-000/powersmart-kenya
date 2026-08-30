@@ -9,7 +9,8 @@ import {
   Megaphone,
   ArrowRight,
 } from 'lucide-react';
-import { PortalLayout, PortalPage } from '../layouts/PortalLayout';
+import { PortalLayout, PortalPage, AppNotification } from '../layouts/PortalLayout';
+import { ManagementPage } from './ManagementPage';
 
 interface AdminPortalProps {
   userName: string;
@@ -171,12 +172,14 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
   );
 
   const renderPlaceholder = () => (
-    <div className={card + ' p-10 text-center'}>
-      <Megaphone size={28} className="mx-auto text-slate-300 mb-3" />
-      <h3 className="text-lg font-bold text-slate-700">{page}</h3>
-      <p className="text-sm text-slate-400 mt-1">This section is coming soon.</p>
-    </div>
+    <ManagementPage page={page as 'meters' | 'transactions' | 'outages' | 'tariffs'} role="admin" />
   );
+
+  const notifications: AppNotification[] = [
+    { id: 'n1', title: 'Manual intervention required — PS-3D8F2A', time: '2 mins ago', tone: 'red' },
+    { id: 'n2', title: 'Spiking failures in Nairobi West', time: '6 mins ago', tone: 'red' },
+    { id: 'n3', title: 'Token latency above 1s threshold', time: '38 mins ago', tone: 'amber' },
+  ];
 
   return (
     <PortalLayout
@@ -185,6 +188,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
       active={page}
       onNavigate={setPage}
       onLogout={onLogout}
+      notifications={notifications}
     >
       {page === 'health' ? (
         <>
