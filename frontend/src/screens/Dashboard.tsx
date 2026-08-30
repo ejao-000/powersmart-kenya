@@ -59,23 +59,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const user = getSession().user;
 
   const refresh = useCallback(async () => {
+    setError(null);
+    // Load each data source independently so one failing endpoint never blanks
+    // the whole dashboard — the sections that succeed still render.
+    const errors: string[] = [];
     try {
-      const [m, p, t, tx] = await Promise.all([
-        meter.status(),
-        meter.prediction(),
-        tokens.list(),
-        txApi.list(),
-      ]);
-      setMeterData(m);
-      setPrediction(p);
-      setTokenList(t);
-      setTxnList(tx);
-      setError(null);
+      setMeterData(await meter.status());
     } catch (err: any) {
-      setError(err.message || 'Failed to load your meter data.');
-    } finally {
-      setLoading(false);
+      errors.push(err.message || 'Meter status unavailable.');
     }
+    try {
+      setPrediction(await meter.prediction());
+    } catch {
+      // forecast is optional — the gauge still shows the live balance
+    }
+    try {
+      setTokenList(await tokens.list());
+    } catch (err: any) {
+      errors.push(err.message || 'Token history unavailable.');
+    }
+    try {
+      setTxnList(await txApi.list());
+    } catch (err: any) {
+      errors.push(err.message || 'Payment history unavailable.');
+    }
+    if (errors.length) setError(errors.join(' · '));
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -202,24 +211,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
             <span className="font-mono text-sm">Connecting to PowerSmart API…</span>
           </div>
         </div>
-      ) : error ? (
-        <div className="max-w-5xl mx-auto px-6 py-16 rounded-2xl bg-slate-900/60 border border-red-500/30">
-          <div className="flex items-center gap-3 text-red-400 mb-3">
-            <AlertTriangle size={20} />
-            <h2 className="font-bold">Unable to load your data</h2>
-          </div>
-          <p className="text-sm text-slate-400">{error}</p>
-          <button
-            onClick={() => { setLoading(true); refresh(); }}
-            className="mt-4 px-4 py-2 rounded-xl bg-cyan-400 text-slate-950 text-sm font-bold hover:bg-cyan-300 transition-all cursor-pointer"
-          >
-            Try again
-          </button>
-        </div>
       ) : (
-        <main className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-          {/* Left column */}
-          <div className="space-y-6">
+        <main className="max-w-5xl mx-auto relative z-10">
+          {error && (
+            <div className="mb-6 px-5 py-4 rounded-2xl bg-slate-900/70 border border-amber-500/30">
+              <div className="flex items-center gap-3 text-amber-400 mb-1">
+                <AlertTriangle size={18} />
+                <h2 className="font-bold text-sm">Some data could not be loaded</h2>
+              </div>
+              <p className="text-xs text-slate-400">{error}</p>
+              <button
+                onClick={() => { setLoading(true); refresh(); }}
+                className="mt-3 px-4 py-2 rounded-xl bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-500/30 transition-all cursor-pointer"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left column */}
+            <div className="space-y-6">
             <LiveGauge
               remainingKwh={meterData?.units_remaining ?? 0}
               maxKwh={100}
@@ -382,6 +394,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                 </div>
               )}
             </div>
+          </div>
           </div>
         </main>
       )}
