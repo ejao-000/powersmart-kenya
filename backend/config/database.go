@@ -117,6 +117,18 @@ func RunMigrations(db *sql.DB) {
 			last_fired_at TIMESTAMPTZ,
 			created_at    TIMESTAMPTZ DEFAULT now()
 		)`,
+		`ALTER TABLE tokens ADD COLUMN IF NOT EXISTS push_method TEXT`,
+		`CREATE TABLE IF NOT EXISTS outages (
+			id            TEXT PRIMARY KEY,
+			user_id       TEXT NOT NULL REFERENCES users(id),
+			reporter_name TEXT,
+			area          TEXT NOT NULL,
+			latitude      DOUBLE PRECISION NOT NULL,
+			longitude     DOUBLE PRECISION NOT NULL,
+			description   TEXT,
+			status        TEXT DEFAULT 'reported',
+			created_at    TIMESTAMPTZ DEFAULT now()
+		)`,
 	}
 
 	for _, stmt := range statements {

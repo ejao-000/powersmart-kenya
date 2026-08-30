@@ -18,10 +18,10 @@ func NewTokenRepo(db *sql.DB) *TokenRepo {
 func (r *TokenRepo) Create(t *model.Token) error {
 	_, err := r.db.Exec(`
 		INSERT INTO tokens
-			(id, user_id, meter_id, token_number, units, amount_ksh, payment_ref, push_status, purchased_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			(id, user_id, meter_id, token_number, units, amount_ksh, payment_ref, push_status, push_method, purchased_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		t.ID, t.UserID, t.MeterID, t.TokenNumber, t.Units,
-		t.AmountKsh, t.PaymentRef, t.PushStatus, t.PurchasedAt,
+		t.AmountKsh, t.PaymentRef, t.PushStatus, t.PushMethod, t.PurchasedAt,
 	)
 	return err
 }
@@ -30,7 +30,7 @@ func (r *TokenRepo) Create(t *model.Token) error {
 func (r *TokenRepo) ListByUser(userID string) ([]*model.Token, error) {
 	rows, err := r.db.Query(`
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
-		       payment_ref, pushed_at, push_status, purchased_at
+		       payment_ref, pushed_at, push_status, push_method, purchased_at
 		FROM tokens
 		WHERE user_id = $1 AND deleted = 0
 		ORDER BY purchased_at DESC`, userID)
@@ -44,7 +44,7 @@ func (r *TokenRepo) ListByUser(userID string) ([]*model.Token, error) {
 		t := &model.Token{}
 		err := rows.Scan(
 			&t.ID, &t.UserID, &t.MeterID, &t.TokenNumber, &t.Units,
-			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PurchasedAt,
+			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PushMethod, &t.PurchasedAt,
 		)
 		if err != nil {
 			return nil, err
@@ -58,10 +58,10 @@ func (r *TokenRepo) GetByID(id string) (*model.Token, error) {
 	t := &model.Token{}
 	err := r.db.QueryRow(`
 		SELECT id, user_id, meter_id, token_number, units, amount_ksh,
-		       payment_ref, pushed_at, push_status, purchased_at
+		       payment_ref, pushed_at, push_status, push_method, purchased_at
 		FROM tokens WHERE id = $1 AND deleted = 0`, id).
 		Scan(&t.ID, &t.UserID, &t.MeterID, &t.TokenNumber, &t.Units,
-			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PurchasedAt)
+			&t.AmountKsh, &t.PaymentRef, &t.PushedAt, &t.PushStatus, &t.PushMethod, &t.PurchasedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -82,10 +82,14 @@ func (r *TokenRepo) SoftDelete(id, userID string) error {
 	return nil
 }
 
-// UpdatePushStatus records the outcome of a Bluetooth push attempt.
-func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, pushedAt interface{}) error {
+// UpdatePushStatus records the outcome of a token push attempt and the method
+// used to deliver it (wifi or bluetooth).
+func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, method string, pushedAt interface{}) error {
+	if method == "" {
+		method = string(model.PushMethodBluetooth)
+	}
 	_, err := r.db.Exec(
-		`UPDATE tokens SET push_status = $1, pushed_at = $2 WHERE id = $3`,
-		status, pushedAt, id)
+		`UPDATE tokens SET push_status = $1, push_method = $2, pushed_at = $3 WHERE id = $4`,
+		status, method, pushedAt, id)
 	return err
 }

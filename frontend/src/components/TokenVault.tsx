@@ -1,19 +1,42 @@
 import React, { useState } from 'react';
 import { Token, fmtUnits } from '../services/api';
-import { KeyRound, Copy, Check, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+  KeyRound,
+  Copy,
+  Check,
+  ShieldCheck,
+  Trash2,
+  Wifi,
+  Bluetooth,
+  Radio,
+  Loader2,
+} from 'lucide-react';
 
 interface TokenVaultProps {
   tokens: Token[];
   onDelete: (id: string) => Promise<void>;
+  onPush: (id: string, method: 'wifi' | 'bluetooth') => Promise<void>;
 }
 
-export const TokenVault: React.FC<TokenVaultProps> = ({ tokens, onDelete }) => {
+export const TokenVault: React.FC<TokenVaultProps> = ({ tokens, onDelete, onPush }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pushing, setPushing] = useState<{ id: string; method: 'wifi' | 'bluetooth' } | null>(null);
 
   const handleCopy = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handlePush = async (id: string, method: 'wifi' | 'bluetooth') => {
+    setPushing({ id, method });
+    try {
+      await onPush(id, method);
+    } catch {
+      // failure is recorded server-side by the dashboard handler
+    } finally {
+      setPushing(null);
+    }
   };
 
   return (
@@ -68,6 +91,46 @@ export const TokenVault: React.FC<TokenVaultProps> = ({ tokens, onDelete }) => {
                     minute: '2-digit',
                   })}
                 </p>
+                {t.push_status === 'success' ? (
+                  <div className="mt-2 flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
+                    <Check size={13} />
+                    Pushed to meter
+                    {t.push_method ? (
+                      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30">
+                        {t.push_method === 'wifi' ? <Wifi size={11} /> : <Bluetooth size={11} />}
+                        {t.push_method}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                    <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                      <Radio size={12} /> Push to meter:
+                    </span>
+                    <button
+                      onClick={() => handlePush(t.id, 'wifi')}
+                      disabled={pushing?.id === t.id}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
+                      title="Push token via WiFi"
+                    >
+                      <Wifi size={12} /> WiFi
+                    </button>
+                    <button
+                      onClick={() => handlePush(t.id, 'bluetooth')}
+                      disabled={pushing?.id === t.id}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-400 border border-slate-700 text-[11px] font-bold transition-all disabled:opacity-50 cursor-pointer"
+                      title="Push token via Bluetooth"
+                    >
+                      <Bluetooth size={12} /> Bluetooth
+                    </button>
+                    {pushing?.id === t.id && (
+                      <span className="flex items-center gap-1 text-[11px] font-mono text-cyan-400">
+                        <Loader2 size={12} className="animate-spin" />
+                        {pushing.method === 'wifi' ? 'Connecting to meter WiFi…' : 'Scanning Bluetooth…'}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button

@@ -12,6 +12,14 @@ const (
 	PushManual   PushStatus = "manual" // user opted to enter manually
 )
 
+// PushMethod is how the token was delivered to the meter.
+type PushMethod string
+
+const (
+	PushMethodBluetooth PushMethod = "bluetooth"
+	PushMethodWiFi      PushMethod = "wifi"
+)
+
 // Token represents a purchased Kenya Power prepaid token.
 type Token struct {
 	ID          string     `json:"id"`
@@ -23,6 +31,7 @@ type Token struct {
 	PaymentRef  string     `json:"payment_ref"`
 	PushedAt    *time.Time `json:"pushed_at"`
 	PushStatus  PushStatus `json:"push_status"`
+	PushMethod  PushMethod `json:"push_method"`
 	PurchasedAt time.Time  `json:"purchased_at"`
 	Deleted     bool       `json:"-"` // soft delete — omit from API responses
 }

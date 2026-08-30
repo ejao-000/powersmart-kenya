@@ -61,21 +61,25 @@ func (h *TokenHandler) BuyToken(w http.ResponseWriter, r *http.Request) {
 }
 
 // PushViaBluetooth POST /api/tokens/{id}/push-bluetooth
+// Query params: ?action=confirm|fail|request (default request), ?method=wifi|bluetooth (default bluetooth)
 func (h *TokenHandler) PushViaBluetooth(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromCtx(r.Context())
 	tokenID := r.PathValue("id")
 
-	// Determine sub-action from query param: ?action=confirm|fail|request
 	action := r.URL.Query().Get("action")
+	method := r.URL.Query().Get("method")
+	if method != "wifi" && method != "bluetooth" {
+		method = "bluetooth"
+	}
 
 	var err error
 	switch action {
 	case "confirm":
-		err = h.bluetoothSvc.ConfirmPush(tokenID, userID)
+		err = h.bluetoothSvc.ConfirmPush(tokenID, userID, method)
 	case "fail":
-		err = h.bluetoothSvc.ReportPushFailed(tokenID, userID)
+		err = h.bluetoothSvc.ReportPushFailed(tokenID, userID, method)
 	default:
-		_, err = h.bluetoothSvc.MarkPushRequested(tokenID, userID)
+		_, err = h.bluetoothSvc.MarkPushRequested(tokenID, userID, method)
 	}
 
 	if err != nil {

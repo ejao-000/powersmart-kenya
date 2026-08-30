@@ -59,6 +59,7 @@ export interface Token {
   payment_ref: string;
   pushed_at: string | null;
   push_status: 'pending' | 'success' | 'failed' | 'manual';
+  push_method?: 'wifi' | 'bluetooth' | '';
   purchased_at: string;
 }
 
@@ -96,6 +97,20 @@ export interface PaymentInitResponse {
   bank_account?: string;
   bank_name?: string;
   bank_reference?: string;
+}
+
+export type OutageStatus = 'reported' | 'confirmed' | 'resolved';
+
+export interface Outage {
+  id: string;
+  user_id: string;
+  reporter_name: string;
+  area: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  status: OutageStatus;
+  created_at: string;
 }
 
 function apiBase(): string {
@@ -240,8 +255,8 @@ export const tokens = {
   list: () => request<Token[]>('/tokens'),
   buy: (body: { amount_ksh: number; payment_channel: string; phone?: string }) =>
     request<Token>('/tokens/buy', { method: 'POST', body }),
-  push: (id: string, action: 'confirm' | 'fail' | 'request') =>
-    request(`/tokens/${id}/push-bluetooth?action=${action}`, { method: 'POST' }),
+  push: (id: string, action: 'request' | 'confirm' | 'fail', method: 'wifi' | 'bluetooth') =>
+    request(`/tokens/${id}/push-bluetooth?action=${action}&method=${method}`, { method: 'POST' }),
   remove: (id: string) => request(`/tokens/${id}`, { method: 'DELETE' }),
 };
 
@@ -260,6 +275,14 @@ export const payments = {
     request<PaymentInitResponse>('/payments/airtel/initiate', { method: 'POST', body }),
   bank: (body: { amount_ksh: number }) =>
     request<PaymentInitResponse>('/payments/bank/initiate', { method: 'POST', body }),
+};
+
+// ── Outages (community power-outage reports + map) ───────────────────────────
+
+export const outages = {
+  list: () => request<Outage[]>('/outages'),
+  report: (body: { area: string; latitude: number; longitude: number; description: string }) =>
+    request<Outage>('/outages', { method: 'POST', body }),
 };
 
 // ── Alerts ───────────────────────────────────────────────────────────────────

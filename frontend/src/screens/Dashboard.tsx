@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { LiveGauge } from '../components/LiveGauge';
 import { ApplianceSliders } from '../components/ApplianceSliders';
 import { TokenVault } from '../components/TokenVault';
+import { OutageMap } from '../components/OutageMap';
 import {
   Zap,
   Smartphone,
@@ -36,6 +37,8 @@ const CHANNELS = [
   { id: 'bank', label: 'Bank', hint: 'no phone needed' },
 ];
 
+const PRESET_AMOUNTS = [100, 200, 500, 1000, 2000];
+
 export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
   const [meterData, setMeterData] = useState<Meter | null>(null);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
@@ -46,6 +49,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
 
   // Buy-token form state
   const [topUpAmount, setTopUpAmount] = useState<number>(500);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customAmount, setCustomAmount] = useState('');
   const [channel, setChannel] = useState('mpesa');
   const [phone, setPhone] = useState('');
   const [buying, setBuying] = useState(false);
@@ -117,6 +122,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           minute: '2-digit',
         })
       : null;
+
+  const handlePush = async (id: string, method: 'wifi' | 'bluetooth') => {
+    try {
+      await tokens.push(id, 'request', method);
+      // Simulate the meter handshake, then confirm the delivery server-side.
+      await new Promise((resolve) => setTimeout(resolve, 1600));
+      await tokens.push(id, 'confirm', method);
+    } catch (e) {
+      try {
+        await tokens.push(id, 'fail', method);
+      } catch {
+        /* ignore secondary failure */
+      }
+      throw e;
+    } finally {
+      await refresh();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-slate-100 p-4 md:p-8 font-sans relative overflow-hidden">
@@ -211,12 +234,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
               </h3>
 
               <div className="grid grid-cols-3 gap-2 mb-4">
-                {[100, 200, 500, 1000, 2000].map((amt) => (
+                {PRESET_AMOUNTS.map((amt) => (
                   <button
                     key={amt}
-                    onClick={() => setTopUpAmount(amt)}
+                    onClick={() => { setCustomOpen(false); setCustomAmount(''); setTopUpAmount(amt); }}
                     className={`py-2.5 rounded-xl font-mono text-xs font-bold border transition-all ${
-                      topUpAmount === amt
+                      !customOpen && topUpAmount === amt
                         ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/10'
                         : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
                     }`}
@@ -224,7 +247,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
                     {amt} KSh
                   </button>
                 ))}
+                <button
+                  onClick={() => {
+                    setCustomOpen(true);
+                    if (customAmount) {
+                      const n = parseInt(customAmount);
+                      if (!isNaN(n)) setTopUpAmount(n);
+                    }
+                  }}
+                  className={`py-2.5 rounded-xl font-mono text-xs font-bold border transition-all ${
+                    customOpen
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-lg shadow-cyan-500/10'
+                      : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  Custom
+                </button>
               </div>
+
+              {customOpen && (
+                <div className="mb-4">
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    Custom amount (KSh) — type any figure
+                  </label>
+                  <input
+                    type="number"
+                    min={50}
+                    step={10}
+                    value={customAmount}
+                    onChange={(e) => {
+                      setCustomAmount(e.target.value);
+                      const n = parseInt(e.target.value);
+                      if (!isNaN(n)) setTopUpAmount(n);
+                    }}
+                    placeholder="e.g. 750"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-2 mb-4">
                 {CHANNELS.map((c) => (
@@ -271,8 +331,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
           {/* Right column */}
           <div className="space-y-6">
             <ApplianceSliders />
+            <OutageMap />
             <TokenVault
               tokens={tokenList}
+              onPush={handlePush}
               onDelete={async (id) => {
                 await tokens.remove(id);
                 await refresh();

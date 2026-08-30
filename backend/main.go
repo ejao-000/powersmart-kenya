@@ -42,6 +42,7 @@ func main() {
 	alertH := handlers.NewAlertHandler(db)
 	adminH := handlers.NewAdminHandler(db)
 	txH := handlers.NewTransactionHandler(db)
+	outageH := handlers.NewOutageHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -115,6 +116,10 @@ func main() {
 	// Transactions
 	mux.Handle("GET /api/transactions", protected(http.HandlerFunc(txH.ListHistory)))
 
+	// Outages (community power-outage reports + map)
+	mux.Handle("GET /api/outages", protected(http.HandlerFunc(outageH.List)))
+	mux.Handle("POST /api/outages", protected(http.HandlerFunc(outageH.Report)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -186,5 +191,7 @@ func logRoutes() {
 	log.Println("  PUT  /api/alerts/{id}")
 	log.Println("  DELETE /api/alerts/{id}")
 	log.Println("  GET  /api/transactions")
+	log.Println("  GET  /api/outages")
+	log.Println("  POST /api/outages")
 	log.Println("  (API-only — the frontend is served separately)")
 }
