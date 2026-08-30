@@ -499,7 +499,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       )}
 
       {/* Header */}
-      <header className="max-w-5xl mx-auto flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
+      <header className="max-w-5xl flex items-center justify-between mb-6 pb-4 border-b border-slate-800/80">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-lg shadow-cyan-500/10">
             <Zap size={22} />
@@ -541,14 +541,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout }) => {
       </header>
 
       {loading ? (
-        <div className="max-w-5xl mx-auto flex items-center justify-center py-32">
+        <div className="max-w-5xl flex items-center justify-center py-32">
           <div className="flex items-center gap-3 text-slate-400">
             <RefreshCw size={20} className="animate-spin" />
             <span className="font-mono text-sm">Connecting to PowerSmart API…</span>
           </div>
         </div>
       ) : (
-        <main className="max-w-5xl mx-auto relative z-10">
+        <main className="max-w-5xl relative z-10">
           {error && (
             <div className="mb-6 px-5 py-4 rounded-2xl bg-slate-900/70 border border-amber-500/30">
               <div className="flex items-center gap-3 text-amber-400 mb-1">
