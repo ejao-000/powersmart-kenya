@@ -12,6 +12,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
+    // Fail loudly if :3000 is already in use instead of silently jumping to
+    // :3001 — a second dev server that ends up on another port looks like a
+    // broken frontend-backend connection.
+    strictPort: true,
     host: true,
     proxy: {
       '/api': {
