@@ -29,6 +29,7 @@ export interface AuthResponse {
 export interface Meter {
   id: string;
   user_id: string;
+  name: string;
   meter_number: string;
   units_remaining: number;
   daily_avg_units: number;
@@ -249,12 +250,24 @@ export const meter = {
     request('/meter/settings', { method: 'PUT', body }),
 };
 
+// ── Meters (multi-meter / landlord) ───────────────────────────────────────────
+
+export const meters = {
+  list: () => request<Meter[]>('/meters'),
+  add: (body: { name: string; meter_number: string; units_remaining?: number }) =>
+    request<Meter>('/meters', { method: 'POST', body }),
+  settings: (id: string, body: { auto_topup?: boolean; topup_threshold?: number; topup_amount_ksh?: number }) =>
+    request(`/meters/${id}/settings`, { method: 'PUT', body }),
+};
+
 // ── Tokens ───────────────────────────────────────────────────────────────────
 
 export const tokens = {
   list: () => request<Token[]>('/tokens'),
-  buy: (body: { amount_ksh: number; payment_channel: string; phone?: string }) =>
+  buy: (body: { amount_ksh: number; payment_channel: string; phone?: string; meter_id?: string }) =>
     request<Token>('/tokens/buy', { method: 'POST', body }),
+  transfer: (body: { meter_account: string; amount_ksh: number }) =>
+    request<Token>('/tokens/transfer', { method: 'POST', body }),
   push: (id: string, action: 'request' | 'confirm' | 'fail', method: 'wifi' | 'bluetooth') =>
     request(`/tokens/${id}/push-bluetooth?action=${action}&method=${method}`, { method: 'POST' }),
   remove: (id: string) => request(`/tokens/${id}`, { method: 'DELETE' }),

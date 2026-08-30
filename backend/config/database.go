@@ -118,6 +118,7 @@ func RunMigrations(db *sql.DB) {
 			created_at    TIMESTAMPTZ DEFAULT now()
 		)`,
 		`ALTER TABLE tokens ADD COLUMN IF NOT EXISTS push_method TEXT`,
+		`ALTER TABLE meters ADD COLUMN IF NOT EXISTS name TEXT`,
 		`CREATE TABLE IF NOT EXISTS outages (
 			id            TEXT PRIMARY KEY,
 			user_id       TEXT NOT NULL REFERENCES users(id),

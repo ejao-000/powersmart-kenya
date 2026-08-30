@@ -17,9 +17,9 @@ func NewMeterRepo(db *sql.DB) *MeterRepo {
 
 func (r *MeterRepo) Create(m *model.Meter) error {
 	_, err := r.db.Exec(`
-		INSERT INTO meters (id, user_id, meter_number, units_remaining, daily_avg_units, auto_topup, topup_threshold, topup_amount, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-		m.ID, m.UserID, m.MeterNumber, m.UnitsRemaining, m.DailyAvgUnits,
+		INSERT INTO meters (id, user_id, name, meter_number, units_remaining, daily_avg_units, auto_topup, topup_threshold, topup_amount, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		m.ID, m.UserID, m.Name, m.MeterNumber, m.UnitsRemaining, m.DailyAvgUnits,
 		m.AutoTopup, m.TopupThreshold, m.TopupAmountKsh, m.UpdatedAt,
 	)
 	return err
@@ -28,10 +28,50 @@ func (r *MeterRepo) Create(m *model.Meter) error {
 func (r *MeterRepo) GetByUserID(userID string) (*model.Meter, error) {
 	m := &model.Meter{}
 	err := r.db.QueryRow(`
-		SELECT id, user_id, meter_number, units_remaining, daily_avg_units, last_reading_at,
+		SELECT id, user_id, COALESCE(name,''), meter_number, units_remaining, daily_avg_units, last_reading_at,
 		       auto_topup, topup_threshold, topup_amount, updated_at
 		FROM meters WHERE user_id = $1`, userID).
-		Scan(&m.ID, &m.UserID, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
+		Scan(&m.ID, &m.UserID, &m.Name, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
+			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	return m, err
+}
+
+// ListByOwner returns every meter managed by the given account (a tenant has
+// one; a landlord can have many). Newest first.
+func (r *MeterRepo) ListByOwner(userID string) ([]*model.Meter, error) {
+	rows, err := r.db.Query(`
+		SELECT id, user_id, COALESCE(name,''), meter_number, units_remaining, daily_avg_units, last_reading_at,
+		       auto_topup, topup_threshold, topup_amount, updated_at
+		FROM meters WHERE user_id = $1
+		ORDER BY updated_at DESC`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*model.Meter
+	for rows.Next() {
+		m := &model.Meter{}
+		if err := rows.Scan(&m.ID, &m.UserID, &m.Name, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
+			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, m)
+	}
+	return list, rows.Err()
+}
+
+// GetByIDForUser returns a meter only if it belongs to the given user.
+func (r *MeterRepo) GetByIDForUser(meterID, userID string) (*model.Meter, error) {
+	m := &model.Meter{}
+	err := r.db.QueryRow(`
+		SELECT id, user_id, COALESCE(name,''), meter_number, units_remaining, daily_avg_units, last_reading_at,
+		       auto_topup, topup_threshold, topup_amount, updated_at
+		FROM meters WHERE id = $1 AND user_id = $2`, meterID, userID).
+		Scan(&m.ID, &m.UserID, &m.Name, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
 			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound

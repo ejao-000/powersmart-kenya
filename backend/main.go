@@ -94,9 +94,15 @@ func main() {
 	mux.Handle("GET /api/meter/prediction", protected(http.HandlerFunc(meterH.GetPrediction)))
 	mux.Handle("PUT /api/meter/settings", protected(http.HandlerFunc(meterH.UpdateSettings)))
 
+	// Multi-meter (landlord / multi-unit owners)
+	mux.Handle("GET /api/meters", protected(http.HandlerFunc(meterH.ListMeters)))
+	mux.Handle("POST /api/meters", protected(http.HandlerFunc(meterH.AddMeter)))
+	mux.Handle("PUT /api/meters/{id}/settings", protected(http.HandlerFunc(meterH.UpdateMeterSettings)))
+
 	// Tokens
 	mux.Handle("GET /api/tokens", protected(http.HandlerFunc(tokenH.ListHistory)))
 	mux.Handle("POST /api/tokens/buy", protected(http.HandlerFunc(tokenH.BuyToken)))
+	mux.Handle("POST /api/tokens/transfer", protected(http.HandlerFunc(tokenH.Transfer)))
 	mux.Handle("POST /api/tokens/{id}/push-bluetooth", protected(http.HandlerFunc(tokenH.PushViaBluetooth)))
 	mux.Handle("DELETE /api/tokens/{id}", protected(http.HandlerFunc(tokenH.DeleteFromHistory)))
 
@@ -177,8 +183,12 @@ func logRoutes() {
 	log.Println("  POST /api/meter/telemetry")
 	log.Println("  GET  /api/meter/prediction")
 	log.Println("  PUT  /api/meter/settings")
+	log.Println("  GET  /api/meters")
+	log.Println("  POST /api/meters")
+	log.Println("  PUT  /api/meters/{id}/settings")
 	log.Println("  GET  /api/tokens")
 	log.Println("  POST /api/tokens/buy")
+	log.Println("  POST /api/tokens/transfer")
 	log.Println("  POST /api/tokens/{id}/push-bluetooth")
 	log.Println("  DELETE /api/tokens/{id}")
 	log.Println("  POST /api/payments/mpesa/initiate")

@@ -114,6 +114,53 @@ func (s *MeterService) UpdateSettings(userID string, settings *model.MeterSettin
 	return nil
 }
 
+// ListMeters returns all meters owned by the account (1 for tenants, many for landlords).
+func (s *MeterService) ListMeters(userID string) ([]*model.Meter, error) {
+	meters, err := s.meterRepo.ListByOwner(userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch meters: %w", err)
+	}
+	if meters == nil {
+		meters = []*model.Meter{}
+	}
+	return meters, nil
+}
+
+// AddMeter lets a landlord / owner register an additional meter under their account.
+func (s *MeterService) AddMeter(userID string, req *model.AddMeterRequest) (*model.Meter, error) {
+	if req.MeterNumber == "" {
+		return nil, fmt.Errorf("meter number is required")
+	}
+	meter := &model.Meter{
+		ID:             uuid.NewString(),
+		UserID:         userID,
+		Name:           req.Name,
+		MeterNumber:    req.MeterNumber,
+		UnitsRemaining: req.UnitsRemaining,
+		DailyAvgUnits:  0,
+		AutoTopup:      false,
+		TopupThreshold: 5,
+		TopupAmountKsh: 200,
+		UpdatedAt:      time.Now(),
+	}
+	if err := s.meterRepo.Create(meter); err != nil {
+		return nil, fmt.Errorf("failed to add meter: %w", err)
+	}
+	return meter, nil
+}
+
+// UpdateMeterSettings updates settings for a specific meter (scoped to its owner).
+func (s *MeterService) UpdateMeterSettings(meterID, userID string, settings *model.MeterSettings) error {
+	if err := s.validateSettings(settings); err != nil {
+		return err
+	}
+	meter, err := s.meterRepo.GetByIDForUser(meterID, userID)
+	if err != nil {
+		return fmt.Errorf("meter not found: %w", err)
+	}
+	return s.meterRepo.UpdateSettings(meter.ID, settings)
+}
+
 func (s *MeterService) validateSettings(settings *model.MeterSettings) error {
 	if settings.TopupThreshold < 0 {
 		return fmt.Errorf("top-up threshold cannot be negative")

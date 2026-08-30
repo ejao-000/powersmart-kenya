@@ -27,9 +27,10 @@ func NewPaymentHandler(db *sql.DB) *PaymentHandler {
 	tokenRepo := repositories.NewTokenRepo(db)
 	meterRepo := repositories.NewMeterRepo(db)
 	txRepo    := repositories.NewTransactionRepo(db)
+	userRepo  := repositories.NewUserRepo(db)
 
 	// TokenService is a dependency of PaymentService (issues token after payment)
-	tokenSvc   := service.NewTokenService(tokenRepo, meterRepo, txRepo)
+	tokenSvc   := service.NewTokenService(tokenRepo, meterRepo, txRepo, userRepo)
 	paymentSvc := service.NewPaymentService(txRepo, tokenSvc)
 
 	return &PaymentHandler{paymentSvc: paymentSvc}

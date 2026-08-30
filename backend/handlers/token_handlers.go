@@ -21,9 +21,10 @@ func NewTokenHandler(db *sql.DB) *TokenHandler {
 	tokenRepo := repositories.NewTokenRepo(db)
 	meterRepo := repositories.NewMeterRepo(db)
 	txRepo := repositories.NewTransactionRepo(db)
+	userRepo := repositories.NewUserRepo(db)
 
 	return &TokenHandler{
-		tokenSvc:     service.NewTokenService(tokenRepo, meterRepo, txRepo),
+		tokenSvc:     service.NewTokenService(tokenRepo, meterRepo, txRepo, userRepo),
 		bluetoothSvc: service.NewBluetoothService(tokenRepo),
 	}
 }
@@ -53,6 +54,24 @@ func (h *TokenHandler) BuyToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := h.tokenSvc.BuyToken(userID, &req)
+	if err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	utils.RespondJSON(w, http.StatusCreated, token)
+}
+
+// Transfer POST /api/tokens/transfer — send token value to another registered meter.
+func (h *TokenHandler) Transfer(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+
+	var req model.TransferTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondBadRequest(w, "Invalid request body")
+		return
+	}
+
+	token, err := h.tokenSvc.TransferUnits(userID, &req)
 	if err != nil {
 		utils.RespondError(w, http.StatusBadRequest, err.Error())
 		return

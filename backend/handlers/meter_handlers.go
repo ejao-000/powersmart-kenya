@@ -86,3 +86,50 @@ func (h *MeterHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.RespondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 }
+
+// ListMeters GET /api/meters — all meters for the account (tenant: 1, landlord: many).
+func (h *MeterHandler) ListMeters(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+	meters, err := h.meterSvc.ListMeters(userID)
+	if err != nil {
+		utils.RespondError(w, http.StatusInternalServerError, "Failed to fetch meters")
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, meters)
+}
+
+// AddMeter POST /api/meters — register an additional meter (landlord / multi-unit owner).
+func (h *MeterHandler) AddMeter(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+
+	var req model.AddMeterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	meter, err := h.meterSvc.AddMeter(userID, &req)
+	if err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	utils.RespondJSON(w, http.StatusCreated, meter)
+}
+
+// UpdateMeterSettings PUT /api/meters/{id}/settings — per-meter auto top-up config.
+func (h *MeterHandler) UpdateMeterSettings(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+	meterID := r.PathValue("id")
+
+	var settings model.MeterSettings
+	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, "Invalid settings payload")
+		return
+	}
+
+	if err := h.meterSvc.UpdateMeterSettings(meterID, userID, &settings); err != nil {
+		utils.RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}

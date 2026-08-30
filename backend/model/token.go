@@ -38,9 +38,17 @@ type Token struct {
 
 // BuyTokenRequest is the payload for POST /api/tokens/buy.
 type BuyTokenRequest struct {
-	AmountKsh     int    `json:"amount_ksh"    validate:"required,min=50"`
+	AmountKsh      int    `json:"amount_ksh"    validate:"required,min=50"`
 	PaymentChannel string `json:"payment_channel" validate:"required,oneof=mpesa airtel bank"`
-	Phone         string `json:"phone"`         // required for mpesa / airtel
+	Phone          string `json:"phone"`         // required for mpesa / airtel
+	MeterID        string `json:"meter_id"`      // optional — buy for a specific meter (landlord multi-meter)
+}
+
+// TransferTokenRequest is the payload for POST /api/tokens/transfer.
+// Lets a user send token value to another registered meter account.
+type TransferTokenRequest struct {
+	MeterAccount string `json:"meter_account" validate:"required"`
+	AmountKsh    int    `json:"amount_ksh"    validate:"required,min=50"`
 }
 
 // BluetoothPushRequest optionally carries the BLE device ID if already paired.

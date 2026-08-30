@@ -27,10 +27,12 @@ type KPTokenProvider interface {
 //  - Purchase flow (create transaction → call KP API → store token)
 //  - History listing and soft-deletion
 //  - Units-per-ksh rate calculation
+//  - Transfer (send token value to another registered meter)
 type TokenService struct {
-	tokenRepo *repositories.TokenRepo
-	meterRepo *repositories.MeterRepo
-	txRepo    *repositories.TransactionRepo
+	tokenRepo  *repositories.TokenRepo
+	meterRepo  *repositories.MeterRepo
+	txRepo     *repositories.TransactionRepo
+	userRepo   *repositories.UserRepo
 	kpProvider KPTokenProvider
 }
 
@@ -38,11 +40,13 @@ func NewTokenService(
 	tokenRepo *repositories.TokenRepo,
 	meterRepo *repositories.MeterRepo,
 	txRepo *repositories.TransactionRepo,
+	userRepo *repositories.UserRepo,
 ) *TokenService {
 	return &TokenService{
 		tokenRepo:  tokenRepo,
 		meterRepo:  meterRepo,
 		txRepo:     txRepo,
+		userRepo:   userRepo,
 		kpProvider: &mockKPProvider{}, // swap for real provider in production
 	}
 }
@@ -52,12 +56,14 @@ func NewTokenServiceWithProvider(
 	tokenRepo *repositories.TokenRepo,
 	meterRepo *repositories.MeterRepo,
 	txRepo *repositories.TransactionRepo,
+	userRepo *repositories.UserRepo,
 	kpProvider KPTokenProvider,
 ) *TokenService {
 	return &TokenService{
 		tokenRepo:  tokenRepo,
 		meterRepo:  meterRepo,
 		txRepo:     txRepo,
+		userRepo:   userRepo,
 		kpProvider: kpProvider,
 	}
 }
@@ -86,9 +92,20 @@ func (s *TokenService) BuyToken(userID string, req *model.BuyTokenRequest) (*mod
 	}
 
 	// -- Fetch meter --------------------------------------------------------
-	meter, err := s.meterRepo.GetByUserID(userID)
-	if err != nil {
-		return nil, fmt.Errorf("meter not found for user: %w", err)
+	// A specific meter_id can be supplied (landlord multi-meter purchases);
+	// otherwise fall back to the account's primary meter.
+	var meter *model.Meter
+	var err error
+	if req.MeterID != "" {
+		meter, err = s.meterRepo.GetByIDForUser(req.MeterID, userID)
+		if err != nil {
+			return nil, fmt.Errorf("meter not found for user: %w", err)
+		}
+	} else {
+		meter, err = s.meterRepo.GetByUserID(userID)
+		if err != nil {
+			return nil, fmt.Errorf("meter not found for user: %w", err)
+		}
 	}
 
 	// -- Create pending transaction -----------------------------------------
@@ -171,6 +188,64 @@ func (s *TokenService) FinaliseTokenAfterPayment(txRecord *model.Transaction) (*
 	}
 
 	_ = s.txRepo.LinkToken(txRecord.ID, token.ID)
+	return token, nil
+}
+
+// TransferUnits lets a user send token value to another registered meter account.
+// A token is issued directly on the recipient's meter; the sender gets a transfer
+// transaction record for their own history.
+func (s *TokenService) TransferUnits(senderID string, req *model.TransferTokenRequest) (*model.Token, error) {
+	if req.AmountKsh < 50 {
+		return nil, ErrInvalidAmount
+	}
+
+	recipient, err := s.userRepo.GetByMeterAccount(req.MeterAccount)
+	if err != nil {
+		return nil, fmt.Errorf("no PowerSmart account found for that meter account")
+	}
+	if recipient.ID == senderID {
+		return nil, fmt.Errorf("you cannot transfer tokens to your own meter")
+	}
+
+	recipientMeter, err := s.meterRepo.GetByUserID(recipient.ID)
+	if err != nil {
+		return nil, fmt.Errorf("recipient meter not found")
+	}
+
+	// Issue a token directly on the recipient's meter.
+	tokenNumber, units, err := s.kpProvider.IssueToken(recipientMeter.MeterNumber, req.AmountKsh)
+	if err != nil {
+		return nil, fmt.Errorf("KP token issuance failed: %w", err)
+	}
+
+	token := &model.Token{
+		ID:          uuid.NewString(),
+		UserID:      recipient.ID,
+		MeterID:     recipientMeter.ID,
+		TokenNumber: tokenNumber,
+		Units:       units,
+		AmountKsh:   req.AmountKsh,
+		PaymentRef:  fmt.Sprintf("TRF-%s", uuid.NewString()[:8]),
+		PushStatus:  model.PushPending,
+		PurchasedAt: time.Now(),
+	}
+	if err := s.tokenRepo.Create(token); err != nil {
+		return nil, fmt.Errorf("failed to save transferred token: %w", err)
+	}
+
+	// Sender-side transaction record.
+	tx := &model.Transaction{
+		ID:        uuid.NewString(),
+		UserID:    senderID,
+		Channel:   "bank",
+		AmountKsh: req.AmountKsh,
+		Reference: "PS-" + token.PaymentRef,
+		Status:    model.TxSuccess,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	_ = s.txRepo.Create(tx)
+
 	return token, nil
 }
 
