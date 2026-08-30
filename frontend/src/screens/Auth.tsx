@@ -8,8 +8,13 @@ interface AuthProps {
 
 type View = 'login' | 'register';
 
+const getInitialView = (): View => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('view') === 'register' ? 'register' : 'login';
+};
+
 export const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
-  const [view, setView] = useState<View>('login');
+  const [view, setView] = useState<View>(getInitialView);
   const [role, setRole] = useState<'tenant' | 'landlord'>('tenant');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
