@@ -48,8 +48,6 @@ body {
 .l-nav-links button { background: none; border: none; cursor: pointer; padding: 0; font-family: inherit; }
 .l-nav-links .active { color: var(--l-brand); box-shadow: 0 2px 0 0 var(--l-brand); padding-bottom: 2px; }
 .l-nav-cta { display: flex; align-items: center; gap: 16px; }
-.l-nav-signin { color: var(--l-muted); font-size: 14px; font-weight: 600; text-decoration: none; transition: color 0.15s; }
-.l-nav-signin:hover { color: var(--l-brand); }
 .l-cta { display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 12px; background: var(--l-brand); color: #fff !important; font-weight: 700; font-size: 13.5px; text-decoration: none !important; box-shadow: 0 10px 22px -10px rgba(30, 58, 138, 0.6); transition: transform 0.15s, box-shadow 0.15s; }
 .l-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -10px rgba(30, 58, 138, 0.7); }
 
