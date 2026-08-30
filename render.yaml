@@ -19,7 +19,7 @@
 #      (The Vite dev proxy makes CORS unnecessary in local development.)
 #
 # NOTE: if you created a Web Service manually instead of importing this
-# blueprint, use root dir "backend", build "./build.sh", start "./powersmart"
+# blueprint, use root dir "backend", build "./build.sh", start "./app"
 # and set DATABASE_URL to a hosted PostgreSQL connection string (Render
 # Postgres, Neon, Supabase, etc.) — never "localhost", which fails on Render.
 
@@ -38,8 +38,11 @@ services:
     name: powersmart-api
     runtime: go
     rootDir: backend
+    # Build to the same binary name Render's Go runtime produces by default
+    # ("app"), so the start command works whether build.sh or Render's own
+    # `go build -tags netgo -ldflags '-s -w' -o app` is executed.
     buildCommand: ./build.sh
-    startCommand: ./powersmart
+    startCommand: ./app
     healthCheckPath: /api/health
     envVars:
       - key: APP_ENV

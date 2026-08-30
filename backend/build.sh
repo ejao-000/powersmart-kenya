@@ -4,6 +4,6 @@
 set -e
 
 echo "==> Building Go API server..."
-go build -o powersmart .
+go build -o app .
 
-echo "==> Build complete: ./backend/powersmart"
+echo "==> Build complete: ./backend/app"

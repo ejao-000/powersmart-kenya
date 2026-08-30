@@ -86,7 +86,7 @@ powersmart-kenya/
 
 ```bash
 cd backend
-go build -o powersmart .
+go build -o app .
 ```
 
 ### 2. Configure the environment
@@ -119,7 +119,7 @@ ADMIN_PASSWORD=a-strong-and-unique-password
 
 ```bash
 cd backend
-go run .            # or: ./powersmart
+go run .            # or: ./app
 ```
 
 The server:
