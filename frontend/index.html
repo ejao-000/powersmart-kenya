@@ -35,7 +35,7 @@
   <section class="l-hero">
     <div class="l-wrap l-hero-grid">
       <div>
-        <span class="l-badge"><span class="l-dot"></span> Next-generation token vending &amp; fleet management</span>
+        <span class="l-badge"><span class="l-dot"></span> <span id="typedBadge"></span><span class="typed-caret"></span></span>
         <h1>Power, planned.<br><em>Never in the dark again.</em></h1>
         <p class="lede">Real-time meter telemetry, instant M-Pesa &amp; Airtel token purchases, and multi-property fleet tools — built for Kenyan households, tenants and landlords.</p>
         <div class="l-hero-actions">
@@ -178,6 +178,52 @@
       </span>
     </div>
   </footer>
+
+  <style>
+    .typed-caret {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      margin-left: 3px;
+      vertical-align: -2px;
+      background: var(--l-brand);
+      animation: caretBlink 0.9s steps(1) infinite;
+    }
+    @keyframes caretBlink { 50% { opacity: 0; } }
+  </style>
+
+  <script>
+    (function () {
+      "use strict";
+      var el = document.getElementById("typedBadge");
+      if (!el) return;
+      var text = "Next-generation token vending & fleet management";
+      var speed = 60, hold = 1600, erase = 26;
+      var i = 0, deleting = false, timer = null;
+
+      function step() {
+        if (!deleting) {
+          i++;
+          el.textContent = text.slice(0, i);
+          if (i === text.length) {
+            timer = setTimeout(function () { deleting = true; step(); }, hold);
+            return;
+          }
+          timer = setTimeout(step, speed);
+        } else {
+          i--;
+          el.textContent = text.slice(0, i);
+          if (i === 0) {
+            deleting = false;
+            timer = setTimeout(step, 400);
+            return;
+          }
+          timer = setTimeout(step, erase);
+        }
+      }
+      step();
+    })();
+  </script>
 
 </body>
 </html>
