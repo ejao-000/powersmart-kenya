@@ -243,14 +243,23 @@
     (function () {
       "use strict";
 
-      // ── Typewriter badge ──────────────────────────────────────────────
+      // ── Typewriter badge (rotates through short taglines) ─────────────
       var el = document.getElementById("typedBadge");
       if (el) {
-        var text = "Next-generation token vending & fleet management";
-        var speed = 60, hold = 1600, erase = 26;
-        var i = 0, deleting = false, timer = null;
+        var phrases = [
+          "Next-generation token vending & fleet management",
+          "Smart prepaid electricity management",
+          "Instant tokens via M-Pesa & Airtel",
+          "Real-time meter monitoring & low-balance alerts",
+          "Landlord fleet tools, simplified",
+          "Never be in the dark again",
+          "Top up in seconds, stay powered always",
+        ];
+        var speed = 55, hold = 1800, erase = 24;
+        var pi = 0, i = 0, deleting = false, timer = null;
 
         function step() {
+          var text = phrases[pi];
           if (!deleting) {
             i++;
             el.textContent = text.slice(0, i);
@@ -264,6 +273,7 @@
             el.textContent = text.slice(0, i);
             if (i === 0) {
               deleting = false;
+              pi = (pi + 1) % phrases.length;
               timer = setTimeout(step, 400);
               return;
             }
