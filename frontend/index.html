@@ -22,159 +22,196 @@
         </div>
       </div>
       <nav class="l-nav-links">
-        <a href="#services">Services</a>
-        <a href="#how">How it works</a>
-        <a href="#pricing">Pricing</a>
-        <a href="app.html?view=register" class="l-cta">Create account</a>
-        <a href="app.html" class="l-btn-outline">Sign in</a>
+        <button type="button" class="active" data-page="home">Home</button>
+        <button type="button" data-page="about">About</button>
+        <button type="button" data-page="offer">What we offer</button>
+        <button type="button" data-page="how">How it works</button>
+        <button type="button" data-page="plans">Plans</button>
       </nav>
+      <div class="l-nav-cta">
+        <a href="app.html?view=register" class="l-cta">Create account</a>
+      </div>
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="l-hero">
-    <div class="l-wrap l-hero-grid">
-      <div>
-        <span class="l-badge"><span class="l-dot"></span> <span id="typedBadge"></span><span class="typed-caret"></span></span>
-        <h1>Power, planned.<br><em>Never in the dark again.</em></h1>
-        <p class="lede">Real-time meter telemetry, instant M-Pesa &amp; Airtel token purchases, and multi-property fleet tools — built for Kenyan households, tenants and landlords.</p>
-        <div class="l-hero-actions">
-          <a href="app.html?view=register" class="l-cta">Create account →</a>
-          <a href="app.html" class="l-btn-outline">Sign in</a>
-        </div>
-      </div>
+  <main>
 
-      <div class="l-hero-visual">
-        <div class="hv-top">
-          <span class="mono" style="font-size:12px; color:#94a3b8">Meter · Live</span>
-          <span class="mono" style="font-size:12px; color:#34d399">● Synced</span>
+    <!-- HOME -->
+    <section class="l-hero" data-page="home">
+      <div class="l-wrap l-hero-grid">
+        <div>
+          <span class="l-badge"><span class="l-dot"></span> <span id="typedBadge"></span><span class="typed-caret"></span></span>
+          <h1>Power, planned.<br><em>Never in the dark again.</em></h1>
+          <p class="lede">Real-time meter telemetry, instant M-Pesa &amp; Airtel token purchases, and multi-property fleet tools — built for Kenyan households, tenants and landlords.</p>
+          <div class="l-hero-actions">
+            <a href="app.html" class="l-cta">Sign in</a>
+            <a href="#plans" class="l-btn-outline" data-nav="plans">View plans</a>
+          </div>
         </div>
-        <div class="hv-gauge">
-          <div class="hv-value">24.5 <span style="font-size:18px">kWh</span></div>
-          <div class="hv-label">Remaining balance</div>
-        </div>
-        <div class="hv-bar"><span></span></div>
-        <div class="hv-row"><span>Daily average</span><b>3.4 kWh</b></div>
-        <div class="hv-row"><span>Estimated run-out</span><b class="mono" style="color:#fbbf24">in ~7 days</b></div>
-        <div class="hv-row"><span>Next auto top-up</span><b>KSh 500 · M-Pesa</b></div>
-      </div>
-    </div>
-  </section>
 
-  <!-- SERVICES -->
-  <section id="services" class="l-section" style="padding-top:0">
-    <div class="l-wrap">
-      <div class="l-section-head">
-        <div class="l-kicker">What we offer</div>
-        <h2>One platform for every power challenge</h2>
-        <p>From single-meter tenants to landlords running entire apartment blocks.</p>
-      </div>
-      <div class="l-cards">
-        <div class="l-card">
-          <div class="lc-ico">📟</div>
-          <h3>Real-time meter telemetry</h3>
-          <p>Track your kWh balance and daily consumption live, with depletion forecasts so you always know when to top up.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">💳</div>
-          <h3>Instant token vending</h3>
-          <p>Buy tokens with M-Pesa, Airtel Money or bank transfer. Tokens are generated and pushed to your meter automatically.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">🏢</div>
-          <h3>Landlord fleet tools</h3>
-          <p>Manage multiple meters, keep a complete token and payment ledger, and configure automatic top-up rules.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">🔔</div>
-          <h3>Smart low-balance alerts</h3>
-          <p>Get notified by push, email or SMS before your power runs out — with recommended top-up amounts.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">📊</div>
-          <h3>Usage analytics</h3>
-          <p>Understand where your power goes with appliance cost estimates and daily consumption trends.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">🛡️</div>
-          <h3>Bank-grade security</h3>
-          <p>Encrypted passwords, signed sessions and role-based access keep your meter account and payments safe.</p>
+        <div class="l-hero-visual">
+          <div class="hv-top">
+            <span class="mono" style="font-size:12px; color:#94a3b8">Meter · Live</span>
+            <span class="mono" style="font-size:12px; color:#34d399">● Synced</span>
+          </div>
+          <div class="hv-gauge">
+            <div class="hv-value">24.5 <span style="font-size:18px">kWh</span></div>
+            <div class="hv-label">Remaining balance</div>
+          </div>
+          <div class="hv-bar"><span></span></div>
+          <div class="hv-row"><span>Daily average</span><b>3.4 kWh</b></div>
+          <div class="hv-row"><span>Estimated run-out</span><b class="mono" style="color:#fbbf24">in ~7 days</b></div>
+          <div class="hv-row"><span>Next auto top-up</span><b>KSh 500 · M-Pesa</b></div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- HOW IT WORKS -->
-  <section id="how" class="l-section" style="background:#fff; border-top:1px solid var(--l-border); border-bottom:1px solid var(--l-border)">
-    <div class="l-wrap">
-      <div class="l-section-head">
-        <div class="l-kicker">Simple by design</div>
-        <h2>How it works</h2>
+    <!-- ABOUT -->
+    <section class="l-section" data-page="about">
+      <div class="l-wrap">
+        <div class="l-section-head">
+          <div class="l-kicker">About PowerSmart</div>
+          <h2>Built in Kenya, for Kenyan power</h2>
+          <p>PowerSmart Kenya is a prepaid electricity management platform that helps households, tenants and landlords monitor meters, buy tokens instantly and never lose power.</p>
+        </div>
+        <div class="l-cards">
+          <div class="l-card">
+            <div class="lc-ico">⚡</div>
+            <h3>Made for Kenya Power meters</h3>
+            <p>Works with your existing prepaid meter account — no hardware, installation or extra wiring required.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">🤝</div>
+            <h3>Trusted by tenants &amp; landlords</h3>
+            <p>From single apartments to entire blocks, we help everyone keep the lights on and manage their power simply.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">🛠️</div>
+            <h3>Simple to get started</h3>
+            <p>Create an account with your meter number and start buying tokens in under a minute.</p>
+          </div>
+        </div>
       </div>
-      <div class="l-cards">
-        <div class="l-card">
-          <div class="lc-ico">1</div>
-          <h3>Register your meter</h3>
-          <p>Create an account with your Kenya Power meter account number and a valid phone number.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">2</div>
-          <h3>Monitor &amp; top up</h3>
-          <p>Watch your balance live and buy tokens instantly when it runs low.</p>
-        </div>
-        <div class="l-card">
-          <div class="lc-ico">3</div>
-          <h3>Stay powered</h3>
-          <p>Auto top-ups and alerts ensure your home — and your tenants' homes — never lose power.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- PRICING -->
-  <section id="pricing" class="l-section">
-    <div class="l-wrap">
-      <div class="l-section-head">
-        <div class="l-kicker">Transparent pricing</div>
-        <h2>Simple, upfront plans</h2>
-      </div>
-      <div class="l-pricing">
-        <div class="l-plan">
-          <h3>Tenant plan</h3>
-          <div class="price">Free <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ forever</span></div>
-          <ul>
-            <li><span>✓</span> Real-time meter tracking</li>
-            <li><span>✓</span> Instant M-Pesa &amp; Airtel top-ups</li>
-            <li><span>✓</span> Depletion forecasts &amp; alerts</li>
-            <li><span>✓</span> Token history &amp; receipts</li>
-          </ul>
-          <a href="app.html?view=register" class="l-cta">Get started free</a>
+    <!-- WHAT WE OFFER -->
+    <section class="l-section" data-page="offer" style="padding-top:64px">
+      <div class="l-wrap">
+        <div class="l-section-head">
+          <div class="l-kicker">What we offer</div>
+          <h2>One platform for every power challenge</h2>
+          <p>From single-meter tenants to landlords running entire apartment blocks.</p>
         </div>
-        <div class="l-plan featured">
-          <span class="pop">Most popular</span>
-          <h3>Landlord fleet plan</h3>
-          <div class="price">KSh 1,500 <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ month</span></div>
-          <ul>
-            <li><span>✓</span> Everything in Tenant plan</li>
-            <li><span>✓</span> Multi-meter portfolio management</li>
-            <li><span>✓</span> Bulk token purchases</li>
-            <li><span>✓</span> Complete payment audit ledger</li>
-          </ul>
-          <a href="app.html?view=register" class="l-cta">Upgrade fleet</a>
+        <div class="l-cards">
+          <div class="l-card">
+            <div class="lc-ico">📟</div>
+            <h3>Real-time meter telemetry</h3>
+            <p>Track your kWh balance and daily consumption live, with depletion forecasts so you always know when to top up.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">💳</div>
+            <h3>Instant token vending</h3>
+            <p>Buy tokens with M-Pesa, Airtel Money or bank transfer. Tokens are generated and pushed to your meter automatically.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">🏢</div>
+            <h3>Landlord fleet tools</h3>
+            <p>Manage multiple meters, keep a complete token and payment ledger, and configure automatic top-up rules.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">🔔</div>
+            <h3>Smart low-balance alerts</h3>
+            <p>Get notified by push, email or SMS before your power runs out — with recommended top-up amounts.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">📊</div>
+            <h3>Usage analytics</h3>
+            <p>Understand where your power goes with appliance cost estimates and daily consumption trends.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">🛡️</div>
+            <h3>Bank-grade security</h3>
+            <p>Encrypted passwords, signed sessions and role-based access keep your meter account and payments safe.</p>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="l-section" data-page="how" style="background:#fff; border-top:1px solid var(--l-border); border-bottom:1px solid var(--l-border)">
+      <div class="l-wrap">
+        <div class="l-section-head">
+          <div class="l-kicker">Simple by design</div>
+          <h2>How it works</h2>
+        </div>
+        <div class="l-cards">
+          <div class="l-card">
+            <div class="lc-ico">1</div>
+            <h3>Register your meter</h3>
+            <p>Create an account with your Kenya Power meter account number and a valid phone number.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">2</div>
+            <h3>Monitor &amp; top up</h3>
+            <p>Watch your balance live and buy tokens instantly when it runs low.</p>
+          </div>
+          <div class="l-card">
+            <div class="lc-ico">3</div>
+            <h3>Stay powered</h3>
+            <p>Auto top-ups and alerts ensure your home — and your tenants' homes — never lose power.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PLANS -->
+    <section class="l-section" data-page="plans" style="padding-top:64px">
+      <div class="l-wrap">
+        <div class="l-section-head">
+          <div class="l-kicker">Transparent pricing</div>
+          <h2>Simple, upfront plans</h2>
+        </div>
+        <div class="l-pricing">
+          <div class="l-plan">
+            <h3>Tenant plan</h3>
+            <div class="price">Free <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ forever</span></div>
+            <ul>
+              <li><span>✓</span> Real-time meter tracking</li>
+              <li><span>✓</span> Instant M-Pesa &amp; Airtel top-ups</li>
+              <li><span>✓</span> Depletion forecasts &amp; alerts</li>
+              <li><span>✓</span> Token history &amp; receipts</li>
+            </ul>
+            <a href="app.html?view=register" class="l-cta">Get started free</a>
+          </div>
+          <div class="l-plan featured">
+            <span class="pop">Most popular</span>
+            <h3>Landlord fleet plan</h3>
+            <div class="price">KSh 1,500 <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ month</span></div>
+            <ul>
+              <li><span>✓</span> Everything in Tenant plan</li>
+              <li><span>✓</span> Multi-meter portfolio management</li>
+              <li><span>✓</span> Bulk token purchases</li>
+              <li><span>✓</span> Complete payment audit ledger</li>
+            </ul>
+            <a href="app.html?view=register" class="l-cta">Upgrade fleet</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <!-- FOOTER -->
   <footer class="l-footer">
     <div class="l-wrap l-footer-inner">
       <span>© 2026 PowerSmart Kenya. All rights reserved.</span>
-      <span style="display:flex; gap:22px">
-        <a href="app.html?view=register">Create account</a>
+      <span style="display:flex; gap:22px; flex-wrap:wrap">
+        <a href="#" data-nav="home">Home</a>
+        <a href="#" data-nav="about">About</a>
+        <a href="#" data-nav="offer">What we offer</a>
+        <a href="#" data-nav="how">How it works</a>
+        <a href="#" data-nav="plans">Plans</a>
         <a href="app.html">Sign in</a>
-        <a href="#services">Services</a>
-        <a href="#pricing">Pricing</a>
       </span>
     </div>
   </footer>
@@ -195,33 +232,66 @@
   <script>
     (function () {
       "use strict";
-      var el = document.getElementById("typedBadge");
-      if (!el) return;
-      var text = "Next-generation token vending & fleet management";
-      var speed = 60, hold = 1600, erase = 26;
-      var i = 0, deleting = false, timer = null;
 
-      function step() {
-        if (!deleting) {
-          i++;
-          el.textContent = text.slice(0, i);
-          if (i === text.length) {
-            timer = setTimeout(function () { deleting = true; step(); }, hold);
-            return;
+      // ── Typewriter badge ──────────────────────────────────────────────
+      var el = document.getElementById("typedBadge");
+      if (el) {
+        var text = "Next-generation token vending & fleet management";
+        var speed = 60, hold = 1600, erase = 26;
+        var i = 0, deleting = false, timer = null;
+
+        function step() {
+          if (!deleting) {
+            i++;
+            el.textContent = text.slice(0, i);
+            if (i === text.length) {
+              timer = setTimeout(function () { deleting = true; step(); }, hold);
+              return;
+            }
+            timer = setTimeout(step, speed);
+          } else {
+            i--;
+            el.textContent = text.slice(0, i);
+            if (i === 0) {
+              deleting = false;
+              timer = setTimeout(step, 400);
+              return;
+            }
+            timer = setTimeout(step, erase);
           }
-          timer = setTimeout(step, speed);
-        } else {
-          i--;
-          el.textContent = text.slice(0, i);
-          if (i === 0) {
-            deleting = false;
-            timer = setTimeout(step, 400);
-            return;
-          }
-          timer = setTimeout(step, erase);
         }
+        step();
       }
-      step();
+
+      // ── Page switcher (Home / About / Offer / How / Plans) ────────────
+      var pages = document.querySelectorAll("main [data-page]");
+      var navButtons = document.querySelectorAll(".l-nav-links button");
+
+      function show(page) {
+        pages.forEach(function (p) {
+          p.style.display = p.getAttribute("data-page") === page ? "" : "none";
+        });
+        navButtons.forEach(function (b) {
+          b.classList.toggle("active", b.getAttribute("data-page") === page);
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      navButtons.forEach(function (b) {
+        b.addEventListener("click", function () {
+          show(b.getAttribute("data-page"));
+        });
+      });
+
+      document.querySelectorAll("[data-nav]").forEach(function (a) {
+        a.addEventListener("click", function (e) {
+          e.preventDefault();
+          show(a.getAttribute("data-nav"));
+        });
+      });
+
+      // Only the Home page is visible on first load.
+      show("home");
     })();
   </script>
 
