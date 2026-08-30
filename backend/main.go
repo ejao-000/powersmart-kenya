@@ -11,6 +11,7 @@ import (
 	"powersmart-backend/handlers"
 	"powersmart-backend/middleware"
 	"powersmart-backend/model"
+	"powersmart-backend/utils"
 )
 
 // MessageResponse is the JSON shape returned by the health endpoint.
@@ -20,8 +21,15 @@ type MessageResponse struct {
 }
 
 func main() {
-	// Load environment + connect database
+	// Load environment + validate required production config BEFORE serving, so
+	// a missing JWT_SECRET fails the deploy immediately with a clear message
+	// instead of crash-looping at the first login/register.
 	config.LoadEnv()
+	if err := utils.ValidateProductionConfig(); err != nil {
+		log.Fatalf("configuration error: %v", err)
+	}
+
+	// Connect database
 	db := config.ConnectDB()
 	config.RunMigrations(db)
 	config.SeedAdminIfConfigured(db)

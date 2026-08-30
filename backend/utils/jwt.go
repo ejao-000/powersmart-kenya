@@ -23,6 +23,25 @@ var (
 	jwtSecretOnce  sync.Once
 )
 
+// ValidateProductionConfig returns an error when required secrets are missing
+// or too weak for a production run. It is called once at startup so a bad
+// deploy fails loudly and immediately with a clear log message, instead of
+// crash-looping at the first login/register (which looks like an unreachable
+// API to clients).
+func ValidateProductionConfig() error {
+	if os.Getenv("APP_ENV") != "production" {
+		return nil
+	}
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return errors.New("JWT_SECRET must be set in production")
+	}
+	if len(secret) < 32 {
+		return errors.New("JWT_SECRET must be at least 32 characters in production")
+	}
+	return nil
+}
+
 // loadSecret reads the JWT signing key from the environment. It runs lazily on
 // first token operation so that config.LoadEnv() (which loads .env) has already
 // run — reading JWT_SECRET inside a package init() would always see an empty
