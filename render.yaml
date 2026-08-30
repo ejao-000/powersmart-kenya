@@ -66,7 +66,9 @@ services:
     # "sh build.sh" (not "./build.sh") so the script does not need an exec bit
     # set in git (build.sh is tracked from a Windows checkout).
     buildCommand: sh build.sh
-    startCommand: npm run preview -- --host 0.0.0.0 --port 10001
+    # Bind to Render's injected $PORT (never hard-code a port or the site
+    # won't be reachable behind Render's router).
+    startCommand: npm run preview -- --host 0.0.0.0 --port $PORT
     envVars:
       # Point the static site at the API service. Render replaces
       # ${POWERSMART_API_URL} with the powersmart-api service URL.
