@@ -23,6 +23,7 @@
     "npm": "^11.19.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.10.1",
     "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {

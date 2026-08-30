@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Dashboard } from './screens/Dashboard';
+import { AdminPortal } from './screens/AdminPortal';
+import { TenantPortal } from './screens/TenantPortal';
+import { LandlordPortal } from './screens/LandlordPortal';
 import { Auth } from './screens/Auth';
 import { getSession, auth, clearSession } from './services/api';
 
@@ -17,7 +19,7 @@ export function App() {
       .then((res) => {
         const user = res.data;
         if (user.role === 'admin') {
-          window.location.replace('/admin-dashboard.html');
+          setStatus('authed');
           return;
         }
         setStatus('authed');
@@ -47,17 +49,20 @@ export function App() {
     return (
       <Auth
         onAuthenticated={(res) => {
-          if (res.user.role === 'admin') {
-            window.location.replace('/admin-dashboard.html');
-            return;
-          }
           setStatus('authed');
         }}
       />
     );
   }
 
-  return <Dashboard onLogout={handleLogout} />;
+  const user = getSession().user;
+  if (user?.role === 'admin') {
+    return <AdminPortal userName={user.name} onLogout={handleLogout} />;
+  }
+  if (user?.role === 'landlord') {
+    return <LandlordPortal onLogout={handleLogout} />;
+  }
+  return <TenantPortal onLogout={handleLogout} />;
 }
 
 export default App;
