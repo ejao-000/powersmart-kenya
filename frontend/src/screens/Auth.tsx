@@ -120,7 +120,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
 
         <div className="relative z-10 text-xs text-slate-500 flex justify-between">
           <span>© 2026 PowerSmart Kenya</span>
-          <a href="/landing.html" className="text-slate-400 hover:text-slate-200 transition-colors">
+          <a href="/" className="text-slate-400 hover:text-slate-200 transition-colors">
             Explore website →
           </a>
         </div>

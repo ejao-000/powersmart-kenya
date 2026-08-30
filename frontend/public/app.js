@@ -13,7 +13,7 @@
   const TOKEN_KEY = "powersmart_token";
   const USER_KEY = "powersmart_user";
   const ROLE_KEY = "powersmart_role";
-  const LOGIN_PAGE = "index.html";
+  const LOGIN_PAGE = "app.html";
 
   /* ── Session helpers ─────────────────────────────────────────────────── */
   function getSession() {

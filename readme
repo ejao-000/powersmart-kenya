@@ -57,14 +57,14 @@ powersmart-kenya/
 │   ├── service/                 # Business logic
 │   └── utils/                   # JWT, validation, responses, KP validator
 └── frontend/
-    ├── index.html               # React app entry (customer portal: login/register/dashboard)
+    ├── index.html               # Landing / marketing page (served at "/")
+    ├── app.html                 # React app entry (customer portal: login/register/dashboard)
     ├── src/                     # React + Vite + Tailwind app (main customer experience)
     │   ├── App.tsx              # Session guard + role routing
     │   ├── screens/             # Auth.tsx, Dashboard.tsx
     │   ├── components/          # LiveGauge, ApplianceSliders, TokenVault
     │   └── services/api.ts      # Typed API client + session helpers
     ├── public/                  # Static assets (copied to dist/ on build)
-    │   ├── landing.html         # Public marketing page
     │   ├── admin-login.html     # Administrator login (separate)
     │   ├── admin-dashboard.html # Admin console (legacy vanilla JS)
     │   ├── tenant-dashboard.html, landlord.html  # Legacy portals
@@ -72,7 +72,7 @@ powersmart-kenya/
     │   ├── config.js            # window.POWERSMART_API (baked by build.sh in prod)
     │   └── css/                 # Design system (portal.css, landing.css)
     ├── build.sh                 # Production build (bakes $VITE_API_URL into config.js)
-    └── vite.config.ts           # Dev server + /api proxy to the Go backend
+    └── vite.config.ts           # Dev server + /api proxy to the Go backend (multi-page build)
 ```
 
 ## Getting started
@@ -148,8 +148,8 @@ env var) to your backend API URL.
 
 | Page | URL |
 |------|-----|
-| Marketing page | `http://localhost:3000/landing.html` |
-| Customer login / register | `http://localhost:3000/` |
+| Landing / marketing page | `http://localhost:3000/` |
+| Customer login / register | `http://localhost:3000/app.html` |
 | Admin login | `http://localhost:3000/admin-login.html` |
 
 **Quick demo flow**

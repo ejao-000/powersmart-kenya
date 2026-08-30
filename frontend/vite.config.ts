@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
 // The frontend is a separate app from the Go backend (pure API, no static
 // serving). In development, Vite proxies every /api request to the backend so
@@ -10,6 +11,16 @@ const API_PROXY_TARGET = process.env.VITE_API_PROXY_TARGET || 'http://localhost:
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      input: {
+        // Root "/" is the marketing landing page; the customer portal
+        // (login/register/dashboard) lives at /app.html.
+        landing: resolve(__dirname, 'index.html'),
+        app: resolve(__dirname, 'app.html'),
+      },
+    },
+  },
   server: {
     port: 3000,
     // Fail loudly if :3000 is already in use instead of silently jumping to
