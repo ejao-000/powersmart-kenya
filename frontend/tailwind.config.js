@@ -18,6 +18,18 @@ export default {
         },
         canvas: '#F5F6F8',
         ink: '#111827',
+        leaf: {
+          50: '#ECF9F4',
+          100: '#D6F2E7',
+          200: '#ADE5D0',
+          300: '#7ED3B4',
+          400: '#3FB98D',
+          500: '#0F9D6E',
+          600: '#0D8A62',
+          700: '#0B5E3E',
+          800: '#094A32',
+          900: '#063626',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
