@@ -143,7 +143,6 @@ export const Auth: React.FC<AuthProps> = ({ onAuthenticated }) => {
             <p className="mt-1.5 text-[13.5px] text-gray-500">
               {role === 'tenant' && 'Track your meter, buy tokens and stay powered.'}
               {role === 'landlord' && 'Manage your properties and tenant billing.'}
-              {role === 'admin' && 'Administrative access for platform oversight.'}
             </p>
           </div>
 

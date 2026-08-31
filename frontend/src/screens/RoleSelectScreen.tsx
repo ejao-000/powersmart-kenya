@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Zap, Home, Building2, ShieldCheck, ArrowRight, Check } from 'lucide-react';
+import { Zap, Home, Building2, ArrowRight, Check } from 'lucide-react';
 
-export type SelectedRole = 'tenant' | 'landlord' | 'admin';
+export type SelectedRole = 'tenant' | 'landlord';
 
 interface RoleSelectScreenProps {
   onContinue: (role: SelectedRole) => void;
@@ -25,12 +25,6 @@ const ROLES: {
     icon: <Building2 size={20} />,
     title: 'I am a Landlord',
     desc: 'Manage properties, tenant consumption and billing.',
-  },
-  {
-    id: 'admin',
-    icon: <ShieldCheck size={20} />,
-    title: 'I am an Admin',
-    desc: 'System oversight, technical config and network management.',
   },
 ];
 
