@@ -7,7 +7,7 @@
   <meta name="description" content="Monitor your prepaid meter in real time, buy electricity tokens instantly and manage multi-meter properties from one dashboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body>
@@ -15,180 +15,197 @@
   <!-- NAV -->
   <header class="l-nav">
     <div class="l-wrap l-nav-inner">
-      <div class="l-brand">
-        <div class="l-brand-mark">⚡</div>
-        <div>
-          PowerSmart <span class="mono" style="color:var(--l-muted); font-size:11px; font-weight:500">KENYA</span>
-        </div>
-      </div>
+      <a class="l-brand" href="#top">
+        <span class="l-brand-mark">⚡</span>
+        PowerSmart<em>-KE</em>
+      </a>
       <nav class="l-nav-links">
-        <button type="button" class="active" data-page="home">Home</button>
-        <button type="button" data-page="about">About</button>
-        <button type="button" data-page="offer">What we offer</button>
-        <button type="button" data-page="how">How it works</button>
-        <button type="button" data-page="plans">Plans</button>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#about">About</a>
       </nav>
       <div class="l-nav-cta">
-        <a href="app.html?view=register" class="l-cta">Create account</a>
+        <a class="l-btn l-btn-outline" href="app.html?view=login">Login</a>
+        <a class="l-btn l-btn-solid" href="app.html?view=register">Join Now</a>
       </div>
     </div>
   </header>
 
   <main>
 
-    <!-- HOME -->
-    <section class="l-hero" data-page="home">
+    <!-- HERO -->
+    <section class="l-hero">
       <div class="l-wrap l-hero-grid">
         <div>
-          <span class="l-badge"><span class="l-dot"></span> <span id="typedBadge"></span><span class="typed-caret"></span></span>
-          <h1>Power, planned.<br><em>Never in the dark again.</em></h1>
-          <p class="lede">Real-time meter telemetry, instant M-Pesa &amp; Airtel token purchases, and multi-property fleet tools — built for Kenyan households, tenants and landlords.</p>
+          <span class="l-badge"><span class="l-dot"></span> Live in Nairobi, Mombasa &amp; Kisumu</span>
+          <h1>Smart Electricity Management <em>for Kenya.</em></h1>
+          <p class="l-lede">Monitor your KPLC prepaid meter, buy tokens instantly, and get smart analytics — all from one beautiful dashboard. No more blackouts, no more queues.</p>
+
+          <div class="l-cta-row">
+            <a class="l-btn l-btn-solid" href="app.html?view=register">Get Started Free&nbsp;&nbsp;→</a>
+            <a class="l-btn l-btn-outline" href="#about"><span class="l-btn-play">▶</span> Watch Demo</a>
+          </div>
+
+          <div class="l-social">
+            <div class="l-avatars">
+              <span style="background:#0f9d6e">A</span>
+              <span style="background:#0891b2">K</span>
+              <span style="background:#f59e0b">M</span>
+              <span style="background:#8b5cf6">S</span>
+              <span style="background:#ef4444">W</span>
+              <span class="more">10K+</span>
+            </div>
+            <div class="l-social-txt"><b>Joined by 10,000+</b><br>happy Kenyans</div>
+          </div>
         </div>
 
-        <div class="l-hero-visual">
-          <div class="hv-top">
-            <span class="mono" style="font-size:12px; color:#94a3b8">Meter · Live</span>
-            <span class="mono" style="font-size:12px; color:#34d399">● Synced</span>
-          </div>
-          <div class="hv-gauge">
-            <div class="hv-value">24.5 <span style="font-size:18px">kWh</span></div>
-            <div class="hv-label">Remaining balance</div>
-          </div>
-          <div class="hv-bar"><span></span></div>
-          <div class="hv-row"><span>Daily average</span><b>3.4 kWh</b></div>
-          <div class="hv-row"><span>Estimated run-out</span><b class="mono" style="color:#fbbf24">in ~7 days</b></div>
-          <div class="hv-row"><span>Next auto top-up</span><b>KSh 500 · M-Pesa</b></div>
-        </div>
-      </div>
-    </section>
+        <div class="l-phone-wrap">
+          <div class="l-phone-glow"></div>
+          <div class="l-phone">
+            <div class="l-phone-notch"></div>
+            <div class="l-phone-inner">
+              <div class="l-phone-status">
+                <span>9:41</span>
+                <span>⌁ ⚡</span>
+              </div>
 
-    <!-- ABOUT -->
-    <section class="l-section" data-page="about">
-      <div class="l-wrap">
-        <div class="l-section-head">
-          <h2>Built in Kenya, for Kenyan power</h2>
-          <p>PowerSmart Kenya is a prepaid electricity management platform that helps households, tenants and landlords monitor meters, buy tokens instantly and never lose power.</p>
-        </div>
-        <div class="l-cards">
-          <div class="l-card">
-            <div class="lc-ico">⚡</div>
-            <h3>Made for Kenya Power meters</h3>
-            <p>Works with your existing prepaid meter account — no hardware, installation or extra wiring required.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">🤝</div>
-            <h3>Trusted by tenants &amp; landlords</h3>
-            <p>From single apartments to entire blocks, we help everyone keep the lights on and manage their power simply.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">🛠️</div>
-            <h3>Simple to get started</h3>
-            <p>Create an account with your meter number and start buying tokens in under a minute.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+              <div class="p-balance">
+                <div class="p-balance-top">
+                  <span>Remaining Balance</span>
+                  <span class="p-live"><i></i> Live</span>
+                </div>
+                <div class="amt">24.5 <small>kWh</small></div>
+                <div class="p-balance-bottom">
+                  <span>≈ KSh 320</span>
+                  <span>Runs out in ~7 days</span>
+                </div>
+              </div>
 
-    <!-- WHAT WE OFFER -->
-    <section class="l-section" data-page="offer" style="padding-top:64px">
-      <div class="l-wrap">
-        <div class="l-section-head">
-          <h2>One platform for every power challenge</h2>
-          <p>From single-meter tenants to landlords running entire apartment blocks.</p>
-        </div>
-        <div class="l-cards">
-          <div class="l-card">
-            <div class="lc-ico">📟</div>
-            <h3>Real-time meter telemetry</h3>
-            <p>Track your kWh balance and daily consumption live, with depletion forecasts so you always know when to top up.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">💳</div>
-            <h3>Instant token vending</h3>
-            <p>Buy tokens with M-Pesa, Airtel Money or bank transfer. Tokens are generated and pushed to your meter automatically.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">🏢</div>
-            <h3>Landlord fleet tools</h3>
-            <p>Manage multiple meters, keep a complete token and payment ledger, and configure automatic top-up rules.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">🔔</div>
-            <h3>Smart low-balance alerts</h3>
-            <p>Get notified by push, email or SMS before your power runs out — with recommended top-up amounts.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">📊</div>
-            <h3>Usage analytics</h3>
-            <p>Understand where your power goes with appliance cost estimates and daily consumption trends.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">🛡️</div>
-            <h3>Bank-grade security</h3>
-            <p>Encrypted passwords, signed sessions and role-based access keep your meter account and payments safe.</p>
+              <div class="p-alert">
+                <span class="ico">⚠</span>
+                <span><b>Low balance</b><small>Only 5% left — top up before Friday</small></span>
+              </div>
+
+              <div class="p-chart">
+                <div class="p-chart-head"><span>Usage · This week</span><b>−12%</b></div>
+                <svg viewBox="0 0 200 62" preserveAspectRatio="none" style="width:100%;height:88px;display:block">
+                  <defs>
+                    <linearGradient id="phoneLine" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0" stop-color="#0f9d6e"/>
+                      <stop offset="1" stop-color="#0b5e3e"/>
+                    </linearGradient>
+                  </defs>
+                  <g stroke="#e5e7eb" stroke-width="1" stroke-dasharray="3 3">
+                    <line x1="0" y1="20" x2="200" y2="20"/>
+                    <line x1="0" y1="40" x2="200" y2="40"/>
+                  </g>
+                  <polyline
+                    fill="none" stroke="url(#phoneLine)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                    points="10,37 42,27 73,32 105,22 137,26 168,14 200,20"/>
+                </svg>
+              </div>
+
+              <div class="p-buy">
+                <a href="app.html?view=register">⛁ Buy Token</a>
+                <a class="sec" href="app.html?view=register" title="Household">👤</a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- HOW IT WORKS -->
-    <section class="l-section" data-page="how" style="background:#fff; border-top:1px solid var(--l-border); border-bottom:1px solid var(--l-border)">
+    <!-- SECTION HEAD -->
+    <section class="l-section" style="padding-bottom:16px">
       <div class="l-wrap">
-        <div class="l-section-head">
-          <div class="l-kicker">Simple by design</div>
+        <div class="l-section-head" style="margin-bottom:0">
+          <h2>Built for everyone, designed for clarity.</h2>
+          <p>Whether you rent a bedsitter in Nairobi or manage twenty meters in Mombasa, PowerSmart keeps your power simple.</p>
         </div>
-        <div class="l-cards">
+      </div>
+    </section>
+
+    <!-- FEATURE CARDS -->
+    <section class="l-section" id="features">
+      <div class="l-wrap">
+        <div class="l-cards-2">
           <div class="l-card">
-            <div class="lc-ico">1</div>
-            <h3>Register your meter</h3>
-            <p>Create an account with your Kenya Power meter account number and a valid phone number.</p>
+            <span class="l-card-icon">🏠</span>
+            <h3>For Tenants</h3>
+            <p class="sub">Renting? We've got your power sorted.</p>
+            <div class="l-checklist">
+              <span class="l-check"><span class="tick">✓</span> Smart usage predictions</span>
+              <span class="l-check"><span class="tick">✓</span> Low balance alerts</span>
+              <span class="l-check"><span class="tick">✓</span> One-tap M-Pesa top-ups</span>
+            </div>
           </div>
+
           <div class="l-card">
-            <div class="lc-ico">2</div>
-            <h3>Monitor &amp; top up</h3>
-            <p>Watch your balance live and buy tokens instantly when it runs low.</p>
-          </div>
-          <div class="l-card">
-            <div class="lc-ico">3</div>
-            <h3>Stay powered</h3>
-            <p>Auto top-ups and alerts ensure your home — and your tenants' homes — never lose power.</p>
+            <span class="l-card-icon">🏢</span>
+            <h3>For Landlords</h3>
+            <p class="sub">Manage your whole portfolio in one view.</p>
+            <div class="l-tags">
+              <span class="l-tag">✓ Bulk token purchases</span>
+              <span class="l-tag">✓ Tenant billing automation</span>
+              <span class="l-tag">✓ Multi-meter dashboard</span>
+            </div>
+            <div class="l-mini-chart">
+              <div class="cap"><span>Portfolio Performance Overview</span><b>+18%</b></div>
+              <svg viewBox="0 0 240 60" preserveAspectRatio="none" style="width:100%;height:120px;display:block">
+                <defs>
+                  <linearGradient id="portFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#0f9d6e" stop-opacity="0.25"/>
+                    <stop offset="1" stop-color="#0f9d6e" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path
+                  fill="url(#portFill)"
+                  d="M0,24 L40,20 L80,22 L120,16 L160,18 L200,12 L240,9 L240,60 L0,60 Z"/>
+                <polyline
+                  fill="none" stroke="#0f9d6e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  points="0,24 40,20 80,22 120,16 160,18 200,12 240,9"/>
+              </svg>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PLANS -->
-    <section class="l-section" data-page="plans" style="padding-top:64px">
+    <!-- 3 STEPS -->
+    <section class="l-section" id="about">
       <div class="l-wrap">
         <div class="l-section-head">
-          <div class="l-kicker">Transparent pricing</div>
-          <h2>Simple, upfront plans</h2>
+          <h2>3 Simple Steps to Power Smart</h2>
+          <p>From signing up to staying powered takes less than a minute.</p>
         </div>
-        <div class="l-pricing">
-          <div class="l-plan">
-            <h3>Tenant plan</h3>
-            <div class="price">Free <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ forever</span></div>
-            <ul>
-              <li><span>✓</span> Real-time meter tracking</li>
-              <li><span>✓</span> Instant M-Pesa &amp; Airtel top-ups</li>
-              <li><span>✓</span> Depletion forecasts &amp; alerts</li>
-              <li><span>✓</span> Token history &amp; receipts</li>
-            </ul>
-            <a href="app.html?view=register" class="l-cta">Get started free</a>
+        <div class="l-steps">
+          <div class="l-step">
+            <span class="l-step-line"></span>
+            <span class="l-step-num">1</span>
+            <h3>Connect Meter</h3>
+            <p>Link your KPLC prepaid meter account securely in seconds.</p>
           </div>
-          <div class="l-plan featured">
-            <span class="pop">Most popular</span>
-            <h3>Landlord fleet plan</h3>
-            <div class="price">KSh 1,500 <span style="font-size:14px; font-weight:500; color:var(--l-muted)">/ month</span></div>
-            <ul>
-              <li><span>✓</span> Everything in Tenant plan</li>
-              <li><span>✓</span> Multi-meter portfolio management</li>
-              <li><span>✓</span> Bulk token purchases</li>
-              <li><span>✓</span> Complete payment audit ledger</li>
-            </ul>
-            <a href="app.html?view=register" class="l-cta">Upgrade fleet</a>
+          <div class="l-step">
+            <span class="l-step-line"></span>
+            <span class="l-step-num">2</span>
+            <h3>Buy Tokens</h3>
+            <p>Top up via M-Pesa, Airtel Money or bank transfer instantly.</p>
+          </div>
+          <div class="l-step">
+            <span class="l-step-num">3</span>
+            <h3>Monitor Usage</h3>
+            <p>Track consumption, get forecasts and never run out again.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- CTA BAND -->
+    <section id="pricing">
+      <div class="l-cta-band">
+        <h2>Join thousands of Kenyans saving on power today.</h2>
+        <p>Free for tenants, powerful for landlords. Start managing your electricity the smart way.</p>
+        <a class="l-btn l-btn-light" href="app.html?view=register">Get Started Free&nbsp;&nbsp;→</a>
       </div>
     </section>
 
@@ -197,123 +214,38 @@
   <!-- FOOTER -->
   <footer class="l-footer">
     <div class="l-wrap l-footer-inner">
+      <div class="l-footer-grid">
+        <div class="l-footer-brand">
+          <a class="l-brand" href="#top">
+            <span class="l-brand-mark">⚡</span>
+            PowerSmart<em>-KE</em>
+          </a>
+          <p class="l-footer-tag">Smart electricity management for Kenya — monitor, buy and forecast your power with confidence.</p>
+        </div>
 
-      <div class="l-footer-social">
-        <a href="#" aria-label="Facebook" title="Facebook">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12Z"/></svg>
-        </a>
-        <a href="#" aria-label="X (Twitter)" title="X (Twitter)">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93Zm-1.3 19.49h2.04L6.48 3.24H4.3Z"/></svg>
-        </a>
-        <a href="#" aria-label="Instagram" title="Instagram">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.72 3.72 0 0 1-1.38-.9 3.72 3.72 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23-.06-1.27-.07-1.65-.07-4.85s.01-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41 1.27-.06 1.65-.07 4.85-.07ZM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38A5.88 5.88 0 0 0 .63 4.14C.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13a5.88 5.88 0 0 0 2.13 1.38c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.88 5.88 0 0 0 2.13-1.38 5.88 5.88 0 0 0 1.38-2.13c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.88 5.88 0 0 0-1.38-2.13A5.88 5.88 0 0 0 19.86.63c-.76-.3-1.64-.5-2.91-.56C15.67.01 15.26 0 12 0Zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32ZM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88Z"/></svg>
-        </a>
-        <a href="#" aria-label="LinkedIn" title="LinkedIn">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0Z"/></svg>
-        </a>
-        <a href="#" aria-label="WhatsApp" title="WhatsApp">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.06 2.87 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.42.25-.7.25-1.29.17-1.42-.07-.13-.27-.2-.57-.35ZM12.05 21.79h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26c0-5.45 4.44-9.88 9.9-9.88a9.83 9.83 0 0 1 9.88 9.9c0 5.44-4.44 9.87-9.89 9.87Zm8.42-18.3A11.8 11.8 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.94L.06 24l6.32-1.65a11.88 11.88 0 0 0 5.67 1.45h.01c6.55 0 11.89-5.34 11.89-11.89 0-3.18-1.24-6.16-3.48-8.42Z"/></svg>
-        </a>
-      </div>
-
-      <div class="l-footer-contact">
-        <span>📞 +254 700 000 000</span>
-        <span>✉️ support@powersmart.ke</span>
-        <span>📍 Nairobi, Kenya</span>
+        <div class="l-footer-cols">
+          <div>
+            <h4>Platform</h4>
+            <ul>
+              <li><a href="#features">Tenant Portal</a></li>
+              <li><a href="#features">Landlord Dashboard</a></li>
+              <li><a href="#about">Help Center</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+              <li><a href="#">Contact Us</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div class="l-footer-copy">© 2026 PowerSmart Kenya. All rights reserved.</div>
     </div>
   </footer>
-
-  <style>
-    .typed-caret {
-      display: inline-block;
-      width: 2px;
-      height: 14px;
-      margin-left: 3px;
-      vertical-align: -2px;
-      background: var(--l-brand);
-      animation: caretBlink 0.9s steps(1) infinite;
-    }
-    @keyframes caretBlink { 50% { opacity: 0; } }
-  </style>
-
-  <script>
-    (function () {
-      "use strict";
-
-      // ── Typewriter badge (rotates through short taglines) ─────────────
-      var el = document.getElementById("typedBadge");
-      if (el) {
-        var phrases = [
-          "Next-generation token vending & fleet management",
-          "Smart prepaid electricity management",
-          "Instant tokens via M-Pesa & Airtel",
-          "Real-time meter monitoring & low-balance alerts",
-          "Landlord fleet tools, simplified",
-          "Never be in the dark again",
-          "Top up in seconds, stay powered always",
-        ];
-        var speed = 55, hold = 1800, erase = 24;
-        var pi = 0, i = 0, deleting = false, timer = null;
-
-        function step() {
-          var text = phrases[pi];
-          if (!deleting) {
-            i++;
-            el.textContent = text.slice(0, i);
-            if (i === text.length) {
-              timer = setTimeout(function () { deleting = true; step(); }, hold);
-              return;
-            }
-            timer = setTimeout(step, speed);
-          } else {
-            i--;
-            el.textContent = text.slice(0, i);
-            if (i === 0) {
-              deleting = false;
-              pi = (pi + 1) % phrases.length;
-              timer = setTimeout(step, 400);
-              return;
-            }
-            timer = setTimeout(step, erase);
-          }
-        }
-        step();
-      }
-
-      // ── Page switcher (Home / About / Offer / How / Plans) ────────────
-      var pages = document.querySelectorAll("main [data-page]");
-      var navButtons = document.querySelectorAll(".l-nav-links button");
-
-      function show(page) {
-        pages.forEach(function (p) {
-          p.style.display = p.getAttribute("data-page") === page ? "" : "none";
-        });
-        navButtons.forEach(function (b) {
-          b.classList.toggle("active", b.getAttribute("data-page") === page);
-        });
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-
-      navButtons.forEach(function (b) {
-        b.addEventListener("click", function () {
-          show(b.getAttribute("data-page"));
-        });
-      });
-
-      document.querySelectorAll("[data-nav]").forEach(function (a) {
-        a.addEventListener("click", function (e) {
-          e.preventDefault();
-          show(a.getAttribute("data-nav"));
-        });
-      });
-
-      // Only the Home page is visible on first load.
-      show("home");
-    })();
-  </script>
 
 </body>
 </html>
