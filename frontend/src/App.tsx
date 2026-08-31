@@ -37,8 +37,8 @@ export function App() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center">
-        <div className="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 animate-pulse">
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="h-10 w-10 rounded-xl bg-brand-500/10 border border-brand-500/30 flex items-center justify-center text-brand-500 animate-pulse">
           ⚡
         </div>
       </div>
