@@ -98,14 +98,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onJoin, onLogin }) => 
       <section className="relative overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 pt-16 pb-20 lg:pt-24 lg:pb-28 grid lg:grid-cols-2 gap-14 items-center">
           <div>
-            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-leaf-50 border border-leaf-200 text-leaf-700 text-xs font-bold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-leaf-500 opacity-60" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-leaf-500" />
-              </span>
-              Live in Nairobi, Mombasa &amp; Kisumu
-            </span>
-
             <h1 className="mt-6 text-[42px] leading-[1.08] lg:text-[56px] font-black tracking-tight">
               Smart Electricity Management
               <br />
