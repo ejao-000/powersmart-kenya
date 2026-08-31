@@ -145,20 +145,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, onBack, onFor
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 bg-white text-[13.5px] font-bold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+            <a
+              href="https://accounts.google.com/signin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 bg-white text-[13.5px] font-bold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
             >
               <GoogleIcon />
               Google
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 bg-white text-[13.5px] font-bold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
+            </a>
+            <a
+              href="https://appleid.apple.com/sign-in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 py-3 rounded-xl border border-gray-200 bg-white text-[13.5px] font-bold text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-colors"
             >
               <AppleIcon />
               Apple
-            </button>
+            </a>
           </div>
         </div>
 
