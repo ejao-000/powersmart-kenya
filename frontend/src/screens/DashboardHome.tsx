@@ -13,8 +13,7 @@ import {
   Clock,
   AlertTriangle,
   Wallet,
-  LifeBuoy,
-  Activity,
+  LogOut,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -44,7 +43,7 @@ const NAV_ITEMS: { id: NavId; label: string; icon: React.ComponentType<{ size?: 
   { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
   { id: 'properties', label: 'Properties', icon: Building2 },
   { id: 'tenants', label: 'Tenants', icon: Users },
-  { id: 'tokens', label: 'Tokens', icon: Zap },
+  { id: 'tokens', label: 'Buy Tokens', icon: Zap },
   { id: 'usage', label: 'Usage', icon: LineChart },
   { id: 'system', label: 'System', icon: Settings },
 ];
@@ -348,13 +347,13 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
             })}
           </div>
 
-          {/* Pinned Buy Tokens */}
+          {/* Pinned Log Out */}
           <div className="px-3 pb-5">
             <button
-              onClick={() => setActive('tokens')}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-leaf-500 hover:bg-leaf-600 text-white text-[13px] font-extrabold shadow-md shadow-leaf-500/20 transition-colors cursor-pointer"
+              onClick={onLogout}
+              className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 text-[13px] font-extrabold transition-colors cursor-pointer"
             >
-              <Zap size={16} fill="currentColor" /> Buy Tokens
+              <LogOut size={16} /> Log Out
             </button>
           </div>
         </aside>
