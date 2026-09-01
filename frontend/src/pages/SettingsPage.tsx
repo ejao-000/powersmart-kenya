@@ -13,6 +13,9 @@ import {
   Save,
   Check,
   Upload,
+  Wifi,
+  Bluetooth,
+  Radio,
 } from 'lucide-react';
 import { SectionCard, initials } from './ui';
 
@@ -50,6 +53,9 @@ export const SettingsPage: React.FC<{ role: Role }> = ({ role }) => {
     marketing: false,
     autoDisconnect: false,
     overdraft: true,
+    wifi: true,
+    bluetooth: true,
+    wifiOnly: false,
   });
 
   const setT = (k: string) => (v: boolean) => setToggles((p) => ({ ...p, [k]: v }));
@@ -131,6 +137,42 @@ export const SettingsPage: React.FC<{ role: Role }> = ({ role }) => {
               <div><label className="ps-label">Low balance threshold (kWh)</label><input className="ps-input" type="number" defaultValue={10} /></div>
             </div>
           </SectionCard>
+
+          {role === 'tenant' && (
+            <SectionCard title="Meter Connection — Send Power via WiFi / Bluetooth">
+              <div className="mb-4 p-3.5 rounded-xl bg-sky-50 border border-sky-100 flex items-start gap-2.5">
+                <Radio size={16} className="text-sky-500 mt-0.5 shrink-0" />
+                <p className="text-[12px] text-sky-700 leading-relaxed">
+                  Use this to load a token onto your prepaid meter without typing the 20-digit code.
+                  Choose which delivery methods are enabled below, then go to <span className="font-bold">Token History</span> and tap
+                  <span className="font-bold"> WiFi</span> or <span className="font-bold">Bluetooth</span> next to an unapplied token.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between py-2">
+                  <span className="flex items-center gap-2.5 text-[13px] font-semibold text-gray-700">
+                    <span className="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 grid place-items-center"><Bluetooth size={15} /></span>
+                    Bluetooth delivery (BLE meters)
+                  </span>
+                  <Toggle on={toggles.bluetooth} onChange={setT('bluetooth')} />
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="flex items-center gap-2.5 text-[13px] font-semibold text-gray-700">
+                    <span className="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 grid place-items-center"><Wifi size={15} /></span>
+                    WiFi delivery (smart meters)
+                  </span>
+                  <Toggle on={toggles.wifi} onChange={setT('wifi')} />
+                </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="flex items-center gap-2.5 text-[13px] font-semibold text-gray-700">
+                    <span className="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 grid place-items-center"><Wifi size={15} /></span>
+                    Require WiFi for auto-purchase push
+                  </span>
+                  <Toggle on={toggles.wifiOnly} onChange={setT('wifiOnly')} />
+                </div>
+              </div>
+            </SectionCard>
+          )}
 
           <SectionCard title="Alerts">
             <div className="space-y-3">

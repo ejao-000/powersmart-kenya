@@ -26,6 +26,7 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Tenant MVP dashboard** — one screen answering "how much electricity do I have", "when will it run out", "what am I spending", plus a Buy Tokens CTA, weekly budget and energy-saving tips.
 - **Instant token vending** — buy tokens via M-Pesa, Airtel Money or bank transfer; tokens are generated and recorded instantly.
 - **Token & payment history** — every token and transaction is stored in the database, with search, filter, copy, CSV download and print/PDF backup.
+- **Send power to your meter (WiFi / Bluetooth)** — load a bought token straight onto your prepaid meter without typing the 20-digit code. Uses the Web Bluetooth API when available, with a simulated delivery fallback for development.
 - **Usage analytics** — daily/weekly/monthly consumption and estimated cost charts from recorded telemetry.
 - **AI-style predictions** — run-out forecast with confidence level plus "how long does a KSh 200/500/1,000/2,000 token last" estimates.
 - **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
@@ -209,7 +210,7 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
-| POST | `/api/tokens/{id}/push-bluetooth` | Push token to meter |
+| POST | `/api/tokens/{id}/push-bluetooth` | Push token to meter (`?action=request\|confirm\|fail&method=wifi\|bluetooth`) |
 | DELETE | `/api/tokens/{id}` | Remove a token from history |
 | GET | `/api/transactions` | Payment history |
 | GET/POST/PUT/DELETE | `/api/alerts...` | Alert rules |

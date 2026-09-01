@@ -14,8 +14,11 @@ import {
   Gauge,
   Target,
   Sparkles,
+  KeyRound,
+  Radio,
 } from 'lucide-react';
 import { SectionCard } from './ui';
+import { TokenPushControls } from '../components/TokenPushControls';
 import {
   meter,
   tokens,
@@ -32,7 +35,9 @@ import {
 
 interface TenantDashboardPageProps {
   onNavigate?: (page: string) => void;
-}const mask = (n: string) => (n.length > 6 ? `${n.slice(0, 3)}••••••${n.slice(-3)}` : n);
+}
+
+const mask = (n: string) => (n.length > 6 ? `${n.slice(0, 3)}••••••${n.slice(-3)}` : n);
 const formatToken = (t: string) => (t.match(/.{1,4}/g) || []).join(' ');
 
 export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavigate }) => {
@@ -177,10 +182,32 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
         </div>
       )}
 
+      {/* Send power to meter */}
+      <div className="ps-card p-5 bg-gradient-to-r from-sky-50 to-emerald-50 border border-sky-100 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <span className="w-11 h-11 rounded-xl bg-sky-500 text-white grid place-items-center shrink-0 shadow-md shadow-sky-500/20">
+            <Radio size={20} />
+          </span>
+          <div>
+            <p className="text-[14px] font-bold text-sky-800">Send power to your meter</p>
+            <p className="text-[12px] text-sky-700/90 mt-0.5 leading-relaxed">
+              Load any unapplied token straight onto your prepaid meter via{' '}
+              <span className="font-bold">WiFi</span> or <span className="font-bold">Bluetooth</span> — no more typing 20-digit codes.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => onNavigate && onNavigate('history')}
+          className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-[12px] font-bold transition-colors cursor-pointer"
+        >
+          <Radio size={14} /> Send token now
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* ── Left column: usage + budget + recommendation ────────────── */}
         <div className="xl:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="ps-card p-5">
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-8 h-8 rounded-lg bg-brand-50 text-brand-500 grid place-items-center">
@@ -200,6 +227,18 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
               </div>
               <p className="text-2xl font-black text-gray-900">{fmtKsh(weeklySpend)}</p>
               <p className="text-[12px] text-gray-500 mt-1">{dailyAvg > 0 ? `${dailyAvg.toFixed(1)} kWh/day avg` : 'No usage data yet'}</p>
+            </div>
+            <div className="ps-card p-5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-8 h-8 rounded-lg bg-brand-50 text-brand-500 grid place-items-center">
+                  <KeyRound size={15} />
+                </span>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Tokens purchased</p>
+              </div>
+              <p className="text-2xl font-black text-gray-900">{tokenList.length}</p>
+              <p className="text-[12px] text-gray-500 mt-1">
+                {tokenList.filter((t) => t.push_status === 'success').length} applied to meter
+              </p>
             </div>
             <div className="ps-card p-5">
               <div className="flex items-center gap-2 mb-2">
@@ -331,6 +370,12 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
                   {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
                   {copied ? 'Copied' : 'Copy token'}
                 </button>
+                <div className="mt-3 pt-3 border-t border-gray-50">
+                  <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
+                    <Radio size={12} /> Send to meter
+                  </p>
+                  <TokenPushControls token={latest} onDone={refresh} />
+                </div>
               </div>
             ) : (
               <div className="py-8 text-center">

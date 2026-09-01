@@ -9,6 +9,7 @@ import {
   KeyRound,
 } from 'lucide-react';
 import { SectionCard } from './ui';
+import { TokenPushControls } from '../components/TokenPushControls';
 import { tokens, Token, fmtKsh, fmtUnits, fmtDateTime } from '../services/api';
 
 const CHANNELS = [
@@ -170,11 +171,16 @@ export const BuyTokensPage: React.FC = () => {
                   <div key={t.id} className="py-3">
                     <div className="flex items-center justify-between">
                       <p className="text-[13px] font-bold text-gray-800">{fmtKsh(t.amount_ksh)}</p>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md text-emerald-600 bg-emerald-50 flex items-center gap-1">
-                        <KeyRound size={10} /> Applied
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
+                        t.push_status === 'success' ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'
+                      }`}>
+                        {t.push_status === 'success' ? 'Applied' : 'Unapplied'}
                       </span>
                     </div>
                     <p className="text-[11px] text-gray-400 mt-0.5">{fmtUnits(t.units)} · {fmtDateTime(t.purchased_at)}</p>
+                    <div className="mt-2">
+                      <TokenPushControls token={t} onDone={load} compact />
+                    </div>
                   </div>
                 ))}
               </div>

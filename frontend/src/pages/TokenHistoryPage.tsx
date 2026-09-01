@@ -9,8 +9,12 @@ import {
   RefreshCw,
   ShieldCheck,
   Filter,
+  Wifi,
+  Bluetooth,
+  Radio,
 } from 'lucide-react';
 import { SectionCard } from './ui';
+import { TokenPushControls } from '../components/TokenPushControls';
 import { tokens, Token, fmtKsh, fmtUnits, fmtDateTime } from '../services/api';
 
 const formatToken = (t: string) => (t.match(/.{1,4}/g) || []).join(' ');
@@ -112,7 +116,7 @@ export const TokenHistoryPage: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="ps-heading">Token History</h1>
-          <p className="ps-sub">Every token you've purchased — search, copy, download or print.</p>
+          <p className="ps-sub">Every token you've purchased — search, copy, or send to your meter via WiFi / Bluetooth.</p>
         </div>
         <div className="flex items-center gap-2.5">
           <button onClick={refresh} className="ps-btn-outline !px-3 !py-2" title="Refresh">
@@ -174,7 +178,7 @@ export const TokenHistoryPage: React.FC = () => {
                   <th className="py-2.5 pr-3 font-semibold">Amount</th>
                   <th className="py-2.5 pr-3 font-semibold">Units</th>
                   <th className="py-2.5 pr-3 font-semibold">Token Number</th>
-                  <th className="py-2.5 pr-3 font-semibold">Status</th>
+                  <th className="py-2.5 pr-3 font-semibold">Sync to Meter</th>
                   <th className="py-2.5 font-semibold"></th>
                 </tr>
               </thead>
@@ -188,11 +192,7 @@ export const TokenHistoryPage: React.FC = () => {
                       <span className="font-mono text-[12px] font-semibold text-gray-700">{formatToken(t.token_number)}</span>
                     </td>
                     <td className="py-3 pr-3">
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                        t.push_status === 'success' ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'
-                      }`}>
-                        {t.push_status === 'success' ? 'Applied' : 'Unapplied'}
-                      </span>
+                      <TokenPushControls token={t} onDone={refresh} />
                     </td>
                     <td className="py-3 text-right">
                       <button
@@ -210,6 +210,32 @@ export const TokenHistoryPage: React.FC = () => {
           </div>
         )}
       </SectionCard>
+
+      {/* Share power to meter */}
+      <div className="ps-card p-5 bg-sky-50 border-sky-100">
+        <div className="flex items-start gap-3">
+          <span className="w-10 h-10 rounded-xl bg-sky-500/15 text-sky-600 grid place-items-center shrink-0">
+            <Radio size={19} />
+          </span>
+          <div className="flex-1">
+            <p className="text-[14px] font-bold text-sky-800">Share your power — send tokens to your meter</p>
+            <p className="text-[12px] text-sky-700/90 mt-0.5 leading-relaxed">
+              Bought a token? Load it straight onto your prepaid meter without typing the 20 digits. Tap{' '}
+              <span className="inline-flex items-center gap-0.5 align-middle"><Wifi size={12} /> WiFi</span> or{' '}
+              <span className="inline-flex items-center gap-0.5 align-middle"><Bluetooth size={12} /> Bluetooth</span>{' '}
+              next to any unapplied token below and keep your phone close to the meter.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-bold">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-sky-200 text-sky-600">
+                <Wifi size={12} /> WiFi — smart meters with network module
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white border border-sky-200 text-sky-600">
+                <Bluetooth size={12} /> Bluetooth — BLE-equipped prepaid meters
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="ps-card p-5 bg-brand-500 text-white border-brand-500 flex items-center justify-between">
         <div className="flex items-center gap-3">
