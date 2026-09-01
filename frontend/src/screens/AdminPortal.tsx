@@ -46,6 +46,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     properties: 'Properties',
     tenants: 'Tenants',
     usage: 'Usage',
+    history: 'Token History',
+    predictions: 'Predictions',
+    budget: 'Budget',
   };
 
   return (

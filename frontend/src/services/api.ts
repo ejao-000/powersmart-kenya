@@ -50,6 +50,26 @@ export interface Prediction {
   recommended_topup_ksh: number;
 }
 
+export interface UsageDay {
+  date: string;
+  kwh: number;
+  cost_ksh: number;
+}
+
+export interface UsageSummary {
+  today_kwh: number;
+  today_cost_ksh: number;
+  week_kwh: number;
+  week_cost_ksh: number;
+  month_kwh: number;
+  month_cost_ksh: number;
+  daily_avg_kwh: number;
+  tariff_ksh: number;
+  daily: UsageDay[];
+  data_quality: 'high' | 'low';
+  generated_at: string;
+}
+
 export interface Token {
   id: string;
   user_id: string;
@@ -282,6 +302,7 @@ export const auth = {
 export const meter = {
   status: () => request<Meter>('/meter'),
   prediction: () => request<Prediction>('/meter/prediction'),
+  usage: () => request<UsageSummary>('/meter/usage'),
   telemetry: (units_remaining: number) =>
     request('/meter/telemetry', { method: 'POST', body: { units_remaining } }),
   settings: (body: { auto_topup?: boolean; topup_threshold?: number; topup_amount_ksh?: number }) =>

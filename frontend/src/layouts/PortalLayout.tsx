@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { PortalLogo } from '../components/PortalLogo';
 
-export type PortalPage = 'dashboard' | 'properties' | 'tenants' | 'tokens' | 'usage' | 'system' | 'settings' | 'users' | 'transactions';
+export type PortalPage = 'dashboard' | 'properties' | 'tenants' | 'tokens' | 'usage' | 'system' | 'settings' | 'users' | 'transactions' | 'history' | 'predictions' | 'budget';
 
 export interface NavItem {
   id: PortalPage;

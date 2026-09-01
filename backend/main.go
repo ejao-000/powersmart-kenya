@@ -43,6 +43,7 @@ func main() {
 	adminH := handlers.NewAdminHandler(db)
 	txH := handlers.NewTransactionHandler(db)
 	outageH := handlers.NewOutageHandler(db)
+	usageH := handlers.NewUsageHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -92,6 +93,7 @@ func main() {
 	mux.Handle("GET /api/meter", protected(http.HandlerFunc(meterH.GetStatus)))
 	mux.Handle("POST /api/meter/telemetry", protected(http.HandlerFunc(meterH.PostTelemetry)))
 	mux.Handle("GET /api/meter/prediction", protected(http.HandlerFunc(meterH.GetPrediction)))
+	mux.Handle("GET /api/meter/usage", protected(http.HandlerFunc(usageH.Summary)))
 	mux.Handle("PUT /api/meter/settings", protected(http.HandlerFunc(meterH.UpdateSettings)))
 
 	// Multi-meter (landlord / multi-unit owners)
@@ -182,6 +184,7 @@ func logRoutes() {
 	log.Println("  GET  /api/meter")
 	log.Println("  POST /api/meter/telemetry")
 	log.Println("  GET  /api/meter/prediction")
+	log.Println("  GET  /api/meter/usage")
 	log.Println("  PUT  /api/meter/settings")
 	log.Println("  GET  /api/meters")
 	log.Println("  POST /api/meters")

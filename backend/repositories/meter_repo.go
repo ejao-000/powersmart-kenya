@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"powersmart-backend/model"
 )
@@ -106,6 +107,28 @@ func (r *MeterRepo) InsertUsageHistory(h *model.UsageHistory) error {
 		`INSERT INTO usage_history (id, meter_id, units_remaining, recorded_at) VALUES ($1, $2, $3, $4)`,
 		h.ID, h.MeterID, h.UnitsRemaining, h.RecordedAt)
 	return err
+}
+
+// GetHistorySince fetches readings recorded after the given timestamp (ascending).
+func (r *MeterRepo) GetHistorySince(meterID string, since time.Time) ([]*model.UsageHistory, error) {
+	rows, err := r.db.Query(`
+		SELECT id, meter_id, units_remaining, recorded_at
+		FROM usage_history WHERE meter_id = $1 AND recorded_at >= $2
+		ORDER BY recorded_at ASC`, meterID, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var hist []*model.UsageHistory
+	for rows.Next() {
+		h := &model.UsageHistory{}
+		if err := rows.Scan(&h.ID, &h.MeterID, &h.UnitsRemaining, &h.RecordedAt); err != nil {
+			return nil, err
+		}
+		hist = append(hist, h)
+	}
+	return hist, rows.Err()
 }
 
 // GetRecentHistory fetches the last N readings for prediction calculations.

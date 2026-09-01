@@ -80,6 +80,9 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     settings: 'Settings',
     transactions: 'Transactions',
     users: 'Users',
+    history: 'Token History',
+    predictions: 'Predictions',
+    budget: 'Budget',
   };
 
   return (

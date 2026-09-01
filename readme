@@ -23,8 +23,11 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 ## Features
 
 - **Real-time meter dashboard** — live kWh balance, daily average usage, depletion forecast.
+- **Tenant MVP dashboard** — one screen answering "how much electricity do I have", "when will it run out", "what am I spending", plus a Buy Tokens CTA, weekly budget and energy-saving tips.
 - **Instant token vending** — buy tokens via M-Pesa, Airtel Money or bank transfer; tokens are generated and recorded instantly.
-- **Token & payment history** — every token and transaction is stored in the database.
+- **Token & payment history** — every token and transaction is stored in the database, with search, filter, copy, CSV download and print/PDF backup.
+- **Usage analytics** — daily/weekly/monthly consumption and estimated cost charts from recorded telemetry.
+- **AI-style predictions** — run-out forecast with confidence level plus "how long does a KSh 200/500/1,000/2,000 token last" estimates.
 - **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
@@ -202,6 +205,7 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | GET | `/api/meter` | Live meter status |
 | POST | `/api/meter/telemetry` | Record a meter reading |
 | GET | `/api/meter/prediction` | Depletion forecast |
+| GET | `/api/meter/usage` | Today / week / month usage + 30-day series (Usage dashboard) |
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
