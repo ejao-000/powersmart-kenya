@@ -21,10 +21,10 @@ interface AdminPortalProps {
 
 const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'users', label: 'Users', icon: Users },
   { id: 'transactions', label: 'Transactions', icon: Receipt },
-  { id: 'tokens', label: 'Tokens', icon: Coins },
-  { id: 'system', label: 'System', icon: Activity },
+  { id: 'users', label: 'User Management', icon: Users },
+  { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
+  { id: 'system', label: 'System Config', icon: Activity },
 ];
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) => {
@@ -39,9 +39,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
   const titles: Record<PortalPage, string> = {
     dashboard: 'Platform Overview',
     users: 'User Management',
-    transactions: 'Transactions',
-    tokens: 'Bulk Distribution',
-    system: 'System Health',
+    transactions: 'Token Ledger & Payments',
+    tokens: 'Bulk Token Purchase',
+    system: 'System Config & Telemetry',
     settings: 'Settings',
     properties: 'Properties',
     tenants: 'Tenants',
@@ -49,17 +49,23 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     history: 'Token History',
     predictions: 'Predictions',
     budget: 'Budget',
+    meter: 'Meter Management',
+    alerts: 'Alerts',
+    support: 'Support',
   };
 
   return (
     <PortalLayout
       userName={userName}
-      roleLabel="System Admin"
+      portalLabel="Admin Portal"
       title={titles[page]}
       active={page}
       onNavigate={setPage}
       onLogout={onLogout}
-      onBuyTokens={() => setPage('tokens')}
+      onSwitchPortal={onLogout}
+      onTopup={() => setPage('tokens')}
+      topupLabel="Bulk Tokens"
+      accent="blue"
       notifications={notifications}
       nav={NAV}
     >

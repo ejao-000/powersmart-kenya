@@ -1,21 +1,31 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 
-// PowerSmart logo lockup: forest-green lightning bolt with a "PS" mark, wordmark
-// "POWER" in deep green and "SMART" in green.
-export const PortalLogo: React.FC<{ dark?: boolean }> = ({ dark }) => {
+// PowerSmart Kenya logo lockup: gold lightning mark on a rounded square, wordmark
+// "PowerSmart Kenya" plus a small portal label underneath. Rendered on the navy sidebar.
+export const PortalLogo: React.FC<{ portalLabel?: string; onDark?: boolean }> = ({
+  portalLabel,
+  onDark = true,
+}) => {
   return (
     <div className="flex items-center gap-2.5 select-none">
-      <div className="relative w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center shadow-md shadow-brand-500/20">
-        <Zap size={20} className="text-white" />
-        <span className="absolute -bottom-0.5 right-0.5 text-[7px] font-black text-brand-700 bg-emerald-100 rounded px-0.5 leading-tight">
-          PS
-        </span>
+      <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-md shadow-gold-500/25 shrink-0">
+        <Zap size={20} className="text-navy-950" fill="currentColor" />
+        <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-navy-900" />
       </div>
-      <div className="leading-none">
-        <span className="font-black text-[15px] tracking-tight text-gray-900">POWER</span>
-        <span className="font-black text-[15px] tracking-tight text-brand-500">SMART</span>
-        <div className="text-[8px] font-bold tracking-[0.35em] text-gray-400 mt-0.5">KENYA</div>
+      <div className="leading-tight min-w-0">
+        <span className="block font-black text-[15px] tracking-tight text-white whitespace-nowrap">
+          PowerSmart<span className="text-gold-400"> Kenya</span>
+        </span>
+        {portalLabel && (
+          <span
+            className={`mt-0.5 block text-[9px] font-bold uppercase tracking-[0.22em] ${
+              onDark ? 'text-slate-400' : 'text-gray-500'
+            }`}
+          >
+            {portalLabel}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -48,10 +48,10 @@ export const OutagesPage: React.FC = () => {
     }).addTo(map);
     const layer = L.layerGroup().addTo(map);
     [[-1.27, 36.79], [-1.285, 36.795], [-1.26, 36.81]].forEach(([lat, lng]) => {
-      L.circleMarker([lat, lng], { radius: 9, color: '#0F5132', weight: 1.5, fillColor: '#ef4444', fillOpacity: 0.6 }).addTo(layer);
+      L.circleMarker([lat, lng], { radius: 9, color: '#2563EB', weight: 1.5, fillColor: '#ef4444', fillOpacity: 0.6 }).addTo(layer);
     });
     [[-1.275, 36.8], [-1.265, 36.8]].forEach(([lat, lng]) => {
-      L.circleMarker([lat, lng], { radius: 7, color: '#0F5132', weight: 1.5, fillColor: '#f59e0b', fillOpacity: 0.6 }).addTo(layer);
+      L.circleMarker([lat, lng], { radius: 7, color: '#2563EB', weight: 1.5, fillColor: '#f59e0b', fillOpacity: 0.6 }).addTo(layer);
     });
     mapInst.current = map;
     return () => {

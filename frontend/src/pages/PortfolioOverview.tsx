@@ -84,9 +84,14 @@ export const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ onNavigate
           <h1 className="ps-heading">Portfolio Overview</h1>
           <p className="ps-sub">Your properties and tenant energy usage at a glance.</p>
         </div>
-        <button className="ps-btn-outline">
-          <Download size={15} /> Export Report
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button onClick={onNavigateTokens} className="ps-btn-gold">
+            <Zap size={15} /> Bulk Purchase Tokens
+          </button>
+          <button className="ps-btn-outline">
+            <Download size={15} /> Export Report
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -141,11 +146,11 @@ export const PortfolioOverview: React.FC<PortfolioOverviewProps> = ({ onNavigate
                   <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                   <XAxis dataKey="week" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#9CA3AF' }} />
                   <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#9CA3AF' }} />
-                  <Tooltip cursor={{ fill: '#F5F6F8' }} />
+                  <Tooltip cursor={{ fill: '#F5F4FA' }} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="Riverside Court" stackId="a" fill="#0F5132" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Kilimani Apartments" stackId="a" fill="#4FA377" />
-                  <Bar dataKey="Kileleshwa Studio" stackId="a" fill="#A9D3BC" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Riverside Court" stackId="a" fill="#2563EB" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Kilimani Apartments" stackId="a" fill="#60A5FA" />
+                  <Bar dataKey="Kileleshwa Studio" stackId="a" fill="#BFDBFE" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

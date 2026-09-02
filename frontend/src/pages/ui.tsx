@@ -42,8 +42,8 @@ export const StatCard: React.FC<{
           </span>
         ) : null}
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-gray-400">{label}</p>
+      <p className="text-[28px] md:text-[32px] font-black text-gray-900 leading-none mt-2">{value}</p>
       {progress !== undefined && (
         <div className="mt-3 h-2 rounded-full bg-gray-100 overflow-hidden">
           <div className="h-full rounded-full bg-brand-500" style={{ width: `${Math.min(progress, 100)}%` }} />

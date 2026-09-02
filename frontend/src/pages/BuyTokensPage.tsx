@@ -93,8 +93,8 @@ export const BuyTokensPage: React.FC = () => {
                   onClick={() => { setCustom(false); setAmount(amt); }}
                   className={`py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${
                     !custom && amount === amt
-                      ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-brand-500'
+                      ? 'bg-gold-500 border-gold-500 text-navy-950 shadow-sm shadow-gold-500/30'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gold-500'
                   }`}
                 >
                   {amt} KSh
@@ -103,7 +103,7 @@ export const BuyTokensPage: React.FC = () => {
               <button
                 onClick={() => { setCustom(true); }}
                 className={`py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${
-                  custom ? 'bg-brand-500 border-brand-500 text-white shadow-sm' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-brand-500'
+                  custom ? 'bg-gold-500 border-gold-500 text-navy-950 shadow-sm shadow-gold-500/30' : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gold-500'
                 }`}
               >
                 Custom
@@ -123,8 +123,8 @@ export const BuyTokensPage: React.FC = () => {
                   onClick={() => setChannel(c.id)}
                   className={`py-2.5 rounded-xl font-bold text-xs border transition-all cursor-pointer ${
                     channel === c.id
-                      ? 'bg-brand-500 border-brand-500 text-white shadow-sm'
-                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-brand-500'
+                      ? 'bg-gold-500 border-gold-500 text-navy-950 shadow-sm shadow-gold-500/30'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:border-gold-500'
                   }`}
                 >
                   {c.label}
@@ -141,7 +141,7 @@ export const BuyTokensPage: React.FC = () => {
             <button
               onClick={buy}
               disabled={buying}
-              className="w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-navy-950 text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-gold-500/30 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {buying ? <RefreshCw size={15} className="animate-spin" /> : <ArrowUpRight size={15} />}
               {buying ? 'Purchasing…' : `Buy KSh ${amount} token`}
@@ -150,12 +150,12 @@ export const BuyTokensPage: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="ps-card p-5 bg-brand-500 text-white border-brand-500">
+          <div className="ps-card p-5 bg-gradient-to-br from-navy-900 to-navy-800 border-navy-800 text-white">
             <div className="flex items-center gap-2 mb-2">
-              <Wallet size={16} />
+              <Wallet size={16} className="text-gold-400" />
               <p className="text-[13px] font-bold">How it works</p>
             </div>
-            <ol className="text-[12px] text-emerald-50/90 space-y-2 mt-2">
+            <ol className="text-[12px] text-slate-300 space-y-2 mt-2">
               <li>1. Pick your amount &amp; payment channel.</li>
               <li>2. Approve the STK push on your phone.</li>
               <li>3. Your 20-digit token is issued instantly.</li>

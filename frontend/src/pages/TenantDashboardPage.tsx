@@ -125,25 +125,25 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
       </div>
 
       {/* ── Balance hero ─────────────────────────────────────────────── */}
-      <div className="ps-card p-6 md:p-8 bg-brand-500 text-white border-brand-500 relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5" />
-        <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-white/5" />
+      <div className="ps-card p-6 md:p-8 bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 border-navy-800 text-white relative overflow-hidden">
+        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-gold-500/10" />
+        <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-brand-500/10" />
         <div className="relative flex flex-col lg:flex-row lg:items-center gap-6">
           <div className="flex-1">
-            <p className="text-[12px] font-bold uppercase tracking-widest text-emerald-100 flex items-center gap-1.5">
-              <Zap size={14} /> My Electricity
+            <p className="text-[12px] font-bold uppercase tracking-widest text-gold-400 flex items-center gap-1.5">
+              <Zap size={14} /> Available Balance
             </p>
             <p className="mt-3 text-5xl md:text-6xl font-black tracking-tight">
               {loading ? '—' : remaining.toFixed(1)}
-              <span className="text-xl md:text-2xl font-bold text-emerald-100 ml-2">kWh</span>
+              <span className="text-xl md:text-2xl font-bold text-slate-300 ml-2">kWh</span>
             </p>
             <div className="mt-4 h-2.5 rounded-full bg-white/15 overflow-hidden max-w-md">
               <div
-                className={`h-full rounded-full transition-all ${criticalBalance ? 'bg-red-400' : lowBalance ? 'bg-amber-400' : 'bg-emerald-300'}`}
+                className={`h-full rounded-full transition-all ${criticalBalance ? 'bg-red-400' : lowBalance ? 'bg-amber-400' : 'bg-gold-400'}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-emerald-50/90">
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-slate-200/90">
               <span className="flex items-center gap-1.5">
                 <CalendarClock size={15} />
                 {daysLeft !== null ? `Approximately ${daysLeft.toFixed(1)} days remaining` : 'Insufficient data for forecast'}
@@ -157,7 +157,7 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
 
           <button
             onClick={buy}
-            className="shrink-0 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white text-brand-600 text-[15px] font-black shadow-lg shadow-brand-900/20 hover:bg-emerald-50 transition-colors cursor-pointer"
+            className="shrink-0 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gold-500 hover:bg-gold-400 text-navy-950 text-[15px] font-black shadow-lg shadow-gold-500/25 transition-colors cursor-pointer"
           >
             <Zap size={18} /> BUY TOKENS
           </button>
@@ -380,7 +380,7 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
             ) : (
               <div className="py-8 text-center">
                 <p className="text-[13px] text-gray-400">No tokens yet — buy your first token.</p>
-                <button onClick={buy} className="mt-3 ps-btn-primary !text-[12px]">
+                <button onClick={buy} className="mt-3 ps-btn-gold !text-[12px]">
                   <ArrowUpRight size={14} /> Buy Tokens
                 </button>
               </div>

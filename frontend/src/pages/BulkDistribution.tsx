@@ -153,7 +153,7 @@ export const BulkDistribution: React.FC = () => {
                     <tr
                       key={r.meter}
                       onClick={() => toggle(r.meter)}
-                      className={`border-b border-gray-50 cursor-pointer transition-colors ${r.selected ? 'bg-brand-50/60' : ''}`}
+                      className={`border-b border-gray-50 cursor-pointer transition-colors ${r.selected ? 'bg-gold-50/70' : ''}`}
                     >
                       <td className="py-3 pr-3">
                         <input
@@ -231,10 +231,10 @@ export const BulkDistribution: React.FC = () => {
             <button
               onClick={doPay}
               disabled={paying || selected.length === 0}
-              className="mt-5 w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-md shadow-brand-500/20 transition-colors disabled:opacity-50 cursor-pointer"
+              className="mt-5 w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-navy-950 text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-gold-500/30 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {paying ? <RefreshCw size={15} className="animate-spin" /> : <Smartphone size={15} />}
-              {paying ? 'Processing M-Pesa…' : 'Pay with M-Pesa'}
+              {paying ? 'Processing M-Pesa…' : 'Buy for All Selected · Pay with M-Pesa'}
             </button>
             <p className="mt-3 text-center text-[11px] text-gray-400 flex items-center justify-center gap-1">
               <Lock size={11} /> Secure payment · encrypted channel

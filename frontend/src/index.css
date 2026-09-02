@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: #F5F6F8;
+  background-color: #F5F4FA;
   color: #111827;
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -11,10 +11,13 @@ body {
 
 @layer components {
   .ps-card {
-    @apply bg-white rounded-xl border border-gray-200 shadow-card;
+    @apply bg-white rounded-2xl border border-gray-200/80 shadow-card;
   }
   .ps-btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-[13px] font-bold transition-colors cursor-pointer;
+  }
+  .ps-btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-[#463200] text-[13px] font-black transition-colors cursor-pointer;
   }
   .ps-btn-outline {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-gray-700 hover:border-brand-500 hover:text-brand-500 text-[13px] font-bold transition-colors cursor-pointer;
@@ -35,7 +38,7 @@ body {
     @apply inline-flex items-center gap-1.5 text-[11px] font-bold text-red-700 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full;
   }
   .ps-heading {
-    @apply text-2xl md:text-3xl font-black text-gray-900 tracking-tight;
+    @apply text-2xl md:text-[28px] font-black text-gray-900 tracking-tight;
   }
   .ps-sub {
     @apply text-[13px] text-gray-500 mt-1;

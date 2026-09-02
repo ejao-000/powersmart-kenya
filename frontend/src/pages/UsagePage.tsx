@@ -141,7 +141,7 @@ export const UsagePage: React.FC = () => {
                       formatter={(value) => [`${Number(value)} kWh`, 'Usage']}
                       contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 12 }}
                     />
-                    <Bar dataKey="kwh" fill="#0F5132" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                    <Bar dataKey="kwh" fill="#2563EB" radius={[6, 6, 0, 0]} maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -162,8 +162,8 @@ export const UsagePage: React.FC = () => {
                   <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                     <defs>
                       <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0F5132" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="#0F5132" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#2563EB" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -173,7 +173,7 @@ export const UsagePage: React.FC = () => {
                       formatter={(value) => [fmtKsh(Number(value)), 'Cost']}
                       contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 12 }}
                     />
-                    <Area type="monotone" dataKey="cost" stroke="#0F5132" strokeWidth={2} fill="url(#costFill)" />
+                    <Area type="monotone" dataKey="cost" stroke="#2563EB" strokeWidth={2} fill="url(#costFill)" />
                   </AreaChart>
                 </ResponsiveContainer>
               )}

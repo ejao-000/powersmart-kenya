@@ -23,11 +23,11 @@ interface LandlordPortalProps {
 
 const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'properties', label: 'Properties', icon: Building2 },
+  { id: 'properties', label: 'Property Management', icon: Building2 },
   { id: 'tenants', label: 'Tenants', icon: Users },
-  { id: 'tokens', label: 'Tokens', icon: Coins },
-  { id: 'usage', label: 'Usage', icon: PieChart },
-  { id: 'system', label: 'System', icon: Activity },
+  { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
+  { id: 'usage', label: 'Budgets & Usage', icon: PieChart },
+  { id: 'system', label: 'System Health', icon: Activity },
 ];
 
 const balanceKsh = (m: Meter) => Math.round(m.units_remaining * 5);
@@ -72,28 +72,34 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
 
   const titles: Record<PortalPage, string> = {
     dashboard: 'Portfolio Overview',
-    properties: 'Properties',
+    properties: 'Property Management',
     tenants: 'Tenants',
-    tokens: 'Bulk Distribution',
-    usage: 'Energy Budget',
+    tokens: 'Bulk Token Purchase',
+    usage: 'Budgets & Usage',
     system: 'System Health',
-    settings: 'Settings',
+    settings: 'Alerts & Configuration',
     transactions: 'Transactions',
     users: 'Users',
     history: 'Token History',
     predictions: 'Predictions',
     budget: 'Budget',
+    meter: 'Meter Management',
+    alerts: 'Alerts',
+    support: 'Support',
   };
 
   return (
     <PortalLayout
       userName={userName}
-      roleLabel="Landlord"
+      portalLabel="Landlord Portal"
       title={titles[page]}
       active={page}
       onNavigate={setPage}
       onLogout={onLogout}
-      onBuyTokens={() => setPage('tokens')}
+      onSwitchPortal={onLogout}
+      onTopup={() => setPage('tokens')}
+      topupLabel="Bulk Tokens"
+      accent="blue"
       notifications={notifications}
       nav={NAV}
     >
