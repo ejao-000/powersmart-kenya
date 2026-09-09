@@ -35,6 +35,15 @@ func (s *UsageService) Summarize(userID string) (*model.UsageSummary, error) {
 	if err != nil {
 		return nil, err
 	}
+	return s.SummarizeMeter(meter)
+}
+
+// SummarizeMeter builds a UsageSummary for an arbitrary owned meter (used by the
+// Energy Intelligence hub so landlords can analyse each unit separately).
+func (s *UsageService) SummarizeMeter(meter *model.Meter) (*model.UsageSummary, error) {
+	if meter == nil {
+		return nil, repositories.ErrNotFound
+	}
 
 	now := time.Now()
 	since := now.AddDate(0, -1, 0) // last ~30 days

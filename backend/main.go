@@ -44,6 +44,7 @@ func main() {
 	txH := handlers.NewTransactionHandler(db)
 	outageH := handlers.NewOutageHandler(db)
 	usageH := handlers.NewUsageHandler(db)
+	energyH := handlers.NewEnergyHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -128,6 +129,13 @@ func main() {
 	mux.Handle("GET /api/outages", protected(http.HandlerFunc(outageH.List)))
 	mux.Handle("POST /api/outages", protected(http.HandlerFunc(outageH.Report)))
 
+	// Energy Intelligence (budget planner + appliance insights + AI coach)
+	mux.Handle("GET /api/energy/intel", protected(http.HandlerFunc(energyH.Intel)))
+	mux.Handle("PUT /api/energy/budget", protected(http.HandlerFunc(energyH.SaveBudget)))
+	mux.Handle("POST /api/energy/appliances", protected(http.HandlerFunc(energyH.CreateAppliance)))
+	mux.Handle("PUT /api/energy/appliances/{id}", protected(http.HandlerFunc(energyH.UpdateAppliance)))
+	mux.Handle("DELETE /api/energy/appliances/{id}", protected(http.HandlerFunc(energyH.DeleteAppliance)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -206,5 +214,10 @@ func logRoutes() {
 	log.Println("  GET  /api/transactions")
 	log.Println("  GET  /api/outages")
 	log.Println("  POST /api/outages")
+	log.Println("  GET  /api/energy/intel")
+	log.Println("  PUT  /api/energy/budget")
+	log.Println("  POST /api/energy/appliances")
+	log.Println("  PUT  /api/energy/appliances/{id}")
+	log.Println("  DELETE /api/energy/appliances/{id}")
 	log.Println("  (API-only — the frontend is served separately)")
 }
