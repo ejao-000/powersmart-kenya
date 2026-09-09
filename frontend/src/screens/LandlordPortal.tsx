@@ -5,6 +5,7 @@ import {
   Users,
   Coins,
   Brain,
+  Gauge,
   Activity,
 } from 'lucide-react';
 import { PortalLayout, PortalPage, NavItem, AppNotification } from '../layouts/PortalLayout';
@@ -14,6 +15,7 @@ import { TenantsPage } from '../pages/TenantsPage';
 import { BulkDistribution } from '../pages/BulkDistribution';
 import { EnergyIntel } from '../pages/EnergyIntel';
 import { PowerPools } from '../pages/PowerPools';
+import { UnitInsights } from '../pages/UnitInsights';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 import { meters, Meter, getSession } from '../services/api';
@@ -27,6 +29,7 @@ const NAV: NavItem[] = [
   { id: 'properties', label: 'Property Management', icon: Building2 },
   { id: 'tenants', label: 'Tenants', icon: Users },
   { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
+  { id: 'insights', label: 'Unit Insights', icon: Gauge },
   { id: 'usage', label: 'Energy Intelligence', icon: Brain },
   { id: 'pools', label: 'Power Pools', icon: Users },
   { id: 'system', label: 'System Health', icon: Activity },
@@ -77,6 +80,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     properties: 'Property Management',
     tenants: 'Tenants',
     tokens: 'Bulk Token Purchase',
+    insights: 'Unit Insights',
     usage: 'Energy Intelligence',
     pools: 'Power Pools',
     system: 'System Health',
@@ -116,6 +120,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
       {page === 'properties' && <PropertiesOverview />}
       {page === 'tenants' && <TenantsPage />}
       {page === 'tokens' && <BulkDistribution />}
+      {page === 'insights' && <UnitInsights />}
       {page === 'usage' && <EnergyIntel />}
       {page === 'pools' && <PowerPools />}
       {page === 'system' && <SystemHealth />}

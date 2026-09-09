@@ -564,6 +564,82 @@ export const pools = {
     request(`/pools/${id}/members/${memberId}`, { method: 'DELETE' }),
 };
 
+// ── Landlord intelligence (unit comparison + anomaly detection + reports) ────
+
+export type AnomalySeverity = 'critical' | 'warning' | 'info';
+
+export interface MeterAnomaly {
+  severity: AnomalySeverity;
+  title: string;
+  reason: string;
+  action: string;
+}
+
+export interface UnitInsight {
+  meter_id: string;
+  meter_name: string;
+  meter_number: string;
+  units_remaining: number;
+  daily_avg_kwh: number;
+  month_kwh: number;
+  month_cost_ksh: number;
+  last_7_kwh: number;
+  prev_7_kwh: number;
+  change_pct: number;
+  anomaly: MeterAnomaly | null;
+}
+
+export interface InsightsBundle {
+  units: UnitInsight[];
+  flagged_count: number;
+  total_month_cost_ksh: number;
+  total_month_kwh: number;
+  generated_at: string;
+}
+
+export interface MonthlyReportRow {
+  meter_id: string;
+  meter_name: string;
+  meter_number: string;
+  tokens: number;
+  units_kwh: number;
+  spend_ksh: number;
+  avg_rate_ksh: number;
+}
+
+export interface MonthlyReport {
+  period: string;
+  generated_at: string;
+  rows: MonthlyReportRow[];
+  totals: { tokens: number; units_kwh: number; spend_ksh: number };
+}
+
+export const insights = {
+  bundle: () => request<InsightsBundle>('/insights'),
+  report: (month?: string) =>
+    request<MonthlyReport>(
+      '/reports/monthly' + (month ? `?month=${encodeURIComponent(month)}` : '')
+    ),
+};
+
+// Builds and triggers a client-side CSV download.
+export function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
+  const escape = (v: string | number) => {
+    const s = String(v ?? '');
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const lines = [header, ...rows].map((r) => r.map(escape).join(',')).join('\n');
+  const blob = new Blob([lines], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ── Formatting helpers ───────────────────────────────────────────────────────
 
 export const fmtKsh = (n: number | undefined | null) =>

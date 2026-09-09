@@ -51,6 +51,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     budget: 'Budget',
     intelligence: 'Energy Intelligence',
     pools: 'Power Pools',
+    insights: 'Unit Insights',
     meter: 'Meter Management',
     alerts: 'Alerts',
     support: 'Support',

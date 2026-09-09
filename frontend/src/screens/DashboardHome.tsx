@@ -54,6 +54,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     usage: 'Analytics',
     intelligence: 'Energy Intelligence',
     pools: 'Power Pools',
+    insights: 'Unit Insights',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
     system: 'Outages & Status',

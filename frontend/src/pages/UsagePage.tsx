@@ -6,6 +6,7 @@ import {
   Wallet,
   Gauge,
   Info,
+  Download,
 } from 'lucide-react';
 import {
   BarChart,
@@ -19,7 +20,7 @@ import {
   Area,
 } from 'recharts';
 import { SectionCard } from './ui';
-import { meter, UsageSummary, fmtKsh } from '../services/api';
+import { meter, insights, downloadCsv, UsageSummary, fmtKsh } from '../services/api';
 
 type Range = '14d' | '30d';
 
@@ -68,6 +69,35 @@ export const UsagePage: React.FC = () => {
     { label: 'This Month', kwh: monthKwh, cost: monthCost, icon: <TrendingUp size={16} />, footer: 'Last 30 days' },
   ];
 
+  const downloadStatement = async () => {
+    try {
+      const rep = await insights.report();
+      const rows = rep.rows.map((r) => [
+        r.meter_name,
+        r.meter_number,
+        r.tokens,
+        r.units_kwh.toFixed(1),
+        Math.round(r.spend_ksh),
+        r.avg_rate_ksh ? r.avg_rate_ksh.toFixed(1) : '',
+      ]);
+      rows.push([
+        'TOTAL',
+        '',
+        rep.totals.tokens,
+        rep.totals.units_kwh.toFixed(1),
+        Math.round(rep.totals.spend_ksh),
+        '',
+      ]);
+      downloadCsv(
+        `powersmart-statement-${rep.period}.csv`,
+        ['Meter / Unit', 'Meter number', 'Tokens', 'Units (kWh)', 'Spend (KSh)', 'Avg rate (KSh/kWh)'],
+        rows
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -81,6 +111,9 @@ export const UsagePage: React.FC = () => {
               <Info size={12} /> Limited data — estimates
             </span>
           )}
+          <button onClick={downloadStatement} className="ps-btn-outline !px-3 !py-2" title="Download monthly statement">
+            <Download size={14} /> Statement
+          </button>
           <button onClick={refresh} className="ps-btn-outline !px-3 !py-2" title="Refresh">
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>
