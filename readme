@@ -212,6 +212,7 @@ All configuration is via environment variables (see `backend/.env.example`).
 | `ADMIN_EMAIL` | — | Admin account email (seed) |
 | `ADMIN_PASSWORD` | — | Admin account password (seed) |
 | `MPESA_*` | — | M-Pesa Daraja credentials & callback URL |
+| `MPESA_ENV` | `sandbox` | `sandbox` or `production` — picks the Safaricom Daraja endpoint (`MPESA_API_BASE` overrides it) |
 | `AIRTEL_*` | — | Airtel Money API key & callback URL |
 | `BANK_ACCOUNT_NUMBER` | — | Virtual bank account details |
 | `MPESA_CALLBACK_SECRET` | — | Shared secret for M-Pesa callbacks |

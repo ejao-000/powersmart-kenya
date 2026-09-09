@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,8 +23,8 @@ import (
 // ── Errors ────────────────────────────────────────────────────────────────────
 
 var (
-	ErrPaymentFailed     = errors.New("payment initiation failed")
-	ErrCallbackInvalid   = errors.New("callback payload is invalid")
+	ErrPaymentFailed       = errors.New("payment initiation failed")
+	ErrCallbackInvalid     = errors.New("callback payload is invalid")
 	ErrTransactionNotFound = errors.New("transaction not found")
 )
 
@@ -32,8 +33,8 @@ var (
 // PaymentInitRequest is the unified request body for all payment channels.
 type PaymentInitRequest struct {
 	AmountKsh int    `json:"amount_ksh"`
-	Phone     string `json:"phone"`       // required for M-Pesa / Airtel
-	Channel   string `json:"channel"`     // "mpesa" | "airtel" | "bank"
+	Phone     string `json:"phone"`   // required for M-Pesa / Airtel
+	Channel   string `json:"channel"` // "mpesa" | "airtel" | "bank"
 }
 
 // PaymentInitResponse is returned to the frontend after initiating a payment.
@@ -55,14 +56,19 @@ type PaymentInitResponse struct {
 // three channels: Safaricom M-Pesa (Daraja STK Push), Airtel Money, and bank.
 //
 // Environment variables required:
-//   MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE,
-//   MPESA_PASSKEY, MPESA_CALLBACK_URL,
-//   AIRTEL_API_KEY, AIRTEL_CALLBACK_URL,
-//   BANK_ACCOUNT_NUMBER, BANK_NAME
+//
+//	MPESA_CONSUMER_KEY, MPESA_CONSUMER_SECRET, MPESA_SHORTCODE,
+//	MPESA_PASSKEY, MPESA_CALLBACK_URL,
+//	AIRTEL_API_KEY, AIRTEL_CALLBACK_URL,
+//	BANK_ACCOUNT_NUMBER, BANK_NAME
 type PaymentService struct {
 	txRepo     *repositories.TransactionRepo
 	tokenSvc   *TokenService
 	httpClient *http.Client
+
+	mu           sync.Mutex
+	token        string
+	tokenExpires time.Time
 }
 
 func NewPaymentService(
@@ -76,6 +82,33 @@ func NewPaymentService(
 	}
 }
 
+// mpesaBase resolves the Daraja base URL. Production credentials should point
+// at the live API; anything else (or an explicit override) uses the sandbox.
+func mpesaBase() string {
+	if base := strings.TrimRight(os.Getenv("MPESA_API_BASE"), "/"); base != "" {
+		return base
+	}
+	if strings.EqualFold(os.Getenv("MPESA_ENV"), "production") {
+		return "https://api.safaricom.co.ke"
+	}
+	return "https://sandbox.safaricom.co.ke"
+}
+
+// mpesaConfigured reports whether the Daraja credentials are present so the
+// caller can fail fast with a helpful message instead of a cryptic 401.
+func mpesaConfigured() (string, bool) {
+	missing := []string{}
+	for _, k := range []string{"MPESA_CONSUMER_KEY", "MPESA_CONSUMER_SECRET", "MPESA_SHORTCODE", "MPESA_PASSKEY"} {
+		if os.Getenv(k) == "" {
+			missing = append(missing, k)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Sprintf("M-Pesa is not configured — missing: %s", strings.Join(missing, ", ")), false
+	}
+	return "", true
+}
+
 // ── M-Pesa ────────────────────────────────────────────────────────────────────
 
 // InitiateMpesa triggers a Safaricom Daraja STK Push to the customer's phone.
@@ -85,18 +118,25 @@ func (s *PaymentService) InitiateMpesa(userID string, req *PaymentInitRequest) (
 		return nil, err
 	}
 
-	// 1. Get OAuth token from Daraja
-	accessToken, err := s.mpesaAccessToken()
+	if msg, ok := mpesaConfigured(); !ok {
+		return nil, fmt.Errorf("%w: %s", ErrPaymentFailed, msg)
+	}
+	callbackURL := os.Getenv("MPESA_CALLBACK_URL")
+	if callbackURL == "" {
+		return nil, fmt.Errorf("%w: M-Pesa is not configured — missing: MPESA_CALLBACK_URL", ErrPaymentFailed)
+	}
+
+	// 1. Get OAuth token from Daraja (cached for ~55 minutes).
+	accessToken, err := s.mpesaAccessTokenCached()
 	if err != nil {
 		return nil, fmt.Errorf("%w: could not authenticate with M-Pesa: %v", ErrPaymentFailed, err)
 	}
 
 	// 2. Build STK Push payload
-	shortcode  := os.Getenv("MPESA_SHORTCODE")
-	passkey    := os.Getenv("MPESA_PASSKEY")
-	callbackURL := os.Getenv("MPESA_CALLBACK_URL")
-	timestamp  := time.Now().Format("20060102150405")
-	password   := base64.StdEncoding.EncodeToString([]byte(shortcode + passkey + timestamp))
+	shortcode := os.Getenv("MPESA_SHORTCODE")
+	passkey := os.Getenv("MPESA_PASSKEY")
+	timestamp := time.Now().Format("20060102150405")
+	password := base64.StdEncoding.EncodeToString([]byte(shortcode + passkey + timestamp))
 	internalRef := newRef("MP")
 
 	stkBody := map[string]interface{}{
@@ -116,7 +156,7 @@ func (s *PaymentService) InitiateMpesa(userID string, req *PaymentInitRequest) (
 	bodyBytes, _ := json.Marshal(stkBody)
 
 	httpReq, _ := http.NewRequest("POST",
-		"https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest",
+		mpesaBase()+"/mpesa/stkpush/v1/processrequest",
 		strings.NewReader(string(bodyBytes)))
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
@@ -167,14 +207,33 @@ func (s *PaymentService) InitiateMpesa(userID string, req *PaymentInitRequest) (
 	}, nil
 }
 
+// mpesaAccessTokenCached returns a cached, still-valid OAuth token or fetches a
+// fresh one. Daraja tokens last one hour; we refresh five minutes early.
+func (s *PaymentService) mpesaAccessTokenCached() (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.token != "" && time.Now().Before(s.tokenExpires.Add(-5*time.Minute)) {
+		return s.token, nil
+	}
+
+	token, err := s.mpesaAccessToken()
+	if err != nil {
+		return "", err
+	}
+	s.token = token
+	s.tokenExpires = time.Now().Add(time.Hour)
+	return token, nil
+}
+
 // mpesaAccessToken fetches a short-lived OAuth2 token from the Daraja API.
 func (s *PaymentService) mpesaAccessToken() (string, error) {
-	key    := os.Getenv("MPESA_CONSUMER_KEY")
+	key := os.Getenv("MPESA_CONSUMER_KEY")
 	secret := os.Getenv("MPESA_CONSUMER_SECRET")
-	creds  := base64.StdEncoding.EncodeToString([]byte(key + ":" + secret))
+	creds := base64.StdEncoding.EncodeToString([]byte(key + ":" + secret))
 
 	req, _ := http.NewRequest("GET",
-		"https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", nil)
+		mpesaBase()+"/oauth/v1/generate?grant_type=client_credentials", nil)
 	req.Header.Set("Authorization", "Basic "+creds)
 
 	resp, err := s.httpClient.Do(req)
@@ -222,7 +281,7 @@ func (s *PaymentService) HandleMpesaCallback(body *model.MpesaCallback) error {
 
 	// Fetch updated transaction and issue the KP token
 	tx.ProviderRef = mpesaReceipt
-	tx.Status     = model.TxSuccess
+	tx.Status = model.TxSuccess
 	if _, err := s.tokenSvc.FinaliseTokenAfterPayment(tx); err != nil {
 		log.Printf("[mpesa_callback] token issuance failed for tx %s: %v", tx.ID, err)
 		// Don't return error — payment was received; retry token issuance manually
@@ -239,16 +298,16 @@ func (s *PaymentService) InitiateAirtel(userID string, req *PaymentInitRequest) 
 		return nil, err
 	}
 
-	apiKey      := os.Getenv("AIRTEL_API_KEY")
+	apiKey := os.Getenv("AIRTEL_API_KEY")
 	callbackURL := os.Getenv("AIRTEL_CALLBACK_URL")
 	internalRef := newRef("AT")
 
 	airtelBody := map[string]interface{}{
-		"reference":    internalRef,
+		"reference": internalRef,
 		"subscriber": map[string]string{
-			"country": "KE",
+			"country":  "KE",
 			"currency": "KES",
-			"msisdn":  normalisePhone(req.Phone),
+			"msisdn":   normalisePhone(req.Phone),
 		},
 		"transaction": map[string]interface{}{
 			"amount":   req.AmountKsh,
@@ -329,7 +388,7 @@ func (s *PaymentService) HandleAirtelCallback(payload map[string]interface{}) er
 	}
 
 	providerRef, _ := txMap["id"].(string)
-	status, _       := txMap["status"].(string) // "TS" = success, "TF" = failure
+	status, _ := txMap["status"].(string) // "TS" = success, "TF" = failure
 
 	tx, err := s.txRepo.GetByProviderRef(providerRef)
 	if err != nil {
@@ -346,7 +405,7 @@ func (s *PaymentService) HandleAirtelCallback(payload map[string]interface{}) er
 		return err
 	}
 
-	tx.Status      = model.TxSuccess
+	tx.Status = model.TxSuccess
 	tx.ProviderRef = airtelMoneyID
 	if _, err := s.tokenSvc.FinaliseTokenAfterPayment(tx); err != nil {
 		log.Printf("[airtel_callback] token issuance failed for tx %s: %v", tx.ID, err)
@@ -366,10 +425,10 @@ func (s *PaymentService) InitiateBank(userID string, req *PaymentInitRequest) (*
 
 	internalRef := newRef("BK")
 	bankAccount := os.Getenv("BANK_ACCOUNT_NUMBER")
-	bankName    := os.Getenv("BANK_NAME")
+	bankName := os.Getenv("BANK_NAME")
 	if bankAccount == "" {
 		bankAccount = "1234567890"
-		bankName    = "Equity Bank"
+		bankName = "Equity Bank"
 	}
 
 	tx := &model.Transaction{
