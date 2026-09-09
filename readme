@@ -34,6 +34,8 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Energy Intelligence hub** — a combined AI energy coach, appliance-level insights and monthly budget planner per meter. It detects week-over-week usage jumps, explains what probably caused them (e.g. a left-on geyser), estimates each registered appliance's share of the bill, projects your full-month spend at the current pace ("likely to spend KSh 3,240 this month") and warns you before you exceed the budget you set.
 - **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
 - **Power Pools (shared electricity wallet)** — groups of people (families, housemates, hostels, small businesses) pool money around a shared meter. Members join by invite code, contribute KSh via M-Pesa/Airtel/bank, and authorised members buy tokens from the pooled balance. Roles and permissions gate who can manage members or buy tokens; a per-pool ledger records every contribution and purchase plus each member's share.
+- **Landlord intelligence (Unit Insights)** — compare every rental unit side-by-side (usage, spend, week-over-week trend, remaining balance) and an unusual-usage engine flags sudden spikes, persistently very-high loads and suspicious inactivity — patterns that point to theft, a running geyser or a new heavy load. Each flag comes with an explanation and a suggested action.
+- **Automatic expense reports** — one-click monthly statements (token purchases per meter, units bought, spend and average rate) with CSV export for tenants and landlords, plus portfolio totals.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
@@ -225,6 +227,8 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | POST | `/api/pools/{id}/members` | Add a member by email (owner/admin) |
 | PATCH | `/api/pools/{id}/members/{memberId}` | Change a member's role/permissions |
 | DELETE | `/api/pools/{id}/members/{memberId}` | Remove a member / leave the pool |
+| GET | `/api/insights` | Landlord unit comparison with anomaly flags |
+| GET | `/api/reports/monthly?month=YYYY-MM` | Monthly token-spend statement per meter |
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
