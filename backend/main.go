@@ -47,6 +47,7 @@ func main() {
 	energyH := handlers.NewEnergyHandler(db)
 	poolH := handlers.NewPoolHandler(db)
 	insightsH := handlers.NewInsightsHandler(db)
+	savingsH := handlers.NewSavingsHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -153,6 +154,16 @@ func main() {
 	mux.Handle("GET /api/insights", protected(http.HandlerFunc(insightsH.Insights)))
 	mux.Handle("GET /api/reports/monthly", protected(http.HandlerFunc(insightsH.MonthlyReport)))
 
+	// Savings Hub (goals, challenges, leaderboard, carbon)
+	mux.Handle("GET /api/goals", protected(http.HandlerFunc(savingsH.ListGoals)))
+	mux.Handle("POST /api/goals", protected(http.HandlerFunc(savingsH.CreateGoal)))
+	mux.Handle("POST /api/goals/{id}/complete", protected(http.HandlerFunc(savingsH.CompleteGoal)))
+	mux.Handle("DELETE /api/goals/{id}", protected(http.HandlerFunc(savingsH.DeleteGoal)))
+	mux.Handle("GET /api/challenges", protected(http.HandlerFunc(savingsH.ListChallenges)))
+	mux.Handle("POST /api/challenges/{key}/claim", protected(http.HandlerFunc(savingsH.ClaimChallenge)))
+	mux.Handle("GET /api/challenges/leaderboard", protected(http.HandlerFunc(savingsH.Leaderboard)))
+	mux.Handle("GET /api/impact/carbon", protected(http.HandlerFunc(savingsH.Carbon)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -247,5 +258,13 @@ func logRoutes() {
 	log.Println("  DELETE /api/pools/{id}/members/{memberId}")
 	log.Println("  GET  /api/insights")
 	log.Println("  GET  /api/reports/monthly")
+	log.Println("  GET  /api/goals")
+	log.Println("  POST /api/goals")
+	log.Println("  POST /api/goals/{id}/complete")
+	log.Println("  DELETE /api/goals/{id}")
+	log.Println("  GET  /api/challenges")
+	log.Println("  POST /api/challenges/{key}/claim")
+	log.Println("  GET  /api/challenges/leaderboard")
+	log.Println("  GET  /api/impact/carbon")
 	log.Println("  (API-only — the frontend is served separately)")
 }
