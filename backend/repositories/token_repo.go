@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"powersmart-backend/model"
 )
@@ -92,4 +93,22 @@ func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, method 
 		`UPDATE tokens SET push_status = $1, push_method = $2, pushed_at = $3 WHERE id = $4`,
 		status, method, pushedAt, id)
 	return err
+}
+
+// SpendByMeter aggregates tokens purchased for a meter in a time window.
+// Returns (count, total units kWh, total amount KSh). Used by monthly reports.
+func (r *TokenRepo) SpendByMeter(meterID string, from, to time.Time) (count int, units, amount float64, err error) {
+	err = r.db.QueryRow(`
+		SELECT
+			COUNT(*),
+			COALESCE(SUM(units), 0),
+			COALESCE(SUM(amount_ksh), 0)
+		FROM tokens
+		WHERE meter_id = $1 AND deleted = 0 AND purchased_at >= $2 AND purchased_at < $3`,
+		meterID, from, to).
+		Scan(&count, &units, &amount)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	return count, units, amount, nil
 }
