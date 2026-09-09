@@ -31,6 +31,7 @@ import {
   fmtKsh,
   fmtUnits,
   fmtDateTime,
+  describeDepletion,
 } from '../services/api';
 
 interface TenantDashboardPageProps {
@@ -169,7 +170,9 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
         <div className="flex items-start gap-2.5 px-4 py-3.5 rounded-xl bg-red-50 border border-red-100">
           <AlertTriangle size={16} className="text-red-500 mt-0.5 shrink-0" />
           <p className="text-[13px] text-red-700">
-            <span className="font-bold">Critical balance.</span> You have {remaining.toFixed(1)} kWh left — buy a token now to avoid an outage.
+            <span className="font-bold">Critical balance.</span> You have {remaining.toFixed(1)} kWh left — at this
+            rate your power is estimated to run out {describeDepletion(daysLeft, depletionText) ?? 'very soon'}. Buy a
+            token now to avoid an outage.
           </p>
         </div>
       )}
@@ -177,7 +180,8 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
         <div className="flex items-start gap-2.5 px-4 py-3.5 rounded-xl bg-amber-50 border border-amber-100">
           <AlertTriangle size={16} className="text-amber-500 mt-0.5 shrink-0" />
           <p className="text-[13px] text-amber-700">
-            <span className="font-bold">Low balance.</span> Consider topping up soon — your power is estimated to last {daysLeft !== null ? `~${daysLeft.toFixed(1)} days` : 'a few days'}.
+            <span className="font-bold">Low balance.</span> With current usage, expect to run out{' '}
+            {describeDepletion(daysLeft, depletionText) ?? 'soon'} — consider topping up.
           </p>
         </div>
       )}

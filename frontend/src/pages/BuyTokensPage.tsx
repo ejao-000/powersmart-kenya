@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Wallet,
   KeyRound,
+  Calculator,
 } from 'lucide-react';
 import { SectionCard } from './ui';
 import { TokenPushControls } from '../components/TokenPushControls';
@@ -19,6 +20,8 @@ const CHANNELS = [
 ];
 
 const PRESETS = [100, 200, 500, 1000, 2000];
+const RATE_KS_PER_KWH = 15.18; // estimated all-in domestic tariff
+const KWH_PER_KSH = 0.2; // ~20 kWh per KSh 100
 
 export const BuyTokensPage: React.FC = () => {
   const [amount, setAmount] = useState(500);
@@ -29,6 +32,7 @@ export const BuyTokensPage: React.FC = () => {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tokenList, setTokenList] = useState<Token[]>([]);
+  const [simDaily, setSimDaily] = useState(6);
 
   const load = async () => {
     try {
@@ -150,6 +154,64 @@ export const BuyTokensPage: React.FC = () => {
         </div>
 
         <div className="space-y-6">
+          {/* Cost simulator */}
+          <SectionCard
+            title="Cost Simulator"
+            action={<Calculator size={15} className="text-gray-400" />}
+          >
+            <p className="text-[12px] text-gray-500 leading-relaxed">
+              Move the slider to your expected usage and PowerSmart estimates your costs before you buy.
+            </p>
+
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wide text-gray-400">
+                  Expected usage
+                </label>
+                <span className="text-[13px] font-black text-gray-800">{simDaily} kWh/day</span>
+              </div>
+              <input
+                type="range"
+                min={1}
+                max={30}
+                value={simDaily}
+                onChange={(e) => setSimDaily(parseInt(e.target.value))}
+                className="w-full accent-brand-500 cursor-pointer"
+              />
+              <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                <span>1 kWh/day</span>
+                <span>30 kWh/day</span>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-[11px] text-gray-400">Monthly cost</p>
+                <p className="text-[15px] font-black text-gray-900 mt-1">
+                  {fmtKsh(Math.round(simDaily * 30 * RATE_KS_PER_KWH))}
+                </p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-[11px] text-gray-400">Token power</p>
+                <p className="text-[15px] font-black text-gray-900 mt-1">
+                  ≈ {(amount * KWH_PER_KSH).toFixed(1)} kWh
+                </p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3">
+                <p className="text-[11px] text-gray-400">Lasts about</p>
+                <p className="text-[15px] font-black text-gray-900 mt-1">
+                  {simDaily > 0 ? `${(amount * KWH_PER_KSH / simDaily).toFixed(1)} days` : '—'}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[12px] text-gray-500 leading-relaxed">
+              {simDaily > 0 && amount * KWH_PER_KSH / simDaily < 5
+                ? `A ${fmtKsh(amount)} token covers less than 5 days at ${simDaily} kWh/day — consider a larger amount to buy less often.`
+                : `At ${simDaily} kWh/day you spend about ${fmtKsh(Math.round(simDaily * RATE_KS_PER_KWH))} per day. Estimates at ${fmtKsh(RATE_KS_PER_KWH)}/kWh.`}
+            </p>
+          </SectionCard>
+
           <div className="ps-card p-5 bg-gradient-to-br from-navy-900 to-navy-800 border-navy-800 text-white">
             <div className="flex items-center gap-2 mb-2">
               <Wallet size={16} className="text-gold-400" />

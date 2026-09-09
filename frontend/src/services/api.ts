@@ -723,3 +723,21 @@ export const fmtDateTime = (iso: string | null | undefined) => {
     minute: '2-digit',
   });
 };
+
+// Human "smart notification" phrasing for a predicted run-out, e.g.
+// "Thursday at 7:00 PM" or "in about 2.3 days".
+export const describeDepletion = (
+  days: number | null | undefined,
+  iso: string | null | undefined
+): string | null => {
+  if (iso) {
+    const d = new Date(iso);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleString('en-KE', { weekday: 'long', hour: 'numeric', minute: '2-digit' });
+    }
+  }
+  if (typeof days === 'number' && days > 0) {
+    return `in about ${days.toFixed(1)} days`;
+  }
+  return null;
+};

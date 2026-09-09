@@ -12,6 +12,9 @@ import {
   Wifi,
   Bluetooth,
   Radio,
+  Send,
+  ChevronDown,
+  AlertTriangle,
 } from 'lucide-react';
 import { SectionCard } from './ui';
 import { TokenPushControls } from '../components/TokenPushControls';
@@ -31,6 +34,12 @@ export const TokenHistoryPage: React.FC = () => {
   const [status, setStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendAccount, setSendAccount] = useState('');
+  const [sendAmount, setSendAmount] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendNotice, setSendNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -60,6 +69,34 @@ export const TokenHistoryPage: React.FC = () => {
     navigator.clipboard?.writeText(num).catch(() => {});
     setCopied(id);
     setTimeout(() => setCopied(null), 1500);
+  };
+
+  const sendPower = async () => {
+    const amt = parseInt(sendAmount) || 0;
+    if (!sendAccount.trim()) {
+      setSendError('Enter the recipient meter account number.');
+      return;
+    }
+    if (amt < 50) {
+      setSendError('Minimum transfer is KSh 50.');
+      return;
+    }
+    setSendError(null);
+    setSending(true);
+    try {
+      const t = await tokens.transfer({ meter_account: sendAccount.trim(), amount_ksh: amt });
+      setSendNotice(
+        `Sent ${fmtKsh(t.amount_ksh)} — a ${fmtUnits(t.units)} token was issued straight to that meter.`
+      );
+      setTimeout(() => setSendNotice(null), 8000);
+      setSendAccount('');
+      setSendAmount('');
+      await refresh();
+    } catch (e: any) {
+      setSendError(e.message || 'Transfer failed.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const downloadCSV = () => {
@@ -235,6 +272,84 @@ export const TokenHistoryPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Emergency power transfer */}
+      <div className="ps-card p-5 bg-amber-50/60 border-amber-100">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 grid place-items-center shrink-0">
+              <Send size={18} />
+            </span>
+            <div>
+              <p className="text-[14px] font-bold text-amber-800">Emergency power transfer</p>
+              <p className="text-[12px] text-amber-700/90 mt-0.5 leading-relaxed max-w-lg">
+                Send token value straight to another registered meter — help a family member or neighbour whose power
+                has just run out.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setSendOpen((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 text-white text-[12px] font-bold cursor-pointer"
+          >
+            {sendOpen ? 'Close' : 'Send power'}
+            <ChevronDown size={14} className={`transition-transform ${sendOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        {sendOpen && (
+          <div className="mt-4 pt-4 border-t border-amber-100">
+            {sendNotice && (
+              <div className="mb-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-emerald-50 border border-emerald-100">
+                <Check size={15} className="text-emerald-500 mt-0.5 shrink-0" />
+                <p className="text-[12px] text-emerald-700">{sendNotice}</p>
+              </div>
+            )}
+            {sendError && (
+              <div className="mb-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl bg-red-50 border border-red-100">
+                <AlertTriangle size={15} className="text-red-500 mt-0.5 shrink-0" />
+                <p className="text-[12px] text-red-700">{sendError}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-1">
+                <label className="ps-label">Recipient meter account</label>
+                <input
+                  value={sendAccount}
+                  onChange={(e) => setSendAccount(e.target.value)}
+                  placeholder="e.g. 1234567890"
+                  className="ps-input !py-2"
+                />
+              </div>
+              <div className="sm:col-span-1">
+                <label className="ps-label">Amount (KSh)</label>
+                <input
+                  type="number"
+                  min={50}
+                  value={sendAmount}
+                  onChange={(e) => setSendAmount(e.target.value)}
+                  placeholder="e.g. 100"
+                  className="ps-input !py-2"
+                />
+              </div>
+              <div className="sm:col-span-1 flex items-end">
+                <button
+                  onClick={sendPower}
+                  disabled={sending}
+                  className="w-full ps-btn-primary !py-2 disabled:opacity-50"
+                >
+                  {sending ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                  {sending ? 'Sending…' : 'Send token'}
+                </button>
+              </div>
+            </div>
+            <p className="mt-3 text-[11px] text-amber-700/70">
+              The recipient must have a PowerSmart account linked to that meter number. Sending power is recorded in
+              your token history.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="ps-card p-5 bg-brand-500 text-white border-brand-500 flex items-center justify-between">
