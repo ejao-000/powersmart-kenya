@@ -50,6 +50,15 @@ type PaymentInitResponse struct {
 	BankReference string `json:"bank_reference,omitempty"`
 }
 
+// PaymentConfigResponse advertises which live channels the backend can process.
+type PaymentConfigResponse struct {
+	MpesaConfigured  bool   `json:"mpesa_configured"`
+	MpesaEnv         string `json:"mpesa_env"`
+	MpesaCallbackURL string `json:"mpesa_callback_url"`
+	AirtelConfigured bool   `json:"airtel_configured"`
+	BankConfigured   bool   `json:"bank_configured"`
+}
+
 // ── PaymentService ────────────────────────────────────────────────────────────
 
 // PaymentService orchestrates payment initiation and callback handling for
@@ -107,6 +116,19 @@ func mpesaConfigured() (string, bool) {
 		return fmt.Sprintf("M-Pesa is not configured — missing: %s", strings.Join(missing, ", ")), false
 	}
 	return "", true
+}
+
+// Config reports which live payment channels are configured so the UI can show
+// real STK flows when available and simulated purchases in development.
+func (s *PaymentService) Config() PaymentConfigResponse {
+	_, mpesaOK := mpesaConfigured()
+	return PaymentConfigResponse{
+		MpesaConfigured:  mpesaOK && os.Getenv("MPESA_CALLBACK_URL") != "",
+		MpesaEnv:         os.Getenv("MPESA_ENV"),
+		MpesaCallbackURL: os.Getenv("MPESA_CALLBACK_URL"),
+		AirtelConfigured: os.Getenv("AIRTEL_API_KEY") != "" && os.Getenv("AIRTEL_CALLBACK_URL") != "",
+		BankConfigured:   os.Getenv("BANK_ACCOUNT_NUMBER") != "",
+	}
 }
 
 // ── M-Pesa ────────────────────────────────────────────────────────────────────

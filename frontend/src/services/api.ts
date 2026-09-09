@@ -410,6 +410,14 @@ export const transactions = {
 // ── Payments ─────────────────────────────────────────────────────────────────
 
 export const payments = {
+  config: () =>
+    request<{
+      mpesa_configured: boolean;
+      mpesa_env: string;
+      mpesa_callback_url: string;
+      airtel_configured: boolean;
+      bank_configured: boolean;
+    }>('/payments/config'),
   mpesa: (body: { amount_ksh: number; phone: string }) =>
     request<PaymentInitResponse>('/payments/mpesa/initiate', { method: 'POST', body }),
   airtel: (body: { amount_ksh: number; phone: string }) =>

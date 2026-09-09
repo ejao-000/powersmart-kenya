@@ -14,11 +14,12 @@ import (
 )
 
 // PaymentHandler exposes:
-//   POST /api/payments/mpesa/initiate    [protected] — trigger STK push
-//   POST /api/payments/airtel/initiate   [protected] — trigger Airtel prompt
-//   POST /api/payments/bank/initiate     [protected] — return bank account details
-//   POST /api/payments/mpesa/callback    [public]    — Safaricom async callback
-//   POST /api/payments/airtel/callback   [public]    — Airtel async callback
+//
+//	POST /api/payments/mpesa/initiate    [protected] — trigger STK push
+//	POST /api/payments/airtel/initiate   [protected] — trigger Airtel prompt
+//	POST /api/payments/bank/initiate     [protected] — return bank account details
+//	POST /api/payments/mpesa/callback    [public]    — Safaricom async callback
+//	POST /api/payments/airtel/callback   [public]    — Airtel async callback
 type PaymentHandler struct {
 	paymentSvc *service.PaymentService
 }
@@ -26,17 +27,27 @@ type PaymentHandler struct {
 func NewPaymentHandler(db *sql.DB) *PaymentHandler {
 	tokenRepo := repositories.NewTokenRepo(db)
 	meterRepo := repositories.NewMeterRepo(db)
-	txRepo    := repositories.NewTransactionRepo(db)
-	userRepo  := repositories.NewUserRepo(db)
+	txRepo := repositories.NewTransactionRepo(db)
+	userRepo := repositories.NewUserRepo(db)
 
 	// TokenService is a dependency of PaymentService (issues token after payment)
-	tokenSvc   := service.NewTokenService(tokenRepo, meterRepo, txRepo, userRepo)
+	tokenSvc := service.NewTokenService(tokenRepo, meterRepo, txRepo, userRepo)
 	paymentSvc := service.NewPaymentService(txRepo, tokenSvc)
 
 	return &PaymentHandler{paymentSvc: paymentSvc}
 }
 
 // ── Initiate routes (protected) ───────────────────────────────────────────────
+
+// Config godoc
+// GET /api/payments/config
+//
+// Reports which live payment channels are configured. Protected (logged-in
+// users only) so the Buy Tokens page can decide between real STK and the
+// development simulation.
+func (h *PaymentHandler) Config(w http.ResponseWriter, r *http.Request) {
+	utils.RespondJSON(w, http.StatusOK, h.paymentSvc.Config())
+}
 
 // InitiateMpesa godoc
 // POST /api/payments/mpesa/initiate

@@ -117,6 +117,7 @@ func main() {
 	mux.Handle("DELETE /api/tokens/{id}", protected(http.HandlerFunc(tokenH.DeleteFromHistory)))
 
 	// Payments
+	mux.Handle("GET /api/payments/config", protected(http.HandlerFunc(paymentH.Config)))
 	mux.Handle("POST /api/payments/mpesa/initiate", protected(http.HandlerFunc(paymentH.InitiateMpesa)))
 	mux.Handle("POST /api/payments/airtel/initiate", protected(http.HandlerFunc(paymentH.InitiateAirtel)))
 	mux.Handle("POST /api/payments/bank/initiate", protected(http.HandlerFunc(paymentH.InitiateBank)))
@@ -243,6 +244,7 @@ func logRoutes() {
 	log.Println("  POST /api/tokens/transfer")
 	log.Println("  POST /api/tokens/{id}/push-bluetooth")
 	log.Println("  DELETE /api/tokens/{id}")
+	log.Println("  GET  /api/payments/config")
 	log.Println("  POST /api/payments/mpesa/initiate")
 	log.Println("  POST /api/payments/airtel/initiate")
 	log.Println("  POST /api/payments/bank/initiate")

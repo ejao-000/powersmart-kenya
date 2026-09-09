@@ -277,6 +277,7 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | GET | `/api/transactions` | Payment history |
 | GET/POST/PUT/DELETE | `/api/alerts...` | Alert rules |
 | POST | `/api/payments/{channel}/initiate` | Initiate M-Pesa / Airtel / bank payment |
+| GET | `/api/payments/config` | Which live payment channels are configured (drives real STK vs simulated buys) |
 
 Admin-only endpoints (role `admin` required):
 

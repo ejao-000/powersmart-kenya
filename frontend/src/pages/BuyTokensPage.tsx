@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Smartphone,
   RefreshCw,
@@ -8,10 +8,20 @@ import {
   Wallet,
   KeyRound,
   Calculator,
+  Copy,
+  Clock,
 } from 'lucide-react';
 import { SectionCard } from './ui';
 import { TokenPushControls } from '../components/TokenPushControls';
-import { tokens, Token, fmtKsh, fmtUnits, fmtDateTime } from '../services/api';
+import {
+  tokens,
+  transactions,
+  payments,
+  Token,
+  fmtKsh,
+  fmtUnits,
+  fmtDateTime,
+} from '../services/api';
 
 const CHANNELS = [
   { id: 'mpesa', label: 'M-Pesa', hint: '0712 345 678' },
@@ -33,6 +43,13 @@ export const BuyTokensPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [tokenList, setTokenList] = useState<Token[]>([]);
   const [simDaily, setSimDaily] = useState(6);
+  const [copied, setCopied] = useState(false);
+
+  // Live payment capability + async (STK) purchase state.
+  const [cfg, setCfg] = useState<{ mpesa_configured: boolean; airtel_configured: boolean } | null>(null);
+  const [pending, setPending] = useState<{ id: string; ref: string; amount: number; channel: string } | null>(null);
+  const [issuedToken, setIssuedToken] = useState<Token | null>(null);
+  const pollAttempts = useRef(0);
 
   const load = async () => {
     try {
@@ -43,7 +60,56 @@ export const BuyTokensPage: React.FC = () => {
   };
   useEffect(() => {
     load();
+    payments.config().then(setCfg).catch(() => setCfg({ mpesa_configured: false, airtel_configured: false }));
   }, []);
+
+  // Poll the pending transaction until the async callback issues the token.
+  useEffect(() => {
+    if (!pending) return;
+    pollAttempts.current = 0;
+    const iv = window.setInterval(async () => {
+      pollAttempts.current += 1;
+      if (pollAttempts.current > 45) {
+        window.clearInterval(iv);
+        setPending(null);
+        setError('The payment is taking unusually long. Check your transaction history, then try again.');
+        return;
+      }
+      try {
+        const txs = await transactions.list();
+        const tx = txs.find((t) => t.id === pending.id);
+        if (tx && (tx.status === 'failed' || tx.status === 'cancelled')) {
+          window.clearInterval(iv);
+          setPending(null);
+          setError(`Payment ${tx.status}. No token was issued — please try again.`);
+          return;
+        }
+        if (tx && tx.status === 'success') {
+          const tks = await tokens.list();
+          const tok = tks.find((t) => t.payment_ref === pending.ref && t.amount_ksh === pending.amount);
+          if (tok) {
+            window.clearInterval(iv);
+            setPending(null);
+            setIssuedToken(tok);
+            setTokenList(tks);
+            return;
+          }
+          // Payment confirmed — token issuance follows moments later; keep polling.
+        }
+      } catch {
+        /* transient network error — retry */
+      }
+    }, 4000);
+    return () => window.clearInterval(iv);
+  }, [pending]);
+
+  // Simulated / development purchase (also the fallback when a channel is off).
+  const instantBuy = async () => {
+    const t = await tokens.buy({ amount_ksh: amount, payment_channel: channel, phone: phone || undefined });
+    setIssuedToken(t);
+    setPhone('');
+    await load();
+  };
 
   const buy = async () => {
     if (amount < 50) {
@@ -55,19 +121,50 @@ export const BuyTokensPage: React.FC = () => {
       return;
     }
     setError(null);
+    setIssuedToken(null);
+
+    const live =
+      (channel === 'mpesa' && cfg?.mpesa_configured) || (channel === 'airtel' && cfg?.airtel_configured);
+
+    if (!live) {
+      setBuying(true);
+      try {
+        await instantBuy();
+        setNotice('Token issued (simulated purchase — live mobile money is not configured on this server).');
+        setTimeout(() => setNotice(null), 8000);
+      } catch (e: any) {
+        setError(e.message || 'Purchase failed.');
+      } finally {
+        setBuying(false);
+      }
+      return;
+    }
+
     setBuying(true);
     try {
-      const t = await tokens.buy({ amount_ksh: amount, payment_channel: channel, phone: phone || undefined });
-      setNotice(`Token issued! ${fmtUnits(t.units)} — ${t.token_number}.`);
-      setTimeout(() => setNotice(null), 6000);
+      const p =
+        channel === 'mpesa'
+          ? await payments.mpesa({ amount_ksh: amount, phone })
+          : await payments.airtel({ amount_ksh: amount, phone });
+      setPending({ id: p.transaction_id, ref: p.reference, amount, channel });
+      setNotice(p.message || 'Approve the push on your phone — we will issue the token as soon as payment confirms.');
+      setTimeout(() => setNotice(null), 9000);
       setPhone('');
-      await load();
     } catch (e: any) {
-      setError(e.message || 'Purchase failed.');
+      setError(e.message || 'Payment initiation failed. Try again.');
     } finally {
       setBuying(false);
     }
   };
+
+  const copyToken = () => {
+    if (!issuedToken) return;
+    navigator.clipboard?.writeText(issuedToken.token_number).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const formatToken = (num: string) => (num.match(/.{1,4}/g) || []).join(' ');
 
   return (
     <div className="space-y-6">
@@ -84,6 +181,60 @@ export const BuyTokensPage: React.FC = () => {
       {error && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm">
           <ShieldCheck size={16} className="shrink-0" /> {error}
+        </div>
+      )}
+
+      {/* Awaiting async payment confirmation */}
+      {pending && (
+        <div className="flex items-start gap-3 px-4 py-4 rounded-xl bg-amber-50 border border-amber-100">
+          <RefreshCw size={18} className="text-amber-500 mt-0.5 shrink-0 animate-spin" />
+          <div className="flex-1">
+            <p className="text-[13px] font-bold text-amber-800">
+              {pending.channel === 'mpesa' ? 'M-Pesa' : 'Airtel'} payment pending
+            </p>
+            <p className="text-[12px] text-amber-700/90 mt-0.5">
+              Approve the STK push on your phone for {fmtKsh(pending.amount)}. PowerSmart is watching for confirmation
+              and will issue the token automatically — keep this page open.
+            </p>
+            <p className="text-[11px] text-amber-600/80 mt-1.5 flex items-center gap-1.5">
+              <Clock size={12} /> Ref: {pending.ref} · can take up to a minute
+            </p>
+          </div>
+          <button
+            onClick={() => { setPending(null); setError('Payment session cancelled — nothing was charged unless you approved it on your phone.'); }}
+            className="text-[11px] font-bold text-amber-600 hover:underline shrink-0 cursor-pointer"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Freshly issued token */}
+      {issuedToken && (
+        <div className="ps-card p-5 bg-emerald-50 border-emerald-100">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[14px] font-bold text-emerald-800 flex items-center gap-1.5">
+              <Check size={16} /> Token issued · {fmtUnits(issuedToken.units)}
+            </p>
+            <span className="ps-pill-green">{fmtKsh(issuedToken.amount_ksh)}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <code className="font-mono text-[15px] font-bold text-gray-800 bg-white border border-emerald-200 rounded-lg px-3 py-2 tracking-wider">
+              {formatToken(issuedToken.token_number)}
+            </code>
+            <button
+              onClick={copyToken}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-emerald-200 text-[12px] font-bold text-emerald-700 cursor-pointer"
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <p className="mt-2 text-[12px] text-emerald-700/80">
+            Send it straight to your meter below, or type it in when the meter asks for a token.
+          </p>
+          <div className="mt-3">
+            <TokenPushControls token={issuedToken} onDone={() => load()} />
+          </div>
         </div>
       )}
 
@@ -144,12 +295,17 @@ export const BuyTokensPage: React.FC = () => {
 
             <button
               onClick={buy}
-              disabled={buying}
+              disabled={buying || !!pending}
               className="w-full py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-navy-950 text-sm font-black flex items-center justify-center gap-2 shadow-md shadow-gold-500/30 transition-colors disabled:opacity-50 cursor-pointer"
             >
               {buying ? <RefreshCw size={15} className="animate-spin" /> : <ArrowUpRight size={15} />}
-              {buying ? 'Purchasing…' : `Buy KSh ${amount} token`}
+              {buying ? 'Initiating payment…' : `Buy KSh ${amount} token`}
             </button>
+            {cfg && !cfg.mpesa_configured && channel === 'mpesa' && (
+              <p className="mt-2 text-[11px] text-gray-400 flex items-center gap-1.5">
+                <Smartphone size={12} /> Live M-Pesa is not configured on this server — a simulated token will be issued.
+              </p>
+            )}
           </SectionCard>
         </div>
 
