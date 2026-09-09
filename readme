@@ -36,6 +36,7 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Power Pools (shared electricity wallet)** — groups of people (families, housemates, hostels, small businesses) pool money around a shared meter. Members join by invite code, contribute KSh via M-Pesa/Airtel/bank, and authorised members buy tokens from the pooled balance. Roles and permissions gate who can manage members or buy tokens; a per-pool ledger records every contribution and purchase plus each member's share.
 - **Landlord intelligence (Unit Insights)** — compare every rental unit side-by-side (usage, spend, week-over-week trend, remaining balance) and an unusual-usage engine flags sudden spikes, persistently very-high loads and suspicious inactivity — patterns that point to theft, a running geyser or a new heavy load. Each flag comes with an explanation and a suggested action.
 - **Automatic expense reports** — one-click monthly statements (token purchases per meter, units bought, spend and average rate) with CSV export for tenants and landlords, plus portfolio totals.
+- **Savings Hub** — reduction goals ("cut my bill from KSh 3,000 to KSh 2,500") tracked against live usage, weekly energy-saving challenges with points and a platform-wide leaderboard, and a carbon footprint estimate (kg CO₂/month and tree-equivalent offset) derived from consumption.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
@@ -229,6 +230,13 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | DELETE | `/api/pools/{id}/members/{memberId}` | Remove a member / leave the pool |
 | GET | `/api/insights` | Landlord unit comparison with anomaly flags |
 | GET | `/api/reports/monthly?month=YYYY-MM` | Monthly token-spend statement per meter |
+| GET/POST | `/api/goals` | List / create a savings reduction goal |
+| POST | `/api/goals/{id}/complete` | Mark a goal achieved |
+| DELETE | `/api/goals/{id}` | Remove a goal |
+| GET | `/api/challenges` | Weekly energy-saving challenges + my status |
+| POST | `/api/challenges/{key}/claim` | Verify and claim a challenge's points |
+| GET | `/api/challenges/leaderboard` | Top scorers + my standing |
+| GET | `/api/impact/carbon` | CO₂ estimate for my primary meter |
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
@@ -271,6 +279,8 @@ PostgreSQL tables are created automatically on first run (`backend/config/databa
 - `pool_members` — who belongs to each pool plus roles/permissions
 - `pool_contributions` — money added to a pool wallet
 - `pool_expenses` — token purchases paid from a pool wallet
+- `savings_goals` — monthly-spend reduction goals per meter
+- `challenge_points` — weekly energy-saving challenge points per user
 
 ## Security
 
