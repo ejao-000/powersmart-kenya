@@ -204,6 +204,23 @@ func RunMigrations(db *sql.DB) {
 			created_at    TIMESTAMPTZ DEFAULT now(),
 			UNIQUE (user_id, challenge_key, week_start)
 		)`,
+		`CREATE TABLE IF NOT EXISTS merchant_profiles (
+			id            TEXT PRIMARY KEY,
+			user_id       TEXT NOT NULL UNIQUE REFERENCES users(id),
+			business_name TEXT NOT NULL,
+			status        TEXT NOT NULL DEFAULT 'pending',
+			created_at    TIMESTAMPTZ DEFAULT now(),
+			updated_at    TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS merchant_ledger (
+			id               TEXT PRIMARY KEY,
+			user_id          TEXT NOT NULL REFERENCES users(id),
+			type             TEXT NOT NULL,
+			amount_ksh       INTEGER NOT NULL,
+			reference        TEXT,
+			customer_account TEXT,
+			created_at       TIMESTAMPTZ DEFAULT now()
+		)`,
 	}
 
 	for _, stmt := range statements {
