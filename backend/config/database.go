@@ -146,6 +146,43 @@ func RunMigrations(db *sql.DB) {
 			created_at    TIMESTAMPTZ DEFAULT now(),
 			updated_at    TIMESTAMPTZ DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS power_pools (
+			id          TEXT PRIMARY KEY,
+			meter_id    TEXT NOT NULL REFERENCES meters(id),
+			name        TEXT NOT NULL,
+			invite_code TEXT NOT NULL UNIQUE,
+			created_by  TEXT NOT NULL REFERENCES users(id),
+			created_at  TIMESTAMPTZ DEFAULT now(),
+			updated_at  TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS pool_members (
+			id         TEXT PRIMARY KEY,
+			pool_id    TEXT NOT NULL REFERENCES power_pools(id),
+			user_id    TEXT NOT NULL REFERENCES users(id),
+			role       TEXT NOT NULL DEFAULT 'member',
+			can_buy    BOOLEAN NOT NULL DEFAULT TRUE,
+			can_invite BOOLEAN NOT NULL DEFAULT FALSE,
+			joined_at  TIMESTAMPTZ DEFAULT now(),
+			UNIQUE (pool_id, user_id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS pool_contributions (
+			id         TEXT PRIMARY KEY,
+			pool_id    TEXT NOT NULL REFERENCES power_pools(id),
+			user_id    TEXT NOT NULL REFERENCES users(id),
+			amount_ksh INTEGER NOT NULL,
+			channel    TEXT NOT NULL DEFAULT 'mpesa',
+			note       TEXT,
+			created_at TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS pool_expenses (
+			id          TEXT PRIMARY KEY,
+			pool_id     TEXT NOT NULL REFERENCES power_pools(id),
+			user_id     TEXT NOT NULL REFERENCES users(id),
+			token_id    TEXT REFERENCES tokens(id),
+			amount_ksh  INTEGER NOT NULL,
+			description TEXT,
+			created_at  TIMESTAMPTZ DEFAULT now()
+		)`,
 	}
 
 	for _, stmt := range statements {

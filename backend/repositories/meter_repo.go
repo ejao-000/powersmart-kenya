@@ -65,6 +65,22 @@ func (r *MeterRepo) ListByOwner(userID string) ([]*model.Meter, error) {
 	return list, rows.Err()
 }
 
+// GetByID returns a meter regardless of ownership (used internally by services
+// that operate on meters the caller does not own, e.g. Power Pool purchases).
+func (r *MeterRepo) GetByID(meterID string) (*model.Meter, error) {
+	m := &model.Meter{}
+	err := r.db.QueryRow(`
+		SELECT id, user_id, COALESCE(name,''), meter_number, units_remaining, daily_avg_units, last_reading_at,
+		       auto_topup, topup_threshold, topup_amount, updated_at
+		FROM meters WHERE id = $1`, meterID).
+		Scan(&m.ID, &m.UserID, &m.Name, &m.MeterNumber, &m.UnitsRemaining, &m.DailyAvgUnits, &m.LastReadingAt,
+			&m.AutoTopup, &m.TopupThreshold, &m.TopupAmountKsh, &m.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	return m, err
+}
+
 // GetByIDForUser returns a meter only if it belongs to the given user.
 func (r *MeterRepo) GetByIDForUser(meterID, userID string) (*model.Meter, error) {
 	m := &model.Meter{}
