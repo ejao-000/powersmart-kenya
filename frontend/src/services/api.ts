@@ -622,6 +622,69 @@ export const insights = {
     ),
 };
 
+// ── Savings Hub (goals, challenges, leaderboard, carbon) ─────────────────────
+
+export interface SavingsGoal {
+  id: string;
+  meter_id: string;
+  meter_name?: string;
+  label: string;
+  baseline_ksh: number;
+  target_ksh: number;
+  current_ksh?: number;
+  progress_pct?: number;
+  active: boolean;
+  achieved: boolean;
+  created_at: string;
+  achieved_at?: string | null;
+}
+
+export type ChallengeStatus = 'done' | 'open' | 'no_data' | 'no_budget';
+
+export interface Challenge {
+  key: string;
+  title: string;
+  description: string;
+  points: number;
+  achieved: boolean;
+  status: ChallengeStatus;
+  message?: string;
+}
+
+export interface LeaderboardRow {
+  user_name: string;
+  points: number;
+  claims: number;
+}
+
+export interface LeaderboardResponse {
+  rows: LeaderboardRow[];
+  my_name: string;
+  my_points: number;
+  my_rank: number;
+  my_claims: number;
+}
+
+export interface CarbonSummary {
+  factor_kg_per_kwh: number;
+  today_kg: number;
+  week_kg: number;
+  month_kg: number;
+  trees_monthly: number;
+}
+
+export const savings = {
+  goals: () => request<SavingsGoal[]>('/goals'),
+  createGoal: (body: { target_ksh: number; meter_id?: string; label?: string }) =>
+    request<SavingsGoal>('/goals', { method: 'POST', body }),
+  completeGoal: (id: string) => request(`/goals/${id}/complete`, { method: 'POST' }),
+  removeGoal: (id: string) => request(`/goals/${id}`, { method: 'DELETE' }),
+  challenges: () => request<Challenge[]>('/challenges'),
+  claimChallenge: (key: string) => request<Challenge>(`/challenges/${key}/claim`, { method: 'POST' }),
+  leaderboard: () => request<LeaderboardResponse>('/challenges/leaderboard'),
+  carbon: () => request<CarbonSummary>('/impact/carbon'),
+};
+
 // Builds and triggers a client-side CSV download.
 export function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
   const escape = (v: string | number) => {
