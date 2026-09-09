@@ -48,6 +48,7 @@ func main() {
 	poolH := handlers.NewPoolHandler(db)
 	insightsH := handlers.NewInsightsHandler(db)
 	savingsH := handlers.NewSavingsHandler(db)
+	merchantH := handlers.NewMerchantHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -92,6 +93,8 @@ func main() {
 	mux.Handle("GET /api/admin/meters", adminOnly(http.HandlerFunc(adminH.Meters)))
 	mux.Handle("GET /api/admin/tokens", adminOnly(http.HandlerFunc(adminH.Tokens)))
 	mux.Handle("GET /api/admin/transactions", adminOnly(http.HandlerFunc(adminH.Transactions)))
+	mux.Handle("GET /api/admin/merchants", adminOnly(http.HandlerFunc(merchantH.ListAdmin)))
+	mux.Handle("POST /api/admin/merchants/{id}/status", adminOnly(http.HandlerFunc(merchantH.SetStatusAdmin)))
 
 	// Meter
 	mux.Handle("GET /api/meter", protected(http.HandlerFunc(meterH.GetStatus)))
@@ -163,6 +166,12 @@ func main() {
 	mux.Handle("POST /api/challenges/{key}/claim", protected(http.HandlerFunc(savingsH.ClaimChallenge)))
 	mux.Handle("GET /api/challenges/leaderboard", protected(http.HandlerFunc(savingsH.Leaderboard)))
 	mux.Handle("GET /api/impact/carbon", protected(http.HandlerFunc(savingsH.Carbon)))
+
+	// Merchant / vendor mode
+	mux.Handle("POST /api/merchant/apply", protected(http.HandlerFunc(merchantH.Apply)))
+	mux.Handle("GET /api/merchant/me", protected(http.HandlerFunc(merchantH.Me)))
+	mux.Handle("POST /api/merchant/float", protected(http.HandlerFunc(merchantH.TopUp)))
+	mux.Handle("POST /api/merchant/vend", protected(http.HandlerFunc(merchantH.Vend)))
 
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
@@ -266,5 +275,11 @@ func logRoutes() {
 	log.Println("  POST /api/challenges/{key}/claim")
 	log.Println("  GET  /api/challenges/leaderboard")
 	log.Println("  GET  /api/impact/carbon")
+	log.Println("  POST /api/merchant/apply")
+	log.Println("  GET  /api/merchant/me")
+	log.Println("  POST /api/merchant/float")
+	log.Println("  POST /api/merchant/vend")
+	log.Println("  GET  /api/admin/merchants")
+	log.Println("  POST /api/admin/merchants/{id}/status")
 	log.Println("  (API-only — the frontend is served separately)")
 }
