@@ -183,6 +183,27 @@ func RunMigrations(db *sql.DB) {
 			description TEXT,
 			created_at  TIMESTAMPTZ DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS savings_goals (
+			id           TEXT PRIMARY KEY,
+			meter_id     TEXT NOT NULL REFERENCES meters(id),
+			label        TEXT NOT NULL DEFAULT '',
+			baseline_ksh DOUBLE PRECISION NOT NULL DEFAULT 0,
+			target_ksh   DOUBLE PRECISION NOT NULL,
+			active       BOOLEAN NOT NULL DEFAULT TRUE,
+			achieved     BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at   TIMESTAMPTZ DEFAULT now(),
+			achieved_at  TIMESTAMPTZ,
+			updated_at   TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS challenge_points (
+			id            TEXT PRIMARY KEY,
+			user_id       TEXT NOT NULL REFERENCES users(id),
+			challenge_key TEXT NOT NULL,
+			week_start    DATE NOT NULL,
+			points        INTEGER NOT NULL DEFAULT 0,
+			created_at    TIMESTAMPTZ DEFAULT now(),
+			UNIQUE (user_id, challenge_key, week_start)
+		)`,
 	}
 
 	for _, stmt := range statements {
