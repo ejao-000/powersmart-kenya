@@ -4,6 +4,8 @@
 
 PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real time, buy electricity tokens instantly (M-Pesa / Airtel / bank), forecast when they will run out of power, and lets landlords manage multi-meter fleets — all through a single, secure web portal.
 
+**Buy power, understand your energy, and save money.**
+
 ---
 
 ## Table of contents
@@ -29,6 +31,7 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Send power to your meter (WiFi / Bluetooth)** — load a bought token straight onto your prepaid meter without typing the 20-digit code. Uses the Web Bluetooth API when available, with a simulated delivery fallback for development.
 - **Usage analytics** — daily/weekly/monthly consumption and estimated cost charts from recorded telemetry.
 - **AI-style predictions** — run-out forecast with confidence level plus "how long does a KSh 200/500/1,000/2,000 token last" estimates.
+- **Energy Intelligence hub** — a combined AI energy coach, appliance-level insights and monthly budget planner per meter. It detects week-over-week usage jumps, explains what probably caused them (e.g. a left-on geyser), estimates each registered appliance's share of the bill, projects your full-month spend at the current pace ("likely to spend KSh 3,240 this month") and warns you before you exceed the budget you set.
 - **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
@@ -207,6 +210,11 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | POST | `/api/meter/telemetry` | Record a meter reading |
 | GET | `/api/meter/prediction` | Depletion forecast |
 | GET | `/api/meter/usage` | Today / week / month usage + 30-day series (Usage dashboard) |
+| GET | `/api/energy/intel` | Energy Intelligence bundle: coach insights, appliance model + spend/budget forecast |
+| PUT | `/api/energy/budget` | Set the monthly spend target (`monthly_budget_ksh`, optional `meter_id`) |
+| POST | `/api/energy/appliances` | Register an appliance (`name`, `watts`, `hours_per_day`) |
+| PUT | `/api/energy/appliances/{id}` | Edit an appliance (name / watts / hours per day) |
+| DELETE | `/api/energy/appliances/{id}` | Remove an appliance |
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
@@ -243,6 +251,8 @@ PostgreSQL tables are created automatically on first run (`backend/config/databa
 - `tokens` — purchased token records
 - `transactions` — payment records
 - `alerts` — alert rules
+- `energy_budgets` — per-meter monthly spend targets (Energy Intelligence)
+- `appliances` — registered household appliances for consumption modelling
 
 ## Security
 

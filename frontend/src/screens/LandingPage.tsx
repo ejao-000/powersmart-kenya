@@ -105,9 +105,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onJoin, onLogin }) => 
             </h1>
 
             <p className="mt-6 max-w-lg text-[16px] leading-relaxed text-gray-500">
-              Monitor your KPLC prepaid meter, buy tokens instantly, and get smart
-              analytics — all from one beautiful dashboard. No more blackouts,
-              no more queues.
+              Buy tokens instantly, then let PowerSmart's Energy Intelligence show
+              you where your power goes, why your usage changed and how to spend
+              less every month. No more blackouts, no more queues.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-4">
@@ -178,7 +178,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onJoin, onLogin }) => 
             icon={<Home size={22} />}
             title="For Tenants"
             tagline="Renting? We've got your power sorted."
-            items={['Smart usage predictions', 'Low balance alerts', 'One-tap M-Pesa top-ups']}
+            items={[
+              'Buy power via M-Pesa in one tap',
+              'AI Energy Coach for your home',
+              'Appliance insights & budget planner',
+              'Low-balance alerts & auto top-up',
+            ]}
           />
           <div className="rounded-2xl border border-gray-200 bg-white p-8 flex flex-col">
             <div className="flex items-start gap-4">
