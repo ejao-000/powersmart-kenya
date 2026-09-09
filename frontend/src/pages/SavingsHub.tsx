@@ -12,6 +12,7 @@ import {
   Sparkles,
   TrendingUp,
   TrendingDown,
+  Home,
 } from 'lucide-react';
 import { SectionCard } from './ui';
 import {
@@ -19,6 +20,7 @@ import {
   Challenge,
   CarbonSummary,
   LeaderboardResponse,
+  NeighborhoodLeaderboard,
   SavingsGoal,
   GreenScore,
   fmtKsh,
@@ -36,6 +38,9 @@ export const SavingsHub: React.FC = () => {
   const [board, setBoard] = useState<LeaderboardResponse | null>(null);
   const [carbon, setCarbon] = useState<CarbonSummary | null>(null);
   const [score, setScore] = useState<GreenScore | null>(null);
+  const [nh, setNh] = useState<NeighborhoodLeaderboard | null>(null);
+  const [hoodInput, setHoodInput] = useState('');
+  const [hoodBusy, setHoodBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [target, setTarget] = useState('');
@@ -51,18 +56,20 @@ export const SavingsHub: React.FC = () => {
 
   const loadAll = useCallback(async () => {
     try {
-      const [ch, g, b, c, s] = await Promise.all([
+      const [ch, g, b, c, s, n] = await Promise.all([
         savings.challenges(),
         savings.goals(),
         savings.leaderboard().catch(() => null),
         savings.carbon().catch(() => null),
         savings.score().catch(() => null),
+        savings.neighborhoods().catch(() => null),
       ]);
       setChallenges(ch);
       setGoals(g);
       setBoard(b);
       setCarbon(c);
       setScore(s);
+      setNh(n);
     } catch {
       /* header handles errors */
     } finally {
@@ -136,6 +143,24 @@ export const SavingsHub: React.FC = () => {
       /* ignore */
     } finally {
       setBusy(false);
+    }
+  };
+
+  const joinHood = async () => {
+    if (!hoodInput.trim()) {
+      flashMsg('Enter your estate or neighborhood name.', false);
+      return;
+    }
+    setHoodBusy(true);
+    try {
+      await savings.setNeighborhood({ neighborhood: hoodInput.trim() });
+      flashMsg(`Welcome to the ${hoodInput.trim()} energy challenge!`);
+      setHoodInput('');
+      await loadAll();
+    } catch (e: any) {
+      flashMsg(e?.message || 'Could not join your neighborhood.', false);
+    } finally {
+      setHoodBusy(false);
     }
   };
 
@@ -312,6 +337,78 @@ export const SavingsHub: React.FC = () => {
                         <span className="text-[13px] font-black text-brand-600">{board.my_points} pts</span>
                       </div>
                     )}
+                  </div>
+                )}
+              </SectionCard>
+
+              {/* Neighborhood energy challenge */}
+              <SectionCard
+                title="Neighborhood energy challenge"
+                action={
+                  nh?.my_hood ? (
+                    <span className="ps-pill-green">
+                      <Home size={11} /> {nh.my_hood}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-bold text-gray-400">Local</span>
+                  )
+                }
+              >
+                {!nh?.my_hood ? (
+                  <div className="mb-4 p-3 rounded-xl bg-gray-50 border border-gray-200">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">
+                      Which estate or neighborhood do you live in?
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        value={hoodInput}
+                        onChange={(e) => setHoodInput(e.target.value)}
+                        placeholder="e.g. Kilimani"
+                        className="ps-input !py-2 flex-1"
+                      />
+                      <button onClick={joinHood} disabled={hoodBusy} className="ps-btn !px-3 !py-2 disabled:opacity-50 shrink-0">
+                        {hoodBusy ? <Loader2 size={14} className="animate-spin" /> : <Home size={14} />} Join
+                      </button>
+                    </div>
+                    <p className="mt-2 text-[11px] text-gray-400">
+                      Your challenge points then count towards your neighborhood on the local leaderboard.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="mb-4 px-3 py-2 rounded-xl bg-brand-50 border border-brand-100 text-[12px] text-brand-700">
+                    {nh.my_rank > 0
+                      ? `${nh.my_hood} is rank #${nh.my_rank} with ${(nh.rows.find((r) => r.name === nh.my_hood)?.points ?? 0)} pts — complete challenges to lift it.`
+                      : `${nh.my_hood} has no points yet — claim a challenge above to get it on the board.`}
+                  </div>
+                )}
+
+                {nh && nh.rows.length === 0 ? (
+                  <p className="py-3 text-center text-[13px] text-gray-400">No neighborhoods on the board yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {nh?.rows.slice(0, 8).map((r, i) => {
+                      const mine = nh.my_hood && r.name.toLowerCase() === nh.my_hood.toLowerCase();
+                      return (
+                        <div
+                          key={r.name + i}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl ${
+                            mine ? 'bg-brand-50/60 border border-brand-100' : 'bg-gray-50/60 border border-gray-100'
+                          }`}
+                        >
+                          <span className={`w-7 h-7 rounded-lg grid place-items-center text-[12px] font-black ${
+                            i === 0 ? 'bg-amber-400 text-navy-950' : 'bg-white text-gray-500 border border-gray-200'
+                          }`}>
+                            {i + 1}
+                          </span>
+                          <Home size={14} className={mine ? 'text-brand-500' : 'text-gray-300'} />
+                          <p className="flex-1 text-[13px] font-bold text-gray-800 truncate">
+                            {r.name} {mine && <span className="text-brand-500">(you)</span>}
+                          </p>
+                          <span className="text-[11px] text-gray-400">{r.members} saver{r.members === 1 ? '' : 's'}</span>
+                          <span className="text-[13px] font-black text-brand-600">{r.points} pts</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </SectionCard>

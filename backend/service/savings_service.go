@@ -508,3 +508,38 @@ func gradeFor(score int) string {
 		return "F"
 	}
 }
+
+// SetNeighborhood records the estate/area the user belongs to for local
+// energy challenges.
+func (s *SavingsService) SetNeighborhood(userID, neighborhood string) error {
+	hood := strings.TrimSpace(neighborhood)
+	if hood == "" {
+		return fmt.Errorf("%w: a neighborhood name is required", ErrInvalid)
+	}
+	if len(hood) > 40 {
+		return fmt.Errorf("%w: neighborhood name is too long (max 40 characters)", ErrInvalid)
+	}
+	return s.userRepo.UpdateNeighborhood(userID, hood)
+}
+
+// Neighborhoods returns the local energy-challenge leaderboard and the caller's
+// position within it.
+func (s *SavingsService) Neighborhoods(userID string) (*model.NeighborhoodLeaderboard, error) {
+	rows, err := s.userRepo.NeighborhoodLeaderboard()
+	if err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		rows = []*model.NeighborhoodRow{}
+	}
+	hood, _ := s.userRepo.GetNeighborhood(userID)
+
+	resp := &model.NeighborhoodLeaderboard{Rows: rows, MyHood: hood, MyRank: 0}
+	for i, r := range rows {
+		if strings.EqualFold(r.Name, hood) {
+			resp.MyRank = i + 1
+			break
+		}
+	}
+	return resp, nil
+}

@@ -175,6 +175,39 @@ func (h *SavingsHandler) Score(w http.ResponseWriter, r *http.Request) {
 	utils.RespondJSON(w, http.StatusOK, score)
 }
 
+// SetNeighborhood godoc
+// PUT /api/profile/neighborhood
+func (h *SavingsHandler) SetNeighborhood(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+
+	var req model.SetNeighborhoodRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondBadRequest(w, "request body is not valid JSON")
+		return
+	}
+	if err := h.svc.SetNeighborhood(userID, req.Neighborhood); err != nil {
+		if errors.Is(err, service.ErrInvalid) {
+			utils.RespondBadRequest(w, err.Error())
+			return
+		}
+		utils.RespondInternalError(w)
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+// Neighborhoods godoc
+// GET /api/challenges/neighborhoods
+func (h *SavingsHandler) Neighborhoods(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+	resp, err := h.svc.Neighborhoods(userID)
+	if err != nil {
+		utils.RespondInternalError(w)
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, resp)
+}
+
 func (h *SavingsHandler) writeSavingsError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, repositories.ErrNotFound):

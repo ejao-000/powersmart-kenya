@@ -728,6 +728,18 @@ export interface LeaderboardResponse {
   my_claims: number;
 }
 
+export interface NeighborhoodRow {
+  name: string;
+  points: number;
+  members: number;
+}
+
+export interface NeighborhoodLeaderboard {
+  rows: NeighborhoodRow[];
+  my_hood: string;
+  my_rank: number;
+}
+
 export interface CarbonSummary {
   factor_kg_per_kwh: number;
   today_kg: number;
@@ -753,6 +765,9 @@ export const savings = {
   challenges: () => request<Challenge[]>('/challenges'),
   claimChallenge: (key: string) => request<Challenge>(`/challenges/${key}/claim`, { method: 'POST' }),
   leaderboard: () => request<LeaderboardResponse>('/challenges/leaderboard'),
+  neighborhoods: () => request<NeighborhoodLeaderboard>('/challenges/neighborhoods'),
+  setNeighborhood: (body: { neighborhood: string }) =>
+    request<{ status: string }>('/profile/neighborhood', { method: 'PUT', body }),
   carbon: () => request<CarbonSummary>('/impact/carbon'),
   score: () => request<GreenScore>('/impact/score'),
 };

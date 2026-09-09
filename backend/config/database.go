@@ -221,6 +221,7 @@ func RunMigrations(db *sql.DB) {
 			customer_account TEXT,
 			created_at       TIMESTAMPTZ DEFAULT now()
 		)`,
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS neighborhood TEXT`,
 		`CREATE TABLE IF NOT EXISTS meter_reserves (
 			meter_id     TEXT PRIMARY KEY REFERENCES meters(id),
 			reserved_kwh DOUBLE PRECISION NOT NULL DEFAULT 0,

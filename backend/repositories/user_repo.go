@@ -66,3 +66,44 @@ func (r *UserRepo) GetByMeterAccount(account string) (*model.User, error) {
 	}
 	return u, err
 }
+
+// UpdateNeighborhood stores the user's estate / area for local challenges.
+func (r *UserRepo) UpdateNeighborhood(userID, neighborhood string) error {
+	_, err := r.db.Exec(`UPDATE users SET neighborhood = $1 WHERE id = $2`, neighborhood, userID)
+	return err
+}
+
+// GetNeighborhood returns the user's saved neighborhood ('' when unset).
+func (r *UserRepo) GetNeighborhood(userID string) (string, error) {
+	var n string
+	err := r.db.QueryRow(`SELECT COALESCE(neighborhood, '') FROM users WHERE id = $1`, userID).Scan(&n)
+	return n, err
+}
+
+// NeighborhoodLeaderboard ranks neighborhoods by challenge points earned by
+// their residents (only neighborhoods with active savers appear).
+func (r *UserRepo) NeighborhoodLeaderboard() ([]*model.NeighborhoodRow, error) {
+	rows, err := r.db.Query(`
+		SELECT COALESCE(NULLIF(u.neighborhood, ''), 'Unset') AS hood,
+		       SUM(cp.points) AS points,
+		       COUNT(DISTINCT cp.user_id) AS members
+		FROM challenge_points cp
+		JOIN users u ON u.id = cp.user_id
+		GROUP BY hood
+		ORDER BY points DESC
+		LIMIT 30`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*model.NeighborhoodRow
+	for rows.Next() {
+		row := &model.NeighborhoodRow{}
+		if err := rows.Scan(&row.Name, &row.Points, &row.Members); err != nil {
+			return nil, err
+		}
+		list = append(list, row)
+	}
+	return list, rows.Err()
+}

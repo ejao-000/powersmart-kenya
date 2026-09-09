@@ -53,9 +53,28 @@ type PowerRequestFulfillment struct {
 
 // GreenScore is the monthly efficiency/impact score for the primary meter.
 type GreenScore struct {
-	Score          int     `json:"score"`
-	Grade          string  `json:"grade"`            // A+ .. F
+	Score         int     `json:"score"`
+	Grade         string  `json:"grade"` // A+ .. F
 	UsageChangePct float64 `json:"usage_change_pct"` // vs previous ~30 days
-	Points         int     `json:"points"`
-	CarbonKgMonth  float64 `json:"carbon_kg_month"`
+	Points        int     `json:"points"`
+	CarbonKgMonth float64 `json:"carbon_kg_month"`
+}
+
+// NeighborhoodRow is one neighborhood on the local energy-challenge board.
+type NeighborhoodRow struct {
+	Name    string `json:"name"`
+	Points  int    `json:"points"`
+	Members int    `json:"members"`
+}
+
+// NeighborhoodLeaderboard wraps the ranked neighborhoods plus the caller's hood.
+type NeighborhoodLeaderboard struct {
+	Rows     []*NeighborhoodRow `json:"rows"`
+	MyHood   string             `json:"my_hood"`
+	MyRank   int                `json:"my_rank"`
+}
+
+// SetNeighborhoodRequest is the payload for PUT /api/profile/neighborhood.
+type SetNeighborhoodRequest struct {
+	Neighborhood string `json:"neighborhood"`
 }

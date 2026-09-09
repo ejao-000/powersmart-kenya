@@ -169,6 +169,8 @@ func main() {
 	mux.Handle("GET /api/challenges", protected(http.HandlerFunc(savingsH.ListChallenges)))
 	mux.Handle("POST /api/challenges/{key}/claim", protected(http.HandlerFunc(savingsH.ClaimChallenge)))
 	mux.Handle("GET /api/challenges/leaderboard", protected(http.HandlerFunc(savingsH.Leaderboard)))
+	mux.Handle("GET /api/challenges/neighborhoods", protected(http.HandlerFunc(savingsH.Neighborhoods)))
+	mux.Handle("PUT /api/profile/neighborhood", protected(http.HandlerFunc(savingsH.SetNeighborhood)))
 	mux.Handle("GET /api/impact/carbon", protected(http.HandlerFunc(savingsH.Carbon)))
 	mux.Handle("GET /api/impact/score", protected(http.HandlerFunc(savingsH.Score)))
 
@@ -293,6 +295,8 @@ func logRoutes() {
 	log.Println("  GET  /api/challenges")
 	log.Println("  POST /api/challenges/{key}/claim")
 	log.Println("  GET  /api/challenges/leaderboard")
+	log.Println("  GET  /api/challenges/neighborhoods")
+	log.Println("  PUT  /api/profile/neighborhood")
 	log.Println("  GET  /api/impact/carbon")
 	log.Println("  GET  /api/impact/score")
 	log.Println("  GET  /api/meter/reserve")

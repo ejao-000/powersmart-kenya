@@ -57,6 +57,12 @@ func main() {
 	grace := newUser(db, "Grace Achieng", "grace@demo.com", "0733345678", "1000000003", "KPM1000000003", "tenant", pw)
 	landlord := newUser(db, "Jane Muthoni", "landlord@demo.com", "0700456789", "1000000020", "KPM1000000020", "landlord", pw)
 
+	// Neighborhoods for the local challenge board.
+	mustExec(db, `UPDATE users SET neighborhood = 'Kilimani' WHERE id = $1`, emma)
+	mustExec(db, `UPDATE users SET neighborhood = 'Kilimani' WHERE id = $1`, brian)
+	mustExec(db, `UPDATE users SET neighborhood = 'Kilimani' WHERE id = $1`, grace)
+	mustExec(db, `UPDATE users SET neighborhood = 'South B' WHERE id = $1`, landlord)
+
 	// ── Meters ─────────────────────────────────────────────────────────────
 	emmaMeter := seedMeter(db, emma, "Apartment 4B, Westlands", "KPM1000000001", 12.0, 1.0, false, 5, 200, now)
 	brianMeter := seedMeter(db, brian, "Studio, Kilimani", "KPM1000000002", 9.0, 1.0, false, 5, 200, now)
