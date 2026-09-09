@@ -376,6 +376,10 @@ export const meter = {
     request('/meter/telemetry', { method: 'POST', body: { units_remaining } }),
   settings: (body: { auto_topup?: boolean; topup_threshold?: number; topup_amount_ksh?: number }) =>
     request('/meter/settings', { method: 'PUT', body }),
+  reserve: () => request<ReserveView>('/meter/reserve'),
+  setReserve: (reserved_kwh: number) =>
+    request<ReserveView>('/meter/reserve', { method: 'PUT', body: { reserved_kwh } }),
+  releaseReserve: () => request<ReserveView>('/meter/reserve/release', { method: 'POST' }),
 };
 
 // ── Meters (multi-meter / landlord) ───────────────────────────────────────────
@@ -443,6 +447,48 @@ export const alerts = {
   update: (id: string, body: { threshold?: number; channel?: string; enabled?: boolean }) =>
     request<Alert>(`/alerts/${id}`, { method: 'PUT', body }),
   remove: (id: string) => request(`/alerts/${id}`, { method: 'DELETE' }),
+};
+
+// ── Power reserve + emergency requests + green score ─────────────────────────
+
+export interface ReserveView {
+  meter_id: string;
+  units_remaining: number;
+  reserved_kwh: number;
+  available_kwh: number;
+  updated_at: string;
+}
+
+export interface PowerRequest {
+  id: string;
+  user_id: string;
+  requester_name?: string;
+  meter_account: string;
+  amount_ksh: number;
+  note?: string;
+  status: 'open' | 'fulfilled' | 'cancelled';
+  fulfilled_by?: string;
+  helper_name?: string;
+  created_at: string;
+  fulfilled_at?: string | null;
+}
+
+export interface PowerRequestBundle {
+  open: PowerRequest[];
+  mine: PowerRequest[];
+}
+
+export interface PowerRequestFulfillment {
+  request: PowerRequest;
+  token: Token;
+}
+
+export const powerRequests = {
+  create: (body: { amount_ksh: number; note?: string }) =>
+    request<PowerRequest>('/power-requests', { method: 'POST', body }),
+  list: () => request<PowerRequestBundle>('/power-requests'),
+  fulfil: (id: string) => request<PowerRequestFulfillment>(`/power-requests/${id}/fulfill`, { method: 'POST' }),
+  cancel: (id: string) => request(`/power-requests/${id}/cancel`, { method: 'POST' }),
 };
 
 // ── Energy Intelligence (budget planner + appliance insights + AI coach) ─────
@@ -684,6 +730,14 @@ export interface CarbonSummary {
   trees_monthly: number;
 }
 
+export interface GreenScore {
+  score: number;
+  grade: string;
+  usage_change_pct: number;
+  points: number;
+  carbon_kg_month: number;
+}
+
 export const savings = {
   goals: () => request<SavingsGoal[]>('/goals'),
   createGoal: (body: { target_ksh: number; meter_id?: string; label?: string }) =>
@@ -694,6 +748,7 @@ export const savings = {
   claimChallenge: (key: string) => request<Challenge>(`/challenges/${key}/claim`, { method: 'POST' }),
   leaderboard: () => request<LeaderboardResponse>('/challenges/leaderboard'),
   carbon: () => request<CarbonSummary>('/impact/carbon'),
+  score: () => request<GreenScore>('/impact/score'),
 };
 
 // ── Merchant / vendor mode ───────────────────────────────────────────────────

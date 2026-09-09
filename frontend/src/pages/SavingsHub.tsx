@@ -20,6 +20,7 @@ import {
   CarbonSummary,
   LeaderboardResponse,
   SavingsGoal,
+  GreenScore,
   fmtKsh,
 } from '../services/api';
 
@@ -34,6 +35,7 @@ export const SavingsHub: React.FC = () => {
   const [goals, setGoals] = useState<SavingsGoal[]>([]);
   const [board, setBoard] = useState<LeaderboardResponse | null>(null);
   const [carbon, setCarbon] = useState<CarbonSummary | null>(null);
+  const [score, setScore] = useState<GreenScore | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [target, setTarget] = useState('');
@@ -49,16 +51,18 @@ export const SavingsHub: React.FC = () => {
 
   const loadAll = useCallback(async () => {
     try {
-      const [ch, g, b, c] = await Promise.all([
+      const [ch, g, b, c, s] = await Promise.all([
         savings.challenges(),
         savings.goals(),
         savings.leaderboard().catch(() => null),
         savings.carbon().catch(() => null),
+        savings.score().catch(() => null),
       ]);
       setChallenges(ch);
       setGoals(g);
       setBoard(b);
       setCarbon(c);
+      setScore(s);
     } catch {
       /* header handles errors */
     } finally {
@@ -153,7 +157,34 @@ export const SavingsHub: React.FC = () => {
             <Trophy size={13} className="text-amber-600" /> {myPoints} points · rank #{board?.my_rank}
           </span>
         )}
+        {!loading && score && (
+          <span className="ps-pill-green">
+            <Leaf size={13} className="text-emerald-600" /> Energy score {score.score}/100 · {score.grade}
+          </span>
+        )}
       </div>
+
+      {!loading && score && score.score > 0 && (
+        <div className="ps-card p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100 flex flex-wrap items-center gap-4">
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 rounded-2xl bg-emerald-500 text-white grid place-items-center text-lg font-black">
+              {score.score}
+            </span>
+            <div>
+              <p className="text-[14px] font-bold text-gray-800">Your Energy Score · {score.grade}</p>
+              <p className="text-[12px] text-gray-500">
+                {score.usage_change_pct <= 0
+                  ? `Using ${Math.abs(score.usage_change_pct).toFixed(0)}% less power week-on-week — keep it up!`
+                  : `Usage is up ${score.usage_change_pct.toFixed(0)}% this week — trim to lift your score.`}
+              </p>
+            </div>
+          </div>
+          <div className="ml-auto flex gap-4 text-[12px] text-gray-500">
+            <span>🌱 {score.carbon_kg_month} kg CO₂/mo</span>
+            <span>🏆 {score.points} pts</span>
+          </div>
+        </div>
+      )}
 
       {flash && (
         <div

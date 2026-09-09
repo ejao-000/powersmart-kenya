@@ -422,3 +422,89 @@ func (s *SavingsService) Carbon(userID string) (*model.CarbonSummary, error) {
 		TreesMonthly:   round2(monthKg / KgPerTreePerMonth),
 	}, nil
 }
+
+// Score computes the monthly "green" energy score (0–100) for the primary meter
+// from usage trend, budget adherence, challenge points and daily efficiency.
+func (s *SavingsService) Score(userID string) (*model.GreenScore, error) {
+	meter, err := s.primaryMeter(userID)
+	if err != nil {
+		return nil, err
+	}
+	usage, err := s.usageSvc.SummarizeMeter(meter)
+	if err != nil {
+		return nil, err
+	}
+
+	last, prev := weekSums(usage.Daily)
+	change := 0.0
+	if prev > 0 {
+		change = (last - prev) / prev * 100
+	}
+
+	onBudget := false
+	if budget, err := s.energyRepo.GetBudgetByMeter(meter.ID); err == nil && budget != nil {
+		onBudget = usage.MonthCostKsh <= budget.MonthlyBudgetKsh
+	}
+	points, _, _ := s.savingsRepo.UserTotals(userID)
+
+	score := 50.0
+	if onBudget {
+		score += 10
+	}
+	if usage.DailyAvgKwh > 0 {
+		switch {
+		case usage.DailyAvgKwh <= 8:
+			score += 5
+		case usage.DailyAvgKwh <= 15:
+			score += 2
+		}
+	}
+	pointsBonus := float64(points)
+	if pointsBonus > 15 {
+		pointsBonus = 15
+	}
+	score += pointsBonus / 15 * 10
+
+	switch {
+	case change <= -10:
+		score += 15
+	case change <= 0:
+		score += 10
+	case change <= 10:
+		score -= 5
+	default:
+		score -= 15
+	}
+	if score < 0 {
+		score = 0
+	}
+	if score > 100 {
+		score = 100
+	}
+
+	final := int(score)
+	return &model.GreenScore{
+		Score:          final,
+		Grade:          gradeFor(final),
+		UsageChangePct: round1(change),
+		Points:         points,
+		CarbonKgMonth:  round2(usage.MonthKwh * CarbonKgPerKwh),
+	}, nil
+}
+
+func gradeFor(score int) string {
+	switch {
+	case score >= 90:
+		return "A+"
+	case score >= 80:
+		return "A"
+	case score >= 70:
+		return "B"
+	case score >= 60:
+		return "C"
+	case score >= 50:
+		return "D"
+	default:
+		return "F"
+	}
+}

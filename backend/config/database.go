@@ -221,6 +221,22 @@ func RunMigrations(db *sql.DB) {
 			customer_account TEXT,
 			created_at       TIMESTAMPTZ DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS meter_reserves (
+			meter_id     TEXT PRIMARY KEY REFERENCES meters(id),
+			reserved_kwh DOUBLE PRECISION NOT NULL DEFAULT 0,
+			updated_at   TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS power_requests (
+			id           TEXT PRIMARY KEY,
+			user_id      TEXT NOT NULL REFERENCES users(id),
+			meter_account TEXT NOT NULL,
+			amount_ksh   INTEGER NOT NULL,
+			note         TEXT,
+			status       TEXT NOT NULL DEFAULT 'open',
+			fulfilled_by TEXT REFERENCES users(id),
+			created_at   TIMESTAMPTZ DEFAULT now(),
+			fulfilled_at TIMESTAMPTZ
+		)`,
 		`CREATE TABLE IF NOT EXISTS marketplace_products (
 			id                    TEXT PRIMARY KEY,
 			category              TEXT NOT NULL,

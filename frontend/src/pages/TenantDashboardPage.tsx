@@ -50,6 +50,12 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  // Emergency power reserve
+  const [reserved, setReserved] = useState(0);
+  const [reserveInput, setReserveInput] = useState('');
+  const [reserveOpen, setReserveOpen] = useState(false);
+  const [reserveSaving, setReserveSaving] = useState(false);
+
   const refresh = useCallback(async () => {
     try {
       setMeterData(await meter.status());
@@ -63,16 +69,44 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
       try {
         setOutageList(await outages.list());
       } catch { /* optional */ }
+      try {
+        const r = await meter.reserve();
+        setReserved(r.reserved_kwh);
+      } catch { /* optional */ }
     } catch { /* portal header handles errors */ } finally {
       setLoading(false);
     }
   }, []);
+
+  const saveReserve = async () => {
+    const kwh = parseFloat(reserveInput) || 0;
+    if (kwh < 0 || kwh > remaining) return;
+    setReserveSaving(true);
+    try {
+      const r = await meter.setReserve(kwh);
+      setReserved(r.reserved_kwh);
+      setReserveOpen(false);
+    } finally {
+      setReserveSaving(false);
+    }
+  };
+
+  const releaseReserve = async () => {
+    setReserveSaving(true);
+    try {
+      const r = await meter.releaseReserve();
+      setReserved(r.reserved_kwh);
+    } finally {
+      setReserveSaving(false);
+    }
+  };
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
   const remaining = meterData?.units_remaining ?? 0;
+  const available = Math.max(remaining - reserved, 0);
   const daysLeft =
     prediction && typeof prediction.days_remaining === 'number' ? prediction.days_remaining : null;
   const dailyAvg = usage?.daily_avg_kwh ?? meterData?.daily_avg_units ?? 0;
@@ -183,6 +217,74 @@ export const TenantDashboardPage: React.FC<TenantDashboardPageProps> = ({ onNavi
             <span className="font-bold">Low balance.</span> With current usage, expect to run out{' '}
             {describeDepletion(daysLeft, depletionText) ?? 'soon'} — consider topping up.
           </p>
+        </div>
+      )}
+
+      {/* Emergency power reserve */}
+      <div className="ps-card p-5 border-amber-100 bg-amber-50/40 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <span className="w-11 h-11 rounded-xl bg-amber-100 text-amber-600 grid place-items-center shrink-0">
+            <ShieldCheck size={20} />
+          </span>
+          <div>
+            <p className="text-[14px] font-bold text-amber-800">Emergency power reserve</p>
+            <p className="text-[12px] text-amber-700/90 mt-0.5 leading-relaxed">
+              {reserved > 0 ? (
+                <>
+                  <span className="font-bold">{available.toFixed(1)} kWh available</span> ·{' '}
+                  <span className="font-bold">{reserved.toFixed(1)} kWh set aside</span> for emergencies. Release it if
+                  you need it.
+                </>
+              ) : (
+                <>
+                  Set aside part of your balance that can't be accidentally spent — unlock it only when you really need
+                  it.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {reserved > 0 ? (
+            <button
+              onClick={releaseReserve}
+              disabled={reserveSaving}
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[12px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {reserveSaving ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={14} />} Release reserve
+            </button>
+          ) : (
+            <button
+              onClick={() => setReserveOpen((v) => !v)}
+              className="shrink-0 ps-btn-outline !px-4 !py-2.5"
+            >
+              Set reserve
+            </button>
+          )}
+        </div>
+      </div>
+
+      {reserveOpen && reserved <= 0 && (
+        <div className="ps-card p-4 border-amber-100">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[180px]">
+              <label className="ps-label">Reserve (kWh)</label>
+              <input
+                type="number"
+                min={0}
+                max={remaining}
+                step={0.5}
+                value={reserveInput}
+                onChange={(e) => setReserveInput(e.target.value)}
+                placeholder={`Up to ${remaining.toFixed(1)} kWh`}
+                className="ps-input"
+              />
+              <p className="text-[11px] text-gray-400 mt-1">Max {remaining.toFixed(1)} kWh · available {available.toFixed(1)} kWh</p>
+            </div>
+            <button onClick={saveReserve} disabled={reserveSaving} className="ps-btn !px-4 !py-2 disabled:opacity-50">
+              {reserveSaving ? <RefreshCw size={14} className="animate-spin" /> : <ShieldCheck size={14} />} Save reserve
+            </button>
+          </div>
         </div>
       )}
 

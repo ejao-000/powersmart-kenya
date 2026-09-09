@@ -50,6 +50,7 @@ func main() {
 	savingsH := handlers.NewSavingsHandler(db)
 	merchantH := handlers.NewMerchantHandler(db)
 	marketH := handlers.NewMarketplaceHandler(db)
+	powerH := handlers.NewPowerHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -168,6 +169,16 @@ func main() {
 	mux.Handle("POST /api/challenges/{key}/claim", protected(http.HandlerFunc(savingsH.ClaimChallenge)))
 	mux.Handle("GET /api/challenges/leaderboard", protected(http.HandlerFunc(savingsH.Leaderboard)))
 	mux.Handle("GET /api/impact/carbon", protected(http.HandlerFunc(savingsH.Carbon)))
+	mux.Handle("GET /api/impact/score", protected(http.HandlerFunc(savingsH.Score)))
+
+	// Emergency power (reserve + "I need power" requests)
+	mux.Handle("GET /api/meter/reserve", protected(http.HandlerFunc(powerH.Reserve)))
+	mux.Handle("PUT /api/meter/reserve", protected(http.HandlerFunc(powerH.SetReserve)))
+	mux.Handle("POST /api/meter/reserve/release", protected(http.HandlerFunc(powerH.ReleaseReserve)))
+	mux.Handle("POST /api/power-requests", protected(http.HandlerFunc(powerH.CreateRequest)))
+	mux.Handle("GET /api/power-requests", protected(http.HandlerFunc(powerH.ListRequests)))
+	mux.Handle("POST /api/power-requests/{id}/fulfill", protected(http.HandlerFunc(powerH.FulfilRequest)))
+	mux.Handle("POST /api/power-requests/{id}/cancel", protected(http.HandlerFunc(powerH.CancelRequest)))
 
 	// Merchant / vendor mode
 	mux.Handle("POST /api/merchant/apply", protected(http.HandlerFunc(merchantH.Apply)))
@@ -281,6 +292,14 @@ func logRoutes() {
 	log.Println("  POST /api/challenges/{key}/claim")
 	log.Println("  GET  /api/challenges/leaderboard")
 	log.Println("  GET  /api/impact/carbon")
+	log.Println("  GET  /api/impact/score")
+	log.Println("  GET  /api/meter/reserve")
+	log.Println("  PUT  /api/meter/reserve")
+	log.Println("  POST /api/meter/reserve/release")
+	log.Println("  POST /api/power-requests")
+	log.Println("  GET  /api/power-requests")
+	log.Println("  POST /api/power-requests/{id}/fulfill")
+	log.Println("  POST /api/power-requests/{id}/cancel")
 	log.Println("  POST /api/merchant/apply")
 	log.Println("  GET  /api/merchant/me")
 	log.Println("  POST /api/merchant/float")

@@ -11,6 +11,7 @@ import {
   Store,
   WifiOff,
   ShoppingBag,
+  HandCoins,
   ZapOff,
   Cable,
   SlidersHorizontal,
@@ -28,6 +29,7 @@ import { SavingsHub } from '../pages/SavingsHub';
 import { MerchantMode } from '../pages/MerchantMode';
 import { OfflineKit } from '../pages/OfflineKit';
 import { Marketplace } from '../pages/Marketplace';
+import { PowerHelp } from '../pages/PowerHelp';
 import { OutagesPage } from '../pages/OutagesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -48,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'merchant', label: 'Vendor Mode', icon: Store },
   { id: 'offline', label: 'Offline Kit', icon: WifiOff },
   { id: 'market', label: 'Marketplace', icon: ShoppingBag },
+  { id: 'help', label: 'Power Help', icon: HandCoins },
   { id: 'system', label: 'Outages', icon: ZapOff },
   { id: 'settings', label: 'Alerts & Settings', icon: SlidersHorizontal },
 ];
@@ -70,6 +73,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     merchant: 'Vendor Mode',
     offline: 'Offline Kit',
     market: 'Marketplace',
+    help: 'Power Help',
     insights: 'Unit Insights',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
@@ -112,6 +116,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
         return <OfflineKit />;
       case 'market':
         return <Marketplace />;
+      case 'help':
+        return <PowerHelp />;
       case 'system':
         return <OutagesPage />;
       case 'settings':

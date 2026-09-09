@@ -159,6 +159,22 @@ func (h *SavingsHandler) Carbon(w http.ResponseWriter, r *http.Request) {
 	utils.RespondJSON(w, http.StatusOK, carbon)
 }
 
+// Score godoc
+// GET /api/impact/score
+func (h *SavingsHandler) Score(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+	score, err := h.svc.Score(userID)
+	if err != nil {
+		if errors.Is(err, service.ErrInvalid) {
+			utils.RespondBadRequest(w, err.Error())
+			return
+		}
+		utils.RespondInternalError(w)
+		return
+	}
+	utils.RespondJSON(w, http.StatusOK, score)
+}
+
 func (h *SavingsHandler) writeSavingsError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, repositories.ErrNotFound):
