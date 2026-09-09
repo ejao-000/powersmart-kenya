@@ -5,12 +5,14 @@ import {
   Receipt,
   Coins,
   Activity,
+  Store,
 } from 'lucide-react';
 import { PortalLayout, PortalPage, NavItem, AppNotification } from '../layouts/PortalLayout';
 import { PlatformOverview } from '../pages/PlatformOverview';
 import { TransactionsPage } from '../pages/TransactionsPage';
 import { UserManagement } from '../pages/UserManagement';
 import { BulkDistribution } from '../pages/BulkDistribution';
+import { VendorApprovals } from '../pages/VendorApprovals';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -23,6 +25,7 @@ const NAV: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'transactions', label: 'Transactions', icon: Receipt },
   { id: 'users', label: 'User Management', icon: Users },
+  { id: 'merchant', label: 'Vendor Approvals', icon: Store },
   { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
   { id: 'system', label: 'System Config', icon: Activity },
 ];
@@ -53,7 +56,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     pools: 'Power Pools',
     insights: 'Unit Insights',
     savings: 'Savings Hub',
-    merchant: 'Vendor Mode',
+    merchant: 'Vendor Approvals',
     offline: 'Offline Kit',
     market: 'Marketplace',
     meter: 'Meter Management',
@@ -78,6 +81,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     >
       {page === 'dashboard' && <PlatformOverview onNavigateTransactions={() => setPage('transactions')} />}
       {page === 'users' && <UserManagement />}
+      {page === 'merchant' && <VendorApprovals />}
       {page === 'transactions' && <TransactionsPage />}
       {page === 'tokens' && <BulkDistribution />}
       {page === 'system' && <SystemHealth />}

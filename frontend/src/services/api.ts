@@ -236,6 +236,9 @@ export const adminApi = {
   users: () => request<AdminUser[]>('/admin/users'),
   meters: () => request<AdminMeter[]>('/admin/meters'),
   transactions: () => request<AdminTransaction[]>('/admin/transactions'),
+  merchants: () => request<MerchantProfile[]>('/admin/merchants'),
+  setMerchantStatus: (id: string, status: string) =>
+    request<MerchantProfile>(`/admin/merchants/${id}/status`, { method: 'POST', body: { status } }),
 };
 
 function apiBase(): string {

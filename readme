@@ -45,7 +45,7 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Energy Marketplace** — an energy-saving product catalogue (solar, LEDs, smart plugs, efficient appliances, audits) where the AI recommends items with reasons drawn from your appliance mix and spend: e.g. “your water heater is ~31% of usage — a solar water heater could cut that demand.”
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
-- **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
+- **Dedicated admin console** — global stats, user list, meter fleet, token ledger, payment audit trail and vendor approvals (activate / suspend merchant accounts).
 - **Security-first** — bcrypt password hashing, signed expiring JWTs, rate-limited auth, security headers, input validation, webhook secrets and RBAC.
 
 ## Tech stack
