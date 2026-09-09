@@ -182,6 +182,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onJoin, onLogin }) => 
               'Buy power via M-Pesa in one tap',
               'AI Energy Coach for your home',
               'Appliance insights & budget planner',
+              'Shared power pools with housemates',
               'Low-balance alerts & auto top-up',
             ]}
           />

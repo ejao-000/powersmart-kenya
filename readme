@@ -33,6 +33,7 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **AI-style predictions** — run-out forecast with confidence level plus "how long does a KSh 200/500/1,000/2,000 token last" estimates.
 - **Energy Intelligence hub** — a combined AI energy coach, appliance-level insights and monthly budget planner per meter. It detects week-over-week usage jumps, explains what probably caused them (e.g. a left-on geyser), estimates each registered appliance's share of the bill, projects your full-month spend at the current pace ("likely to spend KSh 3,240 this month") and warns you before you exceed the budget you set.
 - **Low-balance alerts** — push / email / SMS rules with configurable thresholds.
+- **Power Pools (shared electricity wallet)** — groups of people (families, housemates, hostels, small businesses) pool money around a shared meter. Members join by invite code, contribute KSh via M-Pesa/Airtel/bank, and authorised members buy tokens from the pooled balance. Roles and permissions gate who can manage members or buy tokens; a per-pool ledger records every contribution and purchase plus each member's share.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
@@ -215,6 +216,15 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | POST | `/api/energy/appliances` | Register an appliance (`name`, `watts`, `hours_per_day`) |
 | PUT | `/api/energy/appliances/{id}` | Edit an appliance (name / watts / hours per day) |
 | DELETE | `/api/energy/appliances/{id}` | Remove an appliance |
+| POST | `/api/pools` | Create a Power Pool around a meter I own |
+| GET | `/api/pools` | List pools I belong to |
+| GET | `/api/pools/{id}` | Pool detail: members + contribution/purchase ledger |
+| POST | `/api/pools/join` | Join a pool with an invite code |
+| POST | `/api/pools/{id}/contributions` | Add money to the pool wallet |
+| POST | `/api/pools/{id}/purchase` | Buy a token from the pooled balance |
+| POST | `/api/pools/{id}/members` | Add a member by email (owner/admin) |
+| PATCH | `/api/pools/{id}/members/{memberId}` | Change a member's role/permissions |
+| DELETE | `/api/pools/{id}/members/{memberId}` | Remove a member / leave the pool |
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
@@ -253,6 +263,10 @@ PostgreSQL tables are created automatically on first run (`backend/config/databa
 - `alerts` — alert rules
 - `energy_budgets` — per-meter monthly spend targets (Energy Intelligence)
 - `appliances` — registered household appliances for consumption modelling
+- `power_pools` — shared electricity wallets (name, meter, invite code, creator)
+- `pool_members` — who belongs to each pool plus roles/permissions
+- `pool_contributions` — money added to a pool wallet
+- `pool_expenses` — token purchases paid from a pool wallet
 
 ## Security
 
