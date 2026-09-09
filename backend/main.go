@@ -45,6 +45,7 @@ func main() {
 	outageH := handlers.NewOutageHandler(db)
 	usageH := handlers.NewUsageHandler(db)
 	energyH := handlers.NewEnergyHandler(db)
+	poolH := handlers.NewPoolHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -136,6 +137,17 @@ func main() {
 	mux.Handle("PUT /api/energy/appliances/{id}", protected(http.HandlerFunc(energyH.UpdateAppliance)))
 	mux.Handle("DELETE /api/energy/appliances/{id}", protected(http.HandlerFunc(energyH.DeleteAppliance)))
 
+	// Power Pools (shared electricity wallets)
+	mux.Handle("POST /api/pools", protected(http.HandlerFunc(poolH.Create)))
+	mux.Handle("GET /api/pools", protected(http.HandlerFunc(poolH.List)))
+	mux.Handle("GET /api/pools/{id}", protected(http.HandlerFunc(poolH.Detail)))
+	mux.Handle("POST /api/pools/join", protected(http.HandlerFunc(poolH.Join)))
+	mux.Handle("POST /api/pools/{id}/contributions", protected(http.HandlerFunc(poolH.Contribute)))
+	mux.Handle("POST /api/pools/{id}/purchase", protected(http.HandlerFunc(poolH.Purchase)))
+	mux.Handle("POST /api/pools/{id}/members", protected(http.HandlerFunc(poolH.AddMember)))
+	mux.Handle("PATCH /api/pools/{id}/members/{memberId}", protected(http.HandlerFunc(poolH.UpdateMember)))
+	mux.Handle("DELETE /api/pools/{id}/members/{memberId}", protected(http.HandlerFunc(poolH.RemoveMember)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -219,5 +231,14 @@ func logRoutes() {
 	log.Println("  POST /api/energy/appliances")
 	log.Println("  PUT  /api/energy/appliances/{id}")
 	log.Println("  DELETE /api/energy/appliances/{id}")
+	log.Println("  POST /api/pools")
+	log.Println("  GET  /api/pools")
+	log.Println("  GET  /api/pools/{id}")
+	log.Println("  POST /api/pools/join")
+	log.Println("  POST /api/pools/{id}/contributions")
+	log.Println("  POST /api/pools/{id}/purchase")
+	log.Println("  POST /api/pools/{id}/members")
+	log.Println("  PATCH /api/pools/{id}/members/{memberId}")
+	log.Println("  DELETE /api/pools/{id}/members/{memberId}")
 	log.Println("  (API-only — the frontend is served separately)")
 }

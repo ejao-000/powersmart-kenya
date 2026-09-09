@@ -24,10 +24,10 @@ type KPTokenProvider interface {
 }
 
 // TokenService manages the full lifecycle of a power token:
-//  - Purchase flow (create transaction → call KP API → store token)
-//  - History listing and soft-deletion
-//  - Units-per-ksh rate calculation
-//  - Transfer (send token value to another registered meter)
+//   - Purchase flow (create transaction → call KP API → store token)
+//   - History listing and soft-deletion
+//   - Units-per-ksh rate calculation
+//   - Transfer (send token value to another registered meter)
 type TokenService struct {
 	tokenRepo  *repositories.TokenRepo
 	meterRepo  *repositories.MeterRepo
@@ -249,6 +249,45 @@ func (s *TokenService) TransferUnits(senderID string, req *model.TransferTokenRe
 	return token, nil
 }
 
+// BuyTokenForPool issues and stores a token against an arbitrary meter on behalf
+// of the calling user, without a payment transaction (the pool ledger records the
+// money side). Used by Power Pool token purchases.
+func (s *TokenService) BuyTokenForPool(userID, meterID string, amountKsh int, paymentRef string) (*model.Token, error) {
+	if amountKsh < 50 {
+		return nil, ErrInvalidAmount
+	}
+
+	meter, err := s.meterRepo.GetByID(meterID)
+	if err != nil {
+		return nil, fmt.Errorf("meter not found: %w", err)
+	}
+
+	tokenNumber, units, err := s.kpProvider.IssueToken(meter.MeterNumber, amountKsh)
+	if err != nil {
+		return nil, fmt.Errorf("KP token issuance failed: %w", err)
+	}
+
+	if paymentRef == "" {
+		paymentRef = "POOL-" + uuid.NewString()[:8]
+	}
+
+	token := &model.Token{
+		ID:          uuid.NewString(),
+		UserID:      userID,
+		MeterID:     meter.ID,
+		TokenNumber: tokenNumber,
+		Units:       units,
+		AmountKsh:   amountKsh,
+		PaymentRef:  paymentRef,
+		PushStatus:  model.PushPending,
+		PurchasedAt: time.Now(),
+	}
+	if err := s.tokenRepo.Create(token); err != nil {
+		return nil, fmt.Errorf("failed to save token: %w", err)
+	}
+	return token, nil
+}
+
 // ListHistory returns all non-deleted tokens for a user, newest first.
 func (s *TokenService) ListHistory(userID string) ([]*model.Token, error) {
 	tokens, err := s.tokenRepo.ListByUser(userID)
@@ -293,7 +332,7 @@ type mockKPProvider struct{}
 
 func (m *mockKPProvider) IssueToken(meterNumber string, amountKsh int) (string, float64, error) {
 	// Generate a deterministic-looking 20-digit token from the amount and time
-	token := fmt.Sprintf("%020d", time.Now().UnixMilli()% 10_000_000_000_000_000)
+	token := fmt.Sprintf("%020d", time.Now().UnixMilli()%10_000_000_000_000_000)
 	units := float64(amountKsh) * 0.20 // ~20 kWh per Ksh 100 (mock rate)
 	return token, units, nil
 }
