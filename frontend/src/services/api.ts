@@ -685,6 +685,51 @@ export const savings = {
   carbon: () => request<CarbonSummary>('/impact/carbon'),
 };
 
+// ── Merchant / vendor mode ───────────────────────────────────────────────────
+
+export interface MerchantProfile {
+  id: string;
+  user_id: string;
+  user_name?: string;
+  business_name: string;
+  status: 'pending' | 'active' | 'suspended';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MerchantLedger {
+  id: string;
+  type: 'topup' | 'sale';
+  amount_ksh: number;
+  reference?: string;
+  customer_account?: string;
+  created_at: string;
+}
+
+export interface MerchantStatus {
+  profile: MerchantProfile | null;
+  float_ksh: number;
+  total_topups_ksh: number;
+  total_sales_ksh: number;
+  sales_count: number;
+  recent_sales: MerchantLedger[];
+}
+
+export interface VendResult {
+  token: Token;
+  balance_ksh: number;
+  customer_name?: string;
+}
+
+export const merchant = {
+  apply: (body: { business_name: string }) => request<MerchantProfile>('/merchant/apply', { method: 'POST', body }),
+  me: () => request<MerchantStatus>('/merchant/me'),
+  topup: (body: { amount_ksh: number; channel: string }) =>
+    request<MerchantStatus>('/merchant/float', { method: 'POST', body }),
+  vend: (body: { meter_account: string; amount_ksh: number }) =>
+    request<VendResult>('/merchant/vend', { method: 'POST', body }),
+};
+
 // Builds and triggers a client-side CSV download.
 export function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
   const escape = (v: string | number) => {
