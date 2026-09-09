@@ -130,6 +130,22 @@ func RunMigrations(db *sql.DB) {
 			status        TEXT DEFAULT 'reported',
 			created_at    TIMESTAMPTZ DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS energy_budgets (
+			id                 TEXT PRIMARY KEY,
+			meter_id           TEXT NOT NULL UNIQUE REFERENCES meters(id),
+			monthly_budget_ksh DOUBLE PRECISION NOT NULL DEFAULT 2000,
+			created_at         TIMESTAMPTZ DEFAULT now(),
+			updated_at         TIMESTAMPTZ DEFAULT now()
+		)`,
+		`CREATE TABLE IF NOT EXISTS appliances (
+			id            TEXT PRIMARY KEY,
+			meter_id      TEXT NOT NULL REFERENCES meters(id),
+			name          TEXT NOT NULL,
+			watts         DOUBLE PRECISION NOT NULL,
+			hours_per_day DOUBLE PRECISION NOT NULL DEFAULT 0,
+			created_at    TIMESTAMPTZ DEFAULT now(),
+			updated_at    TIMESTAMPTZ DEFAULT now()
+		)`,
 	}
 
 	for _, stmt := range statements {
