@@ -51,6 +51,7 @@ func main() {
 	merchantH := handlers.NewMerchantHandler(db)
 	marketH := handlers.NewMarketplaceHandler(db)
 	powerH := handlers.NewPowerHandler(db)
+	backupH := handlers.NewBackupHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -138,6 +139,7 @@ func main() {
 	// Outages (community power-outage reports + map)
 	mux.Handle("GET /api/outages", protected(http.HandlerFunc(outageH.List)))
 	mux.Handle("POST /api/outages", protected(http.HandlerFunc(outageH.Report)))
+	mux.Handle("GET /api/outages/risk", protected(http.HandlerFunc(outageH.Risk)))
 
 	// Energy Intelligence (budget planner + appliance insights + AI coach)
 	mux.Handle("GET /api/energy/intel", protected(http.HandlerFunc(energyH.Intel)))
@@ -182,6 +184,11 @@ func main() {
 	mux.Handle("GET /api/power-requests", protected(http.HandlerFunc(powerH.ListRequests)))
 	mux.Handle("POST /api/power-requests/{id}/fulfill", protected(http.HandlerFunc(powerH.FulfilRequest)))
 	mux.Handle("POST /api/power-requests/{id}/cancel", protected(http.HandlerFunc(powerH.CancelRequest)))
+
+	// Backup power manager
+	mux.Handle("GET /api/backup", protected(http.HandlerFunc(backupH.List)))
+	mux.Handle("PUT /api/backup", protected(http.HandlerFunc(backupH.Upsert)))
+	mux.Handle("DELETE /api/backup/{id}", protected(http.HandlerFunc(backupH.Delete)))
 
 	// Merchant / vendor mode
 	mux.Handle("POST /api/merchant/apply", protected(http.HandlerFunc(merchantH.Apply)))
@@ -272,6 +279,7 @@ func logRoutes() {
 	log.Println("  GET  /api/transactions")
 	log.Println("  GET  /api/outages")
 	log.Println("  POST /api/outages")
+	log.Println("  GET  /api/outages/risk")
 	log.Println("  GET  /api/energy/intel")
 	log.Println("  PUT  /api/energy/budget")
 	log.Println("  POST /api/energy/appliances")
@@ -306,6 +314,9 @@ func logRoutes() {
 	log.Println("  GET  /api/power-requests")
 	log.Println("  POST /api/power-requests/{id}/fulfill")
 	log.Println("  POST /api/power-requests/{id}/cancel")
+	log.Println("  GET  /api/backup")
+	log.Println("  PUT  /api/backup")
+	log.Println("  DELETE /api/backup/{id}")
 	log.Println("  POST /api/merchant/apply")
 	log.Println("  GET  /api/merchant/me")
 	log.Println("  POST /api/merchant/float")

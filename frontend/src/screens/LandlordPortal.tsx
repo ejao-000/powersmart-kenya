@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   HandCoins,
   Mic,
+  BatteryCharging,
   Activity,
 } from 'lucide-react';
 import { PortalLayout, PortalPage, NavItem, AppNotification } from '../layouts/PortalLayout';
@@ -28,6 +29,7 @@ import { OfflineKit } from '../pages/OfflineKit';
 import { Marketplace } from '../pages/Marketplace';
 import { PowerHelp } from '../pages/PowerHelp';
 import { VoiceAssistant } from '../pages/VoiceAssistant';
+import { BackupPower } from '../pages/BackupPower';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 import { meters, Meter, getSession } from '../services/api';
@@ -50,6 +52,7 @@ const NAV: NavItem[] = [
   { id: 'market', label: 'Marketplace', icon: ShoppingBag },
   { id: 'help', label: 'Power Help', icon: HandCoins },
   { id: 'voice', label: 'Voice Assistant', icon: Mic },
+  { id: 'backup', label: 'Backup Power', icon: BatteryCharging },
   { id: 'system', label: 'System Health', icon: Activity },
 ];
 
@@ -107,6 +110,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     market: 'Marketplace',
     help: 'Power Help',
     voice: 'Voice Assistant',
+    backup: 'Backup Power',
     system: 'System Health',
     settings: 'Alerts & Configuration',
     transactions: 'Transactions',
@@ -153,6 +157,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
       {page === 'market' && <Marketplace />}
       {page === 'help' && <PowerHelp />}
       {page === 'voice' && <VoiceAssistant />}
+      {page === 'backup' && <BackupPower />}
       {page === 'system' && <SystemHealth />}
       {page === 'settings' && <SettingsPage role="landlord" />}
     </PortalLayout>

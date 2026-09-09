@@ -12,7 +12,7 @@ import {
   Info,
 } from 'lucide-react';
 import { SectionCard } from './ui';
-import { outages, Outage, fmtDateTime } from '../services/api';
+import { outages, Outage, OutageRisk, fmtDateTime } from '../services/api';
 
 const MAINTENANCE = [
   { area: 'Westlands Substation', date: 'Tue 3 Sep', time: '22:00 – 05:00' },
@@ -32,11 +32,16 @@ export const OutagesPage: React.FC = () => {
   const [sms, setSms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [risk, setRisk] = useState<OutageRisk | null>(null);
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInst = useRef<L.Map | null>(null);
 
   useEffect(() => {
     outages.list().then(setOutageList).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    outages.risk().then(setRisk).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -96,6 +101,44 @@ export const OutagesPage: React.FC = () => {
       {notice && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
           <Check size={16} /> {notice}
+        </div>
+      )}
+
+      {/* Blackout predictor */}
+      {risk && (
+        <div
+          className={`ps-card p-5 border ${
+            risk.risk_pct >= 55 ? 'bg-red-50 border-red-100' : risk.risk_pct >= 30 ? 'bg-amber-50 border-amber-100' : 'bg-emerald-50 border-emerald-100'
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className={`w-12 h-12 rounded-xl grid place-items-center shrink-0 text-white ${risk.risk_pct >= 55 ? 'bg-red-500' : risk.risk_pct >= 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}>
+                <AlertTriangle size={22} />
+              </span>
+              <div>
+                <p className={`text-[15px] font-bold ${risk.risk_pct >= 55 ? 'text-red-700' : risk.risk_pct >= 30 ? 'text-amber-800' : 'text-emerald-700'}`}>
+                  Blackout risk: {risk.risk_pct}% — {risk.level.replace('_', ' ')}
+                </p>
+                <p className="text-[12px] text-gray-500 mt-0.5">{risk.reasons.join(' ')}</p>
+              </div>
+            </div>
+            <div className="min-w-[180px] flex-1 sm:max-w-[260px]">
+              <div className="h-3 rounded-full bg-white/70 overflow-hidden border border-black/5">
+                <div
+                  className={`h-full rounded-full ${risk.risk_pct >= 55 ? 'bg-red-500' : risk.risk_pct >= 30 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                  style={{ width: `${risk.risk_pct}%` }}
+                />
+              </div>
+              <div className="mt-2 flex gap-x-4 gap-y-1 flex-wrap">
+                {risk.tips.slice(0, 2).map((tip, i) => (
+                  <span key={i} className="text-[11px] text-gray-500 flex items-center gap-1">
+                    <Check size={11} className={risk.risk_pct >= 55 ? 'text-red-400' : 'text-emerald-500'} /> {tip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

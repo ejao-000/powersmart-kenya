@@ -238,6 +238,17 @@ func RunMigrations(db *sql.DB) {
 			created_at   TIMESTAMPTZ DEFAULT now(),
 			fulfilled_at TIMESTAMPTZ
 		)`,
+		`CREATE TABLE IF NOT EXISTS backup_sources (
+			id          TEXT PRIMARY KEY,
+			user_id     TEXT NOT NULL REFERENCES users(id),
+			type        TEXT NOT NULL,
+			name        TEXT NOT NULL DEFAULT '',
+			capacity_kwh DOUBLE PRECISION NOT NULL DEFAULT 0,
+			charge_pct  DOUBLE PRECISION NOT NULL DEFAULT 100,
+			created_at  TIMESTAMPTZ DEFAULT now(),
+			updated_at  TIMESTAMPTZ DEFAULT now(),
+			UNIQUE (user_id, type)
+		)`,
 		`CREATE TABLE IF NOT EXISTS marketplace_products (
 			id                    TEXT PRIMARY KEY,
 			category              TEXT NOT NULL,

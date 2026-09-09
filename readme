@@ -49,6 +49,9 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Receipt scanner** — paste a KPLC SMS/paper receipt in Token History and PowerSmart extracts the 20-digit token, amount, units and date, then saves it to your history (duplicates rejected) so no token is ever lost.
 - **Voice Power Assistant** — ask your meter questions with your voice (Web Speech API) or by typing: balance, run-out estimate, usage, and guided purchases — with spoken replies you can mute.
 - **Neighborhood energy challenges** — set your estate/area and your challenge points start counting toward a local leaderboard that ranks neighborhoods (e.g. Kilimani vs South B) by savings effort.
+- **Blackout predictor** — estimates the chance of an outage in your neighborhood from recent community reports and advises when to charge devices / top up backup power (`GET /api/outages/risk`).
+- **Backup Power Manager** — track solar/inverter/battery/generator/power-station sources with capacity and charge, and see your estimated runtime at any load (`GET/PUT/DELETE /api/backup`).
+- **Power transfer QR** — the emergency-transfer panel can render a scannable QR encoding the recipient meter + amount for quick in-person transfers.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger, payment audit trail and vendor approvals (activate / suspend merchant accounts).
@@ -273,6 +276,10 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | GET | `/api/impact/score` | Monthly green energy score (0–100 + grade) |
 | GET/PUT | `/api/meter/reserve` | Read / set the emergency power reserve (kWh) |
 | POST | `/api/meter/reserve/release` | Unlock the emergency reserve |
+| GET | `/api/outages/risk` | Estimated blackout risk for my neighborhood |
+| GET/PUT | `/api/backup` | List / upsert my backup power sources |
+| DELETE | `/api/backup/{id}` | Remove a backup source |
+| POST | `/api/meter/reserve/release` | Unlock the emergency reserve |
 | POST | `/api/power-requests` | Ask the community for emergency power |
 | GET | `/api/power-requests` | Open requests + my requests |
 | POST | `/api/power-requests/{id}/fulfill` | Send power to a requester |
@@ -335,6 +342,7 @@ PostgreSQL tables are created automatically on first run (`backend/config/databa
 - `marketplace_products` — energy-saving product catalogue for recommendations
 - `meter_reserves` — emergency kWh reserved per meter
 - `power_requests` — public “I need power” help requests
+- `backup_sources` — per-user backup power devices (type, capacity, charge)
 
 ## Security
 

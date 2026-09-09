@@ -442,6 +442,34 @@ export const outages = {
   list: () => request<Outage[]>('/outages'),
   report: (body: { area: string; latitude: number; longitude: number; description: string }) =>
     request<Outage>('/outages', { method: 'POST', body }),
+  risk: () => request<OutageRisk>('/outages/risk'),
+};
+
+export interface OutageRisk {
+  risk_pct: number;
+  level: 'low' | 'moderate' | 'high' | 'very_high';
+  reasons: string[];
+  tips: string[];
+}
+
+// ── Backup power manager ─────────────────────────────────────────────────────
+
+export interface BackupSource {
+  id: string;
+  user_id: string;
+  type: 'solar' | 'inverter' | 'battery' | 'generator' | 'power_station';
+  name: string;
+  capacity_kwh: number;
+  charge_pct: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const backup = {
+  list: () => request<BackupSource[]>('/backup'),
+  upsert: (body: { type: string; name?: string; capacity_kwh: number; charge_pct?: number }) =>
+    request<BackupSource>('/backup', { method: 'PUT', body }),
+  remove: (id: string) => request(`/backup/${id}`, { method: 'DELETE' }),
 };
 
 // ── Alerts ───────────────────────────────────────────────────────────────────

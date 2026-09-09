@@ -469,6 +469,22 @@ export const TokenHistoryPage: React.FC = () => {
               The recipient must have a PowerSmart account linked to that meter number. Sending power is recorded in
               your token history.
             </p>
+            {sendAccount.trim() && parseInt(sendAmount) > 0 && (
+              <div className="mt-3 pt-3 border-t border-amber-100">
+                <p className="text-[11px] font-bold text-amber-700 mb-2">…or share as a QR code</p>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+                    `powersmart://send?meter=${encodeURIComponent(sendAccount.trim())}&amount=${parseInt(sendAmount) || 0}`
+                  )}`}
+                  alt="Power transfer QR"
+                  className="w-36 h-36 rounded-xl border border-amber-200 bg-white p-2"
+                />
+                <p className="mt-2 text-[11px] text-amber-700/70">
+                  The other person scans this in the PowerSmart app to auto-fill the transfer. Works offline at
+                  point-of-sale style transfers.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

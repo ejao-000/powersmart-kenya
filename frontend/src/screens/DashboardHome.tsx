@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   HandCoins,
   Mic,
+  BatteryCharging,
   ZapOff,
   Cable,
   SlidersHorizontal,
@@ -32,6 +33,7 @@ import { OfflineKit } from '../pages/OfflineKit';
 import { Marketplace } from '../pages/Marketplace';
 import { PowerHelp } from '../pages/PowerHelp';
 import { VoiceAssistant } from '../pages/VoiceAssistant';
+import { BackupPower } from '../pages/BackupPower';
 import { OutagesPage } from '../pages/OutagesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -54,6 +56,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'market', label: 'Marketplace', icon: ShoppingBag },
   { id: 'help', label: 'Power Help', icon: HandCoins },
   { id: 'voice', label: 'Voice Assistant', icon: Mic },
+  { id: 'backup', label: 'Backup Power', icon: BatteryCharging },
   { id: 'system', label: 'Outages', icon: ZapOff },
   { id: 'settings', label: 'Alerts & Settings', icon: SlidersHorizontal },
 ];
@@ -78,6 +81,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     market: 'Marketplace',
     help: 'Power Help',
     voice: 'Voice Assistant',
+    backup: 'Backup Power',
     insights: 'Unit Insights',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
@@ -124,6 +128,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
         return <PowerHelp />;
       case 'voice':
         return <VoiceAssistant />;
+      case 'backup':
+        return <BackupPower />;
       case 'system':
         return <OutagesPage />;
       case 'settings':
