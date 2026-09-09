@@ -134,6 +134,72 @@ export interface Outage {
   created_at: string;
 }
 
+export type CoachSeverity = 'success' | 'info' | 'warning' | 'critical';
+
+export interface EnergyBudget {
+  id: string;
+  meter_id: string;
+  monthly_budget_ksh: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EnergyAppliance {
+  id: string;
+  meter_id: string;
+  name: string;
+  watts: number;
+  hours_per_day: number;
+  created_at: string;
+  updated_at: string;
+  daily_kwh: number;
+  monthly_kwh: number;
+  daily_cost_ksh: number;
+  monthly_cost_ksh: number;
+  share_pct: number;
+}
+
+export interface EnergyBudgetConfig {
+  monthly_budget_ksh: number;
+  configured: boolean;
+  suggested_ksh: number;
+}
+
+export interface SpendForecast {
+  projected_month_kwh: number;
+  projected_month_cost_ksh: number;
+  last_period_cost_ksh: number;
+  delta_ksh: number;
+  delta_pct: number;
+  overrun_ksh: number;
+  budget_used_pct: number;
+  status: 'ok' | 'warning' | 'critical';
+}
+
+export interface CoachInsight {
+  severity: CoachSeverity;
+  title: string;
+  message: string;
+}
+
+export interface EnergyIntel {
+  meter_id: string;
+  meter_name: string;
+  tariff_ksh: number;
+  units_remaining: number;
+  days_remaining: number;
+  depletion_date: string | null;
+  confidence_level: string;
+  recommended_topup_ksh: number;
+  budget: EnergyBudgetConfig;
+  forecast: SpendForecast;
+  usage: UsageSummary;
+  appliances: EnergyAppliance[];
+  model_coverage_pct: number;
+  coach: CoachInsight[];
+  generated_at: string;
+}
+
 export interface AdminUser {
   id: string;
   name: string;
@@ -366,6 +432,29 @@ export const alerts = {
   update: (id: string, body: { threshold?: number; channel?: string; enabled?: boolean }) =>
     request<Alert>(`/alerts/${id}`, { method: 'PUT', body }),
   remove: (id: string) => request(`/alerts/${id}`, { method: 'DELETE' }),
+};
+
+// ── Energy Intelligence (budget planner + appliance insights + AI coach) ─────
+
+export const energy = {
+  intel: (meterId?: string) =>
+    request<EnergyIntel>(
+      '/energy/intel' + (meterId ? `?meter_id=${encodeURIComponent(meterId)}` : '')
+    ),
+  saveBudget: (body: { meter_id?: string; monthly_budget_ksh: number }) =>
+    request<EnergyBudget>('/energy/budget', { method: 'PUT', body }),
+  addAppliance: (body: {
+    meter_id?: string;
+    name: string;
+    watts: number;
+    hours_per_day: number;
+  }) => request<EnergyAppliance>('/energy/appliances', { method: 'POST', body }),
+  updateAppliance: (
+    id: string,
+    body: { name?: string; watts?: number; hours_per_day?: number }
+  ) => request<EnergyAppliance>(`/energy/appliances/${id}`, { method: 'PUT', body }),
+  removeAppliance: (id: string) =>
+    request(`/energy/appliances/${id}`, { method: 'DELETE' }),
 };
 
 // ── Formatting helpers ───────────────────────────────────────────────────────
