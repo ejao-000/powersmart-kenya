@@ -46,6 +46,7 @@ func main() {
 	usageH := handlers.NewUsageHandler(db)
 	energyH := handlers.NewEnergyHandler(db)
 	poolH := handlers.NewPoolHandler(db)
+	insightsH := handlers.NewInsightsHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -148,6 +149,10 @@ func main() {
 	mux.Handle("PATCH /api/pools/{id}/members/{memberId}", protected(http.HandlerFunc(poolH.UpdateMember)))
 	mux.Handle("DELETE /api/pools/{id}/members/{memberId}", protected(http.HandlerFunc(poolH.RemoveMember)))
 
+	// Landlord intelligence (unit comparison + anomaly detection + reports)
+	mux.Handle("GET /api/insights", protected(http.HandlerFunc(insightsH.Insights)))
+	mux.Handle("GET /api/reports/monthly", protected(http.HandlerFunc(insightsH.MonthlyReport)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -240,5 +245,7 @@ func logRoutes() {
 	log.Println("  POST /api/pools/{id}/members")
 	log.Println("  PATCH /api/pools/{id}/members/{memberId}")
 	log.Println("  DELETE /api/pools/{id}/members/{memberId}")
+	log.Println("  GET  /api/insights")
+	log.Println("  GET  /api/reports/monthly")
 	log.Println("  (API-only — the frontend is served separately)")
 }
