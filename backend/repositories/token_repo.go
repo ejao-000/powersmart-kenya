@@ -83,6 +83,13 @@ func (r *TokenRepo) SoftDelete(id, userID string) error {
 	return nil
 }
 
+// TokenNumberExists reports whether a non-deleted token with this number exists.
+func (r *TokenRepo) TokenNumberExists(number string) (bool, error) {
+	var n int
+	err := r.db.QueryRow(`SELECT COUNT(*) FROM tokens WHERE token_number = $1 AND deleted = 0`, number).Scan(&n)
+	return n > 0, err
+}
+
 // UpdatePushStatus records the outcome of a token push attempt and the method
 // used to deliver it (wifi or bluetooth).
 func (r *TokenRepo) UpdatePushStatus(id string, status model.PushStatus, method string, pushedAt interface{}) error {

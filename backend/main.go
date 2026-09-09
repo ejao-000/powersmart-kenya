@@ -113,6 +113,7 @@ func main() {
 	// Tokens
 	mux.Handle("GET /api/tokens", protected(http.HandlerFunc(tokenH.ListHistory)))
 	mux.Handle("POST /api/tokens/buy", protected(http.HandlerFunc(tokenH.BuyToken)))
+	mux.Handle("POST /api/tokens/import", protected(http.HandlerFunc(tokenH.ImportToken)))
 	mux.Handle("POST /api/tokens/transfer", protected(http.HandlerFunc(tokenH.Transfer)))
 	mux.Handle("POST /api/tokens/{id}/push-bluetooth", protected(http.HandlerFunc(tokenH.PushViaBluetooth)))
 	mux.Handle("DELETE /api/tokens/{id}", protected(http.HandlerFunc(tokenH.DeleteFromHistory)))
@@ -252,6 +253,7 @@ func logRoutes() {
 	log.Println("  PUT  /api/meters/{id}/settings")
 	log.Println("  GET  /api/tokens")
 	log.Println("  POST /api/tokens/buy")
+	log.Println("  POST /api/tokens/import")
 	log.Println("  POST /api/tokens/transfer")
 	log.Println("  POST /api/tokens/{id}/push-bluetooth")
 	log.Println("  DELETE /api/tokens/{id}")

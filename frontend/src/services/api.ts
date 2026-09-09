@@ -398,6 +398,12 @@ export const tokens = {
   list: () => request<Token[]>('/tokens'),
   buy: (body: { amount_ksh: number; payment_channel: string; phone?: string; meter_id?: string }) =>
     request<Token>('/tokens/buy', { method: 'POST', body }),
+  importToken: (body: {
+    token_number: string;
+    amount_ksh?: number;
+    units?: number;
+    purchased_at?: string;
+  }) => request<Token>('/tokens/import', { method: 'POST', body }),
   transfer: (body: { meter_account: string; amount_ksh: number }) =>
     request<Token>('/tokens/transfer', { method: 'POST', body }),
   push: (id: string, action: 'request' | 'confirm' | 'fail', method: 'wifi' | 'bluetooth') =>

@@ -12,6 +12,7 @@ import {
   WifiOff,
   ShoppingBag,
   HandCoins,
+  Mic,
   ZapOff,
   Cable,
   SlidersHorizontal,
@@ -30,6 +31,7 @@ import { MerchantMode } from '../pages/MerchantMode';
 import { OfflineKit } from '../pages/OfflineKit';
 import { Marketplace } from '../pages/Marketplace';
 import { PowerHelp } from '../pages/PowerHelp';
+import { VoiceAssistant } from '../pages/VoiceAssistant';
 import { OutagesPage } from '../pages/OutagesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -51,6 +53,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'offline', label: 'Offline Kit', icon: WifiOff },
   { id: 'market', label: 'Marketplace', icon: ShoppingBag },
   { id: 'help', label: 'Power Help', icon: HandCoins },
+  { id: 'voice', label: 'Voice Assistant', icon: Mic },
   { id: 'system', label: 'Outages', icon: ZapOff },
   { id: 'settings', label: 'Alerts & Settings', icon: SlidersHorizontal },
 ];
@@ -74,6 +77,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     offline: 'Offline Kit',
     market: 'Marketplace',
     help: 'Power Help',
+    voice: 'Voice Assistant',
     insights: 'Unit Insights',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
@@ -118,6 +122,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
         return <Marketplace />;
       case 'help':
         return <PowerHelp />;
+      case 'voice':
+        return <VoiceAssistant />;
       case 'system':
         return <OutagesPage />;
       case 'settings':

@@ -46,6 +46,8 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Power reserve** — set aside part of your balance as an emergency reserve; the dashboard shows balance vs available vs reserved, and you release the reserve only when you truly need it.
 - **Power Help (“I need power”)** — public emergency requests; anyone can fulfil one and PowerSmart issues a token straight onto the requester's meter, recording the helper. Each user can also ask for help and track/cancel their own requests.
 - **Green Energy Score** — a monthly 0–100 efficiency score (grade + usage trend + carbon + challenge points) computed from the meter, shown on the Savings Hub.
+- **Receipt scanner** — paste a KPLC SMS/paper receipt in Token History and PowerSmart extracts the 20-digit token, amount, units and date, then saves it to your history (duplicates rejected) so no token is ever lost.
+- **Voice Power Assistant** — ask your meter questions with your voice (Web Speech API) or by typing: balance, run-out estimate, usage, and guided purchases — with spoken replies you can mute.
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger, payment audit trail and vendor approvals (activate / suspend merchant accounts).
@@ -282,6 +284,7 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | PUT | `/api/meter/settings` | Auto top-up settings |
 | GET | `/api/tokens` | Token history |
 | POST | `/api/tokens/buy` | Purchase a token |
+| POST | `/api/tokens/import` | Add a token from a receipt/SMS (duplicates rejected) |
 | POST | `/api/tokens/{id}/push-bluetooth` | Push token to meter (`?action=request\|confirm\|fail&method=wifi\|bluetooth`) |
 | DELETE | `/api/tokens/{id}` | Remove a token from history |
 | GET | `/api/transactions` | Payment history |

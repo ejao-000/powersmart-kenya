@@ -6,10 +6,10 @@ import "time"
 type PushStatus string
 
 const (
-	PushPending  PushStatus = "pending"
-	PushSuccess  PushStatus = "success"
-	PushFailed   PushStatus = "failed"
-	PushManual   PushStatus = "manual" // user opted to enter manually
+	PushPending PushStatus = "pending"
+	PushSuccess PushStatus = "success"
+	PushFailed  PushStatus = "failed"
+	PushManual  PushStatus = "manual" // user opted to enter manually
 )
 
 // PushMethod is how the token was delivered to the meter.
@@ -40,8 +40,8 @@ type Token struct {
 type BuyTokenRequest struct {
 	AmountKsh      int    `json:"amount_ksh"    validate:"required,min=50"`
 	PaymentChannel string `json:"payment_channel" validate:"required,oneof=mpesa airtel bank"`
-	Phone          string `json:"phone"`         // required for mpesa / airtel
-	MeterID        string `json:"meter_id"`      // optional — buy for a specific meter (landlord multi-meter)
+	Phone          string `json:"phone"`    // required for mpesa / airtel
+	MeterID        string `json:"meter_id"` // optional — buy for a specific meter (landlord multi-meter)
 }
 
 // TransferTokenRequest is the payload for POST /api/tokens/transfer.
@@ -54,4 +54,12 @@ type TransferTokenRequest struct {
 // BluetoothPushRequest optionally carries the BLE device ID if already paired.
 type BluetoothPushRequest struct {
 	DeviceID string `json:"device_id"` // optional — empty means "scan for nearest"
+}
+
+// ImportTokenRequest lets a user add a token read from a paper/screen receipt.
+type ImportTokenRequest struct {
+	TokenNumber string   `json:"token_number"`           // required, 20 digits
+	AmountKsh   *int     `json:"amount_ksh,omitempty"`   // optional — parsed from the receipt
+	Units       *float64 `json:"units,omitempty"`        // optional kWh shown on the receipt
+	PurchasedAt string   `json:"purchased_at,omitempty"` // optional ISO date (RFC3339)
 }

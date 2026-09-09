@@ -79,6 +79,24 @@ func (h *TokenHandler) Transfer(w http.ResponseWriter, r *http.Request) {
 	utils.RespondJSON(w, http.StatusCreated, token)
 }
 
+// ImportToken POST /api/tokens/import — add a token from a paper/SMS receipt.
+func (h *TokenHandler) ImportToken(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromCtx(r.Context())
+
+	var req model.ImportTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.RespondBadRequest(w, "request body is not valid JSON")
+		return
+	}
+
+	token, err := h.tokenSvc.ImportToken(userID, &req)
+	if err != nil {
+		utils.RespondBadRequest(w, err.Error())
+		return
+	}
+	utils.RespondJSON(w, http.StatusCreated, token)
+}
+
 // PushViaBluetooth POST /api/tokens/{id}/push-bluetooth
 // Query params: ?action=confirm|fail|request (default request), ?method=wifi|bluetooth (default bluetooth)
 func (h *TokenHandler) PushViaBluetooth(w http.ResponseWriter, r *http.Request) {

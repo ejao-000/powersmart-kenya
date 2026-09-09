@@ -15,6 +15,7 @@ import {
   Send,
   ChevronDown,
   AlertTriangle,
+  ScanText,
 } from 'lucide-react';
 import { SectionCard } from './ui';
 import { TokenPushControls } from '../components/TokenPushControls';
@@ -40,6 +41,65 @@ export const TokenHistoryPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendNotice, setSendNotice] = useState<string | null>(null);
+
+  // Receipt scanner / manual import.
+  const [scanOpen, setScanOpen] = useState(false);
+  const [raw, setRaw] = useState('');
+  const [draft, setDraft] = useState({ number: '', amount: '', units: '', date: '' });
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
+
+  const parseReceipt = () => {
+    const text = raw;
+    let num = '';
+    const grouped = text.match(/(\d{4})\s+(\d{4})\s+(\d{4})\s+(\d{4})\s+(\d{4})/);
+    if (grouped) {
+      num = grouped.slice(1).join('');
+    } else {
+      const flat = text.match(/\d{20}/);
+      if (flat) num = flat[0];
+    }
+    const amt = text.match(/(?:KSh|KES)\s*([\d,]+)/i);
+    const units = text.match(/([\d.]+)\s*kWh/i);
+    let date = '';
+    const d1 = text.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/i);
+    if (d1) {
+      date = new Date(`${d1[1]} ${d1[2]} ${d1[3]}`).toISOString().slice(0, 10);
+    } else {
+      const d2 = text.match(/(\d{4}-\d{2}-\d{2})/);
+      if (d2) date = d2[1];
+    }
+    setDraft({
+      number: num,
+      amount: amt ? amt[1].replace(/,/g, '') : '',
+      units: units ? units[1] : '',
+      date,
+    });
+  };
+
+  const doImport = async () => {
+    const num = draft.number.replace(/\s/g, '');
+    if (!/^\d{20}$/.test(num)) {
+      setImportMsg('We could not read a 20-digit token. Paste the full receipt/SMS text or type the token manually.');
+      return;
+    }
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      const amount = draft.amount ? parseInt(draft.amount) : undefined;
+      const units = draft.units ? parseFloat(draft.units) : undefined;
+      const purchased_at = draft.date ? new Date(draft.date).toISOString() : undefined;
+      await tokens.importToken({ token_number: num, amount_ksh: amount, units, purchased_at });
+      setRaw('');
+      setDraft({ number: '', amount: '', units: '', date: '' });
+      setImportMsg('Token added to your history safely.');
+      await refresh();
+    } catch (e: any) {
+      setImportMsg(e?.message || 'Could not save that token.');
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -162,11 +222,72 @@ export const TokenHistoryPage: React.FC = () => {
           <button onClick={downloadCSV} className="ps-btn-outline !px-3 !py-2">
             <Download size={14} /> CSV
           </button>
+          <button onClick={() => setScanOpen((v) => !v)} className="ps-btn-outline !px-3 !py-2" title="Scan a receipt">
+            <ScanText size={14} /> {scanOpen ? 'Close' : 'Scan receipt'}
+          </button>
           <button onClick={printTokens} className="ps-btn-primary">
             <Printer size={15} /> Print / PDF
           </button>
         </div>
       </div>
+
+      {scanOpen && (
+        <SectionCard
+          title="Add a token from a receipt"
+          action={<span className="text-[11px] font-bold text-gray-400">Paste SMS or paper receipt text</span>}
+        >
+          <p className="text-[12px] text-gray-500 leading-relaxed">
+            Bought power at a kiosk and the message was deleted? Paste the receipt or SMS text — PowerSmart reads the
+            20-digit token, amount and date for you, then keeps it safe in your history.
+          </p>
+          <textarea
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            rows={4}
+            placeholder={'e.g. KPLC Token 1234 5678 9012 3456 6789 \nAmount: KSh 500 · 100 kWh · 04 Sep 2026'}
+            className="ps-input font-mono !text-[13px] mt-3"
+          />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button onClick={parseReceipt} className="ps-btn-outline !px-3 !py-2">
+              <ScanText size={14} /> Auto-fill from text
+            </button>
+          </div>
+
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="sm:col-span-2">
+              <label className="ps-label">20-digit token number</label>
+              <input
+                value={draft.number}
+                onChange={(e) => setDraft((d) => ({ ...d, number: e.target.value }))}
+                placeholder="1234 5678 9012 3456 6789"
+                className="ps-input font-mono"
+              />
+            </div>
+            <div>
+              <label className="ps-label">Amount (KSh)</label>
+              <input type="number" min={0} value={draft.amount} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value }))} placeholder="500" className="ps-input" />
+            </div>
+            <div>
+              <label className="ps-label">Units (kWh)</label>
+              <input type="number" min={0} value={draft.units} onChange={(e) => setDraft((d) => ({ ...d, units: e.target.value }))} placeholder="100" className="ps-input" />
+            </div>
+          </div>
+          <div className="mt-3 max-w-xs">
+            <label className="ps-label">Purchased date</label>
+            <input type="date" value={draft.date} onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))} className="ps-input" />
+          </div>
+
+          {importMsg && (
+            <div className={`mt-3 flex items-start gap-2 px-3.5 py-2.5 rounded-xl border ${importMsg.includes('saved') || importMsg.includes('added') ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'}`}>
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+              <p className="text-[12px]">{importMsg}</p>
+            </div>
+          )}
+          <button onClick={doImport} disabled={importing} className="mt-3 ps-btn disabled:opacity-50">
+            {importing ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />} {importing ? 'Saving…' : 'Save token to history'}
+          </button>
+        </SectionCard>
+      )}
 
       <SectionCard
         title="Your Tokens"

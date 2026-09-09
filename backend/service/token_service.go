@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -284,6 +285,61 @@ func (s *TokenService) BuyTokenForPool(userID, meterID string, amountKsh int, pa
 	}
 	if err := s.tokenRepo.Create(token); err != nil {
 		return nil, fmt.Errorf("failed to save token: %w", err)
+	}
+	return token, nil
+}
+
+// ImportToken lets a user add a token they purchased elsewhere (e.g. read from a
+// paper or SMS receipt). The token is stored in their history as "manual" so
+// they never lose it; duplicates are rejected.
+func (s *TokenService) ImportToken(userID string, req *model.ImportTokenRequest) (*model.Token, error) {
+	number := strings.ReplaceAll(strings.TrimSpace(req.TokenNumber), " ", "")
+	if len(number) != 20 {
+		return nil, fmt.Errorf("a token number must be 20 digits")
+	}
+	for _, c := range number {
+		if c < '0' || c > '9' {
+			return nil, fmt.Errorf("a token number must contain only digits")
+		}
+	}
+
+	exists, err := s.tokenRepo.TokenNumberExists(number)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, fmt.Errorf("that token is already saved in your history")
+	}
+
+	meter, err := s.meterRepo.GetByUserID(userID)
+	if err != nil {
+		return nil, fmt.Errorf("meter not found: %w", err)
+	}
+
+	purchasedAt := time.Now()
+	if req.PurchasedAt != "" {
+		if t, err := time.Parse(time.RFC3339, req.PurchasedAt); err == nil {
+			purchasedAt = t
+		}
+	}
+
+	token := &model.Token{
+		ID:          uuid.NewString(),
+		UserID:      userID,
+		MeterID:     meter.ID,
+		TokenNumber: number,
+		PushStatus:  model.PushManual,
+		PurchasedAt: purchasedAt,
+	}
+	if req.AmountKsh != nil {
+		token.AmountKsh = *req.AmountKsh
+	}
+	if req.Units != nil {
+		token.Units = *req.Units
+	}
+
+	if err := s.tokenRepo.Create(token); err != nil {
+		return nil, err
 	}
 	return token, nil
 }

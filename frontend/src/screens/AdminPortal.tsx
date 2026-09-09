@@ -60,6 +60,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     offline: 'Offline Kit',
     market: 'Marketplace',
     help: 'Power Help',
+    voice: 'Voice Assistant',
     meter: 'Meter Management',
     alerts: 'Alerts',
     support: 'Support',
