@@ -6,6 +6,7 @@ import {
   KeyRound,
   LineChart,
   Brain,
+  Users,
   ZapOff,
   Cable,
   SlidersHorizontal,
@@ -18,6 +19,7 @@ import { BuyTokensPage } from '../pages/BuyTokensPage';
 import { TokenHistoryPage } from '../pages/TokenHistoryPage';
 import { UsagePage } from '../pages/UsagePage';
 import { EnergyIntel } from '../pages/EnergyIntel';
+import { PowerPools } from '../pages/PowerPools';
 import { OutagesPage } from '../pages/OutagesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -33,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'history', label: 'Token History', icon: KeyRound },
   { id: 'usage', label: 'Analytics', icon: LineChart },
   { id: 'intelligence', label: 'Energy Intelligence', icon: Brain },
+  { id: 'pools', label: 'Power Pools', icon: Users },
   { id: 'system', label: 'Outages', icon: ZapOff },
   { id: 'settings', label: 'Alerts & Settings', icon: SlidersHorizontal },
 ];
@@ -50,6 +53,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     history: 'Token History',
     usage: 'Analytics',
     intelligence: 'Energy Intelligence',
+    pools: 'Power Pools',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
     system: 'Outages & Status',
@@ -81,6 +85,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
         return <UsagePage />;
       case 'intelligence':
         return <EnergyIntel />;
+      case 'pools':
+        return <PowerPools />;
       case 'system':
         return <OutagesPage />;
       case 'settings':

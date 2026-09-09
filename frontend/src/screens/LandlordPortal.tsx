@@ -13,6 +13,7 @@ import { PropertiesOverview } from '../pages/PropertiesOverview';
 import { TenantsPage } from '../pages/TenantsPage';
 import { BulkDistribution } from '../pages/BulkDistribution';
 import { EnergyIntel } from '../pages/EnergyIntel';
+import { PowerPools } from '../pages/PowerPools';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 import { meters, Meter, getSession } from '../services/api';
@@ -27,6 +28,7 @@ const NAV: NavItem[] = [
   { id: 'tenants', label: 'Tenants', icon: Users },
   { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
   { id: 'usage', label: 'Energy Intelligence', icon: Brain },
+  { id: 'pools', label: 'Power Pools', icon: Users },
   { id: 'system', label: 'System Health', icon: Activity },
 ];
 
@@ -76,6 +78,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     tenants: 'Tenants',
     tokens: 'Bulk Token Purchase',
     usage: 'Energy Intelligence',
+    pools: 'Power Pools',
     system: 'System Health',
     settings: 'Alerts & Configuration',
     transactions: 'Transactions',
@@ -114,6 +117,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
       {page === 'tenants' && <TenantsPage />}
       {page === 'tokens' && <BulkDistribution />}
       {page === 'usage' && <EnergyIntel />}
+      {page === 'pools' && <PowerPools />}
       {page === 'system' && <SystemHealth />}
       {page === 'settings' && <SettingsPage role="landlord" />}
     </PortalLayout>

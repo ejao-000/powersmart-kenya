@@ -457,6 +457,113 @@ export const energy = {
     request(`/energy/appliances/${id}`, { method: 'DELETE' }),
 };
 
+// ── Power Pools (shared electricity wallet) ──────────────────────────────────
+
+export type PoolRole = 'owner' | 'admin' | 'member';
+
+export interface PowerPoolSummary {
+  id: string;
+  name: string;
+  meter_id: string;
+  meter_name: string;
+  invite_code: string;
+  my_role: PoolRole;
+  my_can_buy: boolean;
+  my_can_invite: boolean;
+  balance_ksh: number;
+  contributions_ksh: number;
+  spent_ksh: number;
+  member_count: number;
+  created_at: string;
+}
+
+export interface PoolMember {
+  id: string;
+  pool_id: string;
+  user_id: string;
+  role: PoolRole;
+  can_buy: boolean;
+  can_invite: boolean;
+  joined_at: string;
+  name?: string;
+  contributed_ksh?: number;
+}
+
+export interface PoolActivity {
+  kind: 'contribution' | 'expense';
+  id: string;
+  user_name?: string;
+  amount_ksh: number;
+  channel?: string;
+  note?: string;
+  token_number?: string;
+  token_units?: number;
+  created_at: string;
+}
+
+export interface PowerPoolDetail {
+  id: string;
+  name: string;
+  meter_id: string;
+  meter_name: string;
+  invite_code: string;
+  my_role: PoolRole;
+  my_can_buy: boolean;
+  my_can_invite: boolean;
+  balance_ksh: number;
+  contributions_ksh: number;
+  spent_ksh: number;
+  members: PoolMember[];
+  activity: PoolActivity[];
+  created_at: string;
+}
+
+export interface PoolContribution {
+  id: string;
+  pool_id: string;
+  user_id: string;
+  user_name?: string;
+  amount_ksh: number;
+  channel: string;
+  note?: string;
+  created_at: string;
+}
+
+export interface PoolPurchaseResult {
+  expense: {
+    id: string;
+    amount_ksh: number;
+    user_name?: string;
+    token_number?: string;
+    token_units?: number;
+    created_at: string;
+  };
+  token: Token;
+  balance_ksh: number;
+}
+
+export const pools = {
+  create: (body: { meter_id: string; name: string }) =>
+    request<PowerPoolSummary>('/pools', { method: 'POST', body }),
+  list: () => request<PowerPoolSummary[]>('/pools'),
+  get: (id: string) => request<PowerPoolDetail>(`/pools/${id}`),
+  join: (body: { invite_code: string }) =>
+    request<PowerPoolDetail>('/pools/join', { method: 'POST', body }),
+  contribute: (id: string, body: { amount_ksh: number; channel: string; note?: string }) =>
+    request<PoolContribution>(`/pools/${id}/contributions`, { method: 'POST', body }),
+  purchase: (id: string, body: { amount_ksh: number }) =>
+    request<PoolPurchaseResult>(`/pools/${id}/purchase`, { method: 'POST', body }),
+  addMember: (id: string, body: { email: string; can_buy?: boolean; can_invite?: boolean }) =>
+    request<PoolMember>(`/pools/${id}/members`, { method: 'POST', body }),
+  updateMember: (
+    id: string,
+    memberId: string,
+    body: { role?: PoolRole; can_buy?: boolean; can_invite?: boolean }
+  ) => request<PoolMember>(`/pools/${id}/members/${memberId}`, { method: 'PATCH', body }),
+  removeMember: (id: string, memberId: string) =>
+    request(`/pools/${id}/members/${memberId}`, { method: 'DELETE' }),
+};
+
 // ── Formatting helpers ───────────────────────────────────────────────────────
 
 export const fmtKsh = (n: number | undefined | null) =>
