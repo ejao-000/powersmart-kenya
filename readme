@@ -176,6 +176,24 @@ env var) to your backend API URL.
 3. Go to the **Top-up** tab, pick an amount and channel, buy a token.
 4. Open `http://localhost:3000/admin-login.html`, sign in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` you configured — explore users, meters, tokens and transactions.
 
+## Demo data
+
+To explore every dashboard with realistic data, seed the database (idempotent — run it again later and it skips):
+
+```bash
+cd backend
+go run ./cmd/seed
+```
+
+Demo logins (password `DemoPass1`):
+
+| Role | Email | What to look at |
+|------|-------|-----------------|
+| Tenant | `emma@demo.com` | Energy Intelligence, Savings Hub, Power Pools (owner) |
+| Pool member | `brian@demo.com` | Power Pools (contribute / buy) |
+| Landlord | `landlord@demo.com` | Unit Insights — Unit 2 is flagged as spiking, Vendor Mode |
+| Tenant | `grace@demo.com` | Savings leaderboard rival |
+
 ## Configuration
 
 All configuration is via environment variables (see `backend/.env.example`).
