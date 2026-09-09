@@ -4,7 +4,7 @@ import {
   Building2,
   Users,
   Coins,
-  PieChart,
+  Brain,
   Activity,
 } from 'lucide-react';
 import { PortalLayout, PortalPage, NavItem, AppNotification } from '../layouts/PortalLayout';
@@ -12,7 +12,7 @@ import { PortfolioOverview } from '../pages/PortfolioOverview';
 import { PropertiesOverview } from '../pages/PropertiesOverview';
 import { TenantsPage } from '../pages/TenantsPage';
 import { BulkDistribution } from '../pages/BulkDistribution';
-import { EnergyBudget } from '../pages/EnergyBudget';
+import { EnergyIntel } from '../pages/EnergyIntel';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 import { meters, Meter, getSession } from '../services/api';
@@ -26,7 +26,7 @@ const NAV: NavItem[] = [
   { id: 'properties', label: 'Property Management', icon: Building2 },
   { id: 'tenants', label: 'Tenants', icon: Users },
   { id: 'tokens', label: 'Bulk Tokens', icon: Coins },
-  { id: 'usage', label: 'Budgets & Usage', icon: PieChart },
+  { id: 'usage', label: 'Energy Intelligence', icon: Brain },
   { id: 'system', label: 'System Health', icon: Activity },
 ];
 
@@ -75,7 +75,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     properties: 'Property Management',
     tenants: 'Tenants',
     tokens: 'Bulk Token Purchase',
-    usage: 'Budgets & Usage',
+    usage: 'Energy Intelligence',
     system: 'System Health',
     settings: 'Alerts & Configuration',
     transactions: 'Transactions',
@@ -83,6 +83,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     history: 'Token History',
     predictions: 'Predictions',
     budget: 'Budget',
+    intelligence: 'Energy Intelligence',
     meter: 'Meter Management',
     alerts: 'Alerts',
     support: 'Support',
@@ -112,7 +113,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
       {page === 'properties' && <PropertiesOverview />}
       {page === 'tenants' && <TenantsPage />}
       {page === 'tokens' && <BulkDistribution />}
-      {page === 'usage' && <EnergyBudget />}
+      {page === 'usage' && <EnergyIntel />}
       {page === 'system' && <SystemHealth />}
       {page === 'settings' && <SettingsPage role="landlord" />}
     </PortalLayout>

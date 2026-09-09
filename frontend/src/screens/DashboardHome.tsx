@@ -5,8 +5,7 @@ import {
   ShoppingCart,
   KeyRound,
   LineChart,
-  CalendarClock,
-  Wallet,
+  Brain,
   ZapOff,
   Cable,
   SlidersHorizontal,
@@ -18,8 +17,7 @@ import { MeterDetailsPage } from '../pages/MeterDetailsPage';
 import { BuyTokensPage } from '../pages/BuyTokensPage';
 import { TokenHistoryPage } from '../pages/TokenHistoryPage';
 import { UsagePage } from '../pages/UsagePage';
-import { PredictionsPage } from '../pages/PredictionsPage';
-import { EnergyBudget } from '../pages/EnergyBudget';
+import { EnergyIntel } from '../pages/EnergyIntel';
 import { OutagesPage } from '../pages/OutagesPage';
 import { SettingsPage } from '../pages/SettingsPage';
 
@@ -34,8 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'tokens', label: 'Purchase Tokens', icon: ShoppingCart },
   { id: 'history', label: 'Token History', icon: KeyRound },
   { id: 'usage', label: 'Analytics', icon: LineChart },
-  { id: 'predictions', label: 'AI Predictions', icon: CalendarClock },
-  { id: 'budget', label: 'Budget', icon: Wallet },
+  { id: 'intelligence', label: 'Energy Intelligence', icon: Brain },
   { id: 'system', label: 'Outages', icon: ZapOff },
   { id: 'settings', label: 'Alerts & Settings', icon: SlidersHorizontal },
 ];
@@ -52,6 +49,7 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
     tokens: 'Purchase Tokens',
     history: 'Token History',
     usage: 'Analytics',
+    intelligence: 'Energy Intelligence',
     predictions: 'AI Predictions',
     budget: 'Energy Budget',
     system: 'Outages & Status',
@@ -81,10 +79,8 @@ export const DashboardHome: React.FC<DashboardHomeProps> = ({ onLogout }) => {
         return <TokenHistoryPage />;
       case 'usage':
         return <UsagePage />;
-      case 'predictions':
-        return <PredictionsPage />;
-      case 'budget':
-        return <EnergyBudget />;
+      case 'intelligence':
+        return <EnergyIntel />;
       case 'system':
         return <OutagesPage />;
       case 'settings':

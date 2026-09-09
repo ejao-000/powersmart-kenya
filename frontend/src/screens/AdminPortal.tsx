@@ -49,6 +49,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     history: 'Token History',
     predictions: 'Predictions',
     budget: 'Budget',
+    intelligence: 'Energy Intelligence',
     meter: 'Meter Management',
     alerts: 'Alerts',
     support: 'Support',
