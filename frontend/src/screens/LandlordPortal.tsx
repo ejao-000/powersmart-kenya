@@ -9,6 +9,7 @@ import {
   Trophy,
   Store,
   WifiOff,
+  ShoppingBag,
   Activity,
 } from 'lucide-react';
 import { PortalLayout, PortalPage, NavItem, AppNotification } from '../layouts/PortalLayout';
@@ -22,6 +23,7 @@ import { UnitInsights } from '../pages/UnitInsights';
 import { SavingsHub } from '../pages/SavingsHub';
 import { MerchantMode } from '../pages/MerchantMode';
 import { OfflineKit } from '../pages/OfflineKit';
+import { Marketplace } from '../pages/Marketplace';
 import { SystemHealth } from '../pages/SystemHealth';
 import { SettingsPage } from '../pages/SettingsPage';
 import { meters, Meter, getSession } from '../services/api';
@@ -41,6 +43,7 @@ const NAV: NavItem[] = [
   { id: 'savings', label: 'Savings Hub', icon: Trophy },
   { id: 'merchant', label: 'Vendor Mode', icon: Store },
   { id: 'offline', label: 'Offline Kit', icon: WifiOff },
+  { id: 'market', label: 'Marketplace', icon: ShoppingBag },
   { id: 'system', label: 'System Health', icon: Activity },
 ];
 
@@ -95,6 +98,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
     savings: 'Savings Hub',
     merchant: 'Vendor Mode',
     offline: 'Offline Kit',
+    market: 'Marketplace',
     system: 'System Health',
     settings: 'Alerts & Configuration',
     transactions: 'Transactions',
@@ -138,6 +142,7 @@ export const LandlordPortal: React.FC<LandlordPortalProps> = ({ onLogout }) => {
       {page === 'savings' && <SavingsHub />}
       {page === 'merchant' && <MerchantMode />}
       {page === 'offline' && <OfflineKit />}
+      {page === 'market' && <Marketplace />}
       {page === 'system' && <SystemHealth />}
       {page === 'settings' && <SettingsPage role="landlord" />}
     </PortalLayout>

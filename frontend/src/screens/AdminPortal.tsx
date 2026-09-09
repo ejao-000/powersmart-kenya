@@ -55,6 +55,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ userName, onLogout }) 
     savings: 'Savings Hub',
     merchant: 'Vendor Mode',
     offline: 'Offline Kit',
+    market: 'Marketplace',
     meter: 'Meter Management',
     alerts: 'Alerts',
     support: 'Support',

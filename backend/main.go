@@ -49,6 +49,7 @@ func main() {
 	insightsH := handlers.NewInsightsHandler(db)
 	savingsH := handlers.NewSavingsHandler(db)
 	merchantH := handlers.NewMerchantHandler(db)
+	marketH := handlers.NewMarketplaceHandler(db)
 
 	mux := http.NewServeMux()
 
@@ -173,6 +174,9 @@ func main() {
 	mux.Handle("POST /api/merchant/float", protected(http.HandlerFunc(merchantH.TopUp)))
 	mux.Handle("POST /api/merchant/vend", protected(http.HandlerFunc(merchantH.Vend)))
 
+	// Energy marketplace
+	mux.Handle("GET /api/marketplace", protected(http.HandlerFunc(marketH.Browse)))
+
 	// Unknown /api paths get a JSON 404 (this mux only matches registered /api
 	// routes; a handler for "/" is intentionally NOT registered so the server
 	// is a pure API backend and never serves the frontend).
@@ -279,6 +283,7 @@ func logRoutes() {
 	log.Println("  GET  /api/merchant/me")
 	log.Println("  POST /api/merchant/float")
 	log.Println("  POST /api/merchant/vend")
+	log.Println("  GET  /api/marketplace")
 	log.Println("  GET  /api/admin/merchants")
 	log.Println("  POST /api/admin/merchants/{id}/status")
 	log.Println("  (API-only — the frontend is served separately)")

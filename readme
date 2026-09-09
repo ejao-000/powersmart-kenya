@@ -41,6 +41,8 @@ PowerSmart Kenya lets tenants monitor their Kenya Power prepaid meter in real ti
 - **Automatic expense reports** — one-click monthly statements (token purchases per meter, units bought, spend and average rate) with CSV export for tenants and landlords, plus portfolio totals.
 - **Savings Hub** — reduction goals ("cut my bill from KSh 3,000 to KSh 2,500") tracked against live usage, weekly energy-saving challenges with points and a platform-wide leaderboard, and a carbon footprint estimate (kg CO₂/month and tree-equivalent offset) derived from consumption.
 - **Merchant (vendor) mode** — authorised agents, kiosks and shops sell electricity tokens. Merchants top up a KSh float via M-Pesa/Airtel/bank and vend tokens straight onto a customer's meter account; every top-up and sale is recorded in a sales ledger. Admins can approve or suspend vendor accounts.
+- **Offline Kit** — save a snapshot of your balance, run-out forecast, tokens and recent payments onto the device, and keep seeing it when the internet drops.
+- **Energy Marketplace** — an energy-saving product catalogue (solar, LEDs, smart plugs, efficient appliances, audits) where the AI recommends items with reasons drawn from your appliance mix and spend: e.g. “your water heater is ~31% of usage — a solar water heater could cut that demand.”
 - **Auto top-up** — automatically buy tokens when the balance drops below a threshold.
 - **Role-based portals** — separate experiences for **Tenant**, **Landlord** and **Admin**, each with its own login.
 - **Dedicated admin console** — global stats, user list, meter fleet, token ledger and payment audit trail.
@@ -245,6 +247,7 @@ Protected endpoints (JWT `Authorization: Bearer <token>`):
 | GET | `/api/merchant/me` | My vendor profile, float and recent sales |
 | POST | `/api/merchant/float` | Top up my vending float |
 | POST | `/api/merchant/vend` | Sell a token to a customer's meter account |
+| GET | `/api/marketplace` | Product catalogue + AI recommendations for my meter |
 | GET | `/api/admin/merchants` | List all vendor accounts (admin) |
 | POST | `/api/admin/merchants/{id}/status` | Approve / suspend a vendor (admin) |
 | PUT | `/api/meter/settings` | Auto top-up settings |
@@ -293,6 +296,7 @@ PostgreSQL tables are created automatically on first run (`backend/config/databa
 - `challenge_points` — weekly energy-saving challenge points per user
 - `merchant_profiles` — vendor businesses (name, status, owner)
 - `merchant_ledger` — float top-ups and token sales per merchant
+- `marketplace_products` — energy-saving product catalogue for recommendations
 
 ## Security
 

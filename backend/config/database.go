@@ -221,6 +221,27 @@ func RunMigrations(db *sql.DB) {
 			customer_account TEXT,
 			created_at       TIMESTAMPTZ DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS marketplace_products (
+			id                    TEXT PRIMARY KEY,
+			category              TEXT NOT NULL,
+			name                  TEXT NOT NULL,
+			description           TEXT,
+			price_ksh             INTEGER NOT NULL DEFAULT 0,
+			est_savings_ksh_month DOUBLE PRECISION NOT NULL DEFAULT 0,
+			active                SMALLINT NOT NULL DEFAULT 1,
+			created_at            TIMESTAMPTZ DEFAULT now()
+		)`,
+		`INSERT INTO marketplace_products (id, category, name, description, price_ksh, est_savings_ksh_month, active)
+		 VALUES
+			('prod-swh','water','Solar water heater','Replaces the geyser that drives most Kenyan electricity bills, heating water free from the sun.',95000,1500),
+			('prod-led','lighting','LED bulbs — 10 pack','Instant swap that cuts lighting load by ~80% versus incandescent bulbs.',1500,250),
+			('prod-smartplug','smart','Smart plugs with energy monitoring','See exactly what each appliance draws and switch them off remotely.',3200,300),
+			('prod-fridge','appliances','A++ rated inverter fridge','Up to 40% more efficient than an old fridge running all day.',42000,900),
+			('prod-heatpump','water','Heat-pump water heater','Uses ~60% less power than a traditional geyser for the same hot water.',120000,1200),
+			('prod-solar-kit','solar','Solar home backup system (5 kWh)','Battery + inverter keeps lights, TV and fridge running during outages and off-peak.',210000,2800),
+			('prod-solar-2kw','solar','2 kW solar panel + inverter kit','Generate your own daytime power and slash monthly token spend.',280000,3000),
+			('prod-audit','services','Energy efficiency home audit','A professional walks your home and finds the fastest ways to cut your bill.',5000,1000)
+		 ON CONFLICT (id) DO NOTHING`,
 	}
 
 	for _, stmt := range statements {

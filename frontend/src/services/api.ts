@@ -730,6 +730,34 @@ export const merchant = {
     request<VendResult>('/merchant/vend', { method: 'POST', body }),
 };
 
+// ── Energy marketplace ───────────────────────────────────────────────────────
+
+export interface MarketplaceProduct {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  price_ksh: number;
+  est_savings_ksh_month: number;
+  created_at: string;
+}
+
+export interface MarketplaceRecommendation {
+  product: MarketplaceProduct;
+  basis: string;
+  reason: string;
+}
+
+export interface MarketplaceBrowse {
+  products: MarketplaceProduct[];
+  recommendations: MarketplaceRecommendation[];
+  generated_at: string;
+}
+
+export const marketplace = {
+  browse: () => request<MarketplaceBrowse>('/marketplace'),
+};
+
 // Builds and triggers a client-side CSV download.
 export function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
   const escape = (v: string | number) => {
